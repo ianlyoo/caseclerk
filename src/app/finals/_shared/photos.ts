@@ -11,6 +11,7 @@ export const PHOTOS: Record<string, Photo> = {
   // Real sandbox cases: museum photos of similar items, not the seller's own.
   "PP-R-VPY-10194485": { src: "/finals/om1n.webp", alt: "Olympus OM-1n body", credit: "Hiyotada, CC0, via Wikimedia Commons" },
   "PP-R-NJA-10194486": { src: "/finals/om1n.webp", alt: "Olympus OM-1n body", credit: "Hiyotada, CC0, via Wikimedia Commons" },
+  "PP-R-UDP-10194489": { src: "/finals/om1n.webp", alt: "Olympus OM-1n body", credit: "Hiyotada, CC0, via Wikimedia Commons" },
   "PP-R-JKB-10194463": { src: "/finals/ring-dish.webp", alt: "Small celadon-glazed dish, sage green", credit: "Cleveland Museum of Art, CC0, via Wikimedia Commons" },
   "PP-R-RCJ-10194476": { src: "/finals/walnut-spoon.webp", alt: "Hand-carved wooden spoon", credit: "Public domain, via Wikimedia Commons" },
 };

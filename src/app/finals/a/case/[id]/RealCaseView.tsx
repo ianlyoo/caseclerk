@@ -143,10 +143,11 @@ function Slip({ r, send, setSend, pull }: { r: ApiCase; send: Send; setSend: (s:
     try {
       const res = await fetch(`/finals/a/live/actions/${a.id}/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
       const j = await res.json().catch(() => ({}));
-      if (res.ok) setSend({ at: "done", status: j.status ?? null, debugId: j.debugId ?? null, when: j.at ?? new Date().toISOString(), message: j.message ?? "PayPal answered." });
+      // Success is { action, message }: PayPal's status and debug id sit on action.result.
+      if (res.ok) setSend({ at: "done", status: j.action?.result?.httpStatus ?? null, debugId: j.action?.result?.debugId ?? null, when: j.action?.updatedAt ?? new Date().toISOString(), message: "CaseClerk filed the evidence with PayPal at" });
       else {
         const e = j.error ?? {};
-        setSend({ at: "refused", status: res.status, debugId: e.debugId ?? null, message: res.status === 409 ? `Already decided: ${e.message ?? "someone answered first."}` : (e.message ?? "CaseClerk couldn't reach PayPal.") });
+        setSend({ at: "refused", status: res.status, debugId: e.debugId ?? e.action?.result?.debugId ?? null, message: res.status === 409 ? `Already decided: ${e.message ?? "someone answered first."}` : (e.message ?? "CaseClerk couldn't reach PayPal.") });
       }
     } catch {
       setSend({ at: "refused", status: 0, debugId: null, message: "The request didn't reach CaseClerk." });
