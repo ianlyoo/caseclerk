@@ -3,7 +3,7 @@
 // present its traffic as live PayPal traffic. The one real run is in ./real.ts.
 // Times are Pacific (the seller is in Portland, OR).
 
-import type { DisputeStage, DisputeStatus, SellerPolicy } from "@/lib/types";
+import { DEFAULT_POLICY, type DisputeStage, type DisputeStatus, type SellerPolicy } from "@/lib/types";
 
 /** The fixture clock: every countdown on the draft pages is measured from here. */
 export const NOW = "2026-10-25T10:40:00-07:00";
@@ -18,14 +18,8 @@ export const SELLER = {
 /** Money actions above $50.00, and filing evidence on cases of $250.00 or more, wait for the seller. */
 export const EVIDENCE_GATE_USD = 250;
 
-export const POLICY: SellerPolicy = {
-  autoRefundMaxUsd: 15,
-  approvalAboveUsd: 50,
-  minWinProbabilityToFight: 0.45,
-  maxOfferPercent: 45,
-  dryRun: false,
-  voice: "Friendly, brief, specific. Never blame the buyer.",
-};
+/** The seller's rules: the app's defaults (src/lib/types.ts), so the finals never drift from what the agent obeys. */
+export const POLICY: SellerPolicy = DEFAULT_POLICY;
 
 /** What CaseClerk is doing with the case, in the seller's words. */
 export type DeskState = "new" | "working" | "waiting_paypal" | "approval" | "won" | "refunded";

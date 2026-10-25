@@ -45,7 +45,7 @@ export const countWord = (n: number, cap = false) => {
   return cap ? w : w.toLowerCase();
 };
 
-export function Masthead({ here }: { here: "landing" | "inbox" | "case" | "deadlines" }) {
+export function Masthead({ here }: { here: "landing" | "inbox" | "case" | "deadlines" | "policy" }) {
   const waiting = usePendingApprovals();
   return (
     <header className={s.mast}>
@@ -61,6 +61,9 @@ export function Masthead({ here }: { here: "landing" | "inbox" | "case" | "deadl
         </Link>
         <Link href={`${BASE}/deadlines`} aria-current={here === "deadlines" ? "page" : undefined}>
           Deadlines
+        </Link>
+        <Link href={`${BASE}/policy`} aria-current={here === "policy" ? "page" : undefined}>
+          Policy
         </Link>
       </nav>
       <span className={s.seller}>{SELLER.name}</span>

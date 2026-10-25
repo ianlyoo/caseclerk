@@ -194,7 +194,7 @@ const idsProbe = (page) =>
     const sample = [...document.querySelectorAll("[data-wire-line][data-sample]")];
     return {
       debug: real.map((l) => (l.textContent.match(/debug ([0-9a-f]{12,13})/) || [])[1]).filter(Boolean),
-      events: real.map((l) => (l.getAttribute("title") || "").replace("Event ", "")).filter(Boolean),
+      events: real.map((l) => ((l.getAttribute("title") || "").match(/^Event (\S+)$/) || [])[1]).filter(Boolean),
       sampleDebug: sample.filter((l) => /debug [0-9a-f]{12,13}/.test(l.textContent)).length,
     };
   });
@@ -355,7 +355,7 @@ const idsProbe = (page) =>
     });
     out(strip.cells === 14 && strip.over <= 0 && !strip.cellOver, `G19 14-day strip has no overflow at ${v.name}`, JSON.stringify({ cells: strip.cells, over: strip.over, cellOver: strip.cellOver }));
     out(strip.due.length && strip.due.every((m) => DUE.includes(m.due) && !m.cents), `G19 every strip mark is bound to a case dueAt, amounts without cents at ${v.name}`, `${strip.due.length} marks`);
-    judgePage(await pageProbe(page, true), `inbox first screen ${v.name}`);
+    judgePage(await pageProbe(page, true), `inbox first screen ${v.name}`, v === V1440 ? { h1Min: 46 } : {});
     if (v === V1440) {
       const live = await liveProbe(page);
       out(live && live.event && live.debug >= 1 && live.cents, "G13 inbox first screen: Wire with a PayPal event, a debug id >= 14 px, an amount with cents", JSON.stringify(live));
@@ -420,12 +420,38 @@ const idsProbe = (page) =>
     await ctx.close();
   }
 
+  // ---- Policy: the app's default rules, each tied to a case, the preview switch ----
+  for (const v of [V1440, V1920, PHONE]) {
+    const { ctx, page, status, errors } = await open(browser, v, `${P}/policy`);
+    out(status === 200 && !errors.length, `policy page loads without errors at ${v.name}`, errors.slice(0, 2).join("; "));
+    judgePage(await pageProbe(page, false), `policy whole page ${v.name}`, v === V1440 ? { h1Min: 46 } : {});
+    if (v === V1440) {
+      const r = await page.evaluate(() =>
+        [...document.querySelectorAll("[data-rule]")].map((li) => ({ key: li.getAttribute("data-rule"), text: li.innerText, links: [...li.querySelectorAll("a[href]")].map((a) => a.getAttribute("href")) })),
+      );
+      const all = r.map((x) => x.text).join("\n");
+      const want = ["$15.00", "$50.00", "$250.00", "45%", "40%", "Friendly, brief, specific. Never blame the buyer."];
+      out(want.every((w) => all.includes(w)) && !/45% of the order/.test(all), "policy shows DEFAULT_POLICY: $15.00, $50.00, $250.00, 45% to fight, 40% offers, the voice", want.filter((w) => !all.includes(w)).join(", "));
+      const unlinked = r.filter((x) => x.key !== "preview" && !x.links.some((h) => h.startsWith("/finals/a")));
+      out(r.length === 7 && !unlinked.length, "every policy rule links to a case where it applied", unlinked.map((x) => x.key).join(", ") || `${r.length} rules`);
+      const sw = page.locator("[data-switch]");
+      const before = await page.locator("[data-rule=preview] p").first().innerText();
+      await sw.click();
+      await page.waitForTimeout(500);
+      const after = await page.locator("[data-rule=preview] p").first().innerText();
+      out((await sw.getAttribute("aria-checked")) === "true" && before !== after && /calls nothing on PayPal/.test(after), "preview switch flips aria-checked and its consequence line", after.slice(0, 50));
+      judgeAnims(await animProbe(page), "policy switch");
+      out((await page.locator("header nav a[href='/finals/a/policy'][aria-current=page]").count()) === 1, "Policy is in the nav and marked current");
+    }
+    await ctx.close();
+  }
+
   // ---- Every link on Final A resolves; deadlines page ----
   {
     const { ctx, page } = await open(browser, V1440, `${P}/deadlines`);
-    judgePage(await pageProbe(page, false), "deadlines whole page 1440");
+    judgePage(await pageProbe(page, false), "deadlines whole page 1440", { h1Min: 46 });
     const hrefs = new Set();
-    for (const p of [P, `${P}/inbox`, `${P}/deadlines`, CASE, `${P}/case/PP-R-RBN-10224961`]) {
+    for (const p of [P, `${P}/inbox`, `${P}/deadlines`, `${P}/policy`, CASE, `${P}/case/PP-R-RBN-10224961`]) {
       await page.goto(BASE + p, { waitUntil: "networkidle" });
       for (const h of await page.$$eval("a[href]", (as) => as.map((a) => a.getAttribute("href")))) hrefs.add(h);
     }

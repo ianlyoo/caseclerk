@@ -55,6 +55,7 @@ check "T14 placeholder data"                                     0 "$(n -i 'lore
 check "T14 dispute ids PP-R-XXX-12345678"                        0 "$(grep -rhoE 'PP-R-[A-Z0-9]+-[0-9]+' $D | grep -vcE '^PP-R-[A-Z]{3}-[0-9]{8}$')"
 check "G12 no debug id in the sample fixtures"                   0 "$(grep -E 'debugId: *"' src/app/finals/_shared/cases.ts src/app/finals/_shared/data.ts | wc -l)"
 check "G7 Wire never shows model, cost or policy"                0 "$(grep -nE 'claude-|costUsd|model' src/app/finals/a/ui.tsx | wc -l)"
+check "Policy page: shared POLICY is the app's DEFAULT_POLICY"   1 "$(grep -c 'export const POLICY: SellerPolicy = DEFAULT_POLICY;' src/app/finals/_shared/data.ts)"
 check "extra: emoji"                                             0 "$(grep -rnP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' $D | wc -l)"
 check "extra: no edits outside owned paths on this branch"       0 "$(git diff --name-only 69f5756^ HEAD | grep -vE '^(src/app/finals/(a|_shared)/|public/finals/|docs/design/(finals/a/|check-)|src/app/layout\.tsx$)' | wc -l)"
 echo "border-radius uses:"; css 'border-radius' | sed 's/^/      /'
