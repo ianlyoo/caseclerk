@@ -2,6 +2,8 @@
 // (compare-and-set), write the seller's audit entry and call PayPal; this maps their result to HTTP.
 import { z } from "zod";
 import { actions } from "@/lib/db";
+import { withWire } from "@/lib/db/wire";
+import type { AgentAction } from "@/lib/types";
 import { deny, executeApproved } from "@/lib/agent/run";
 import { errMessage, json, jsonError, parseBody } from "./http";
 
@@ -18,18 +20,29 @@ export async function handleApproval(req: Request, id: string, verdict: "approve
   }
 
   try {
-    const r = verdict === "approve" ? await executeApproved(id) : await deny(id, body.note);
+    const r = await withWire({ origin: "seller", caseId: action.caseId }, () =>
+      verdict === "approve" ? executeApproved(id) : deny(id, body.note),
+    );
     if (!r.ok) {
       const current = r.action ?? (await actions.get(id).catch(() => null));
       // Someone else decided first → 409; PayPal or the policy gate refused → 502 with the reason.
       const lost = current && current.status !== "failed" && current.status !== "executed";
-      return jsonError(lost ? 409 : 502, lost ? "conflict" : "upstream_error", r.message, { action: current });
+      return jsonError(lost ? 409 : 502, lost ? "conflict" : "upstream_error", r.message, {
+        action: current,
+        ...(verdict === "approve" && current ? paypalAnswer(current) : {}),
+      });
     }
-    return json({ action: r.action ?? (await actions.get(id)), message: r.message });
+    const done = r.action ?? (await actions.get(id));
+    return json({ action: done, message: r.message, ...(verdict === "approve" && done ? paypalAnswer(done) : {}) });
   } catch (e) {
     console.error(`[api/actions/${id}/${verdict}] failed: ${errMessage(e)}`);
     return jsonError(502, "upstream_error", `Couldn't ${verdict} the action. Try again.`, {
       action: await actions.get(id).catch(() => null),
     });
   }
+}
+
+/** PayPal's answer to the executed action, for the approval slip: HTTP status, debug id, time. */
+function paypalAnswer(a: AgentAction): { status: number | null; debugId: string | null; at: string } {
+  return { status: a.result?.httpStatus ?? null, debugId: a.result?.debugId ?? null, at: a.updatedAt };
 }

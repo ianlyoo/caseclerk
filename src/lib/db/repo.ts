@@ -148,6 +148,48 @@ export type TestCapturesRepo = {
   get(captureId: string): Promise<TestCapture | null>;
 };
 
+export type WireOrigin = "agent" | "webhook" | "seller" | "cron" | "system";
+
+/**
+ * One PayPal call (kind "call") or webhook delivery (kind "event") on the wire log.
+ * Never holds request bodies, headers or secrets: ids, paths, statuses and timings only.
+ */
+export type WireEntry = {
+  id: string;
+  at: string;
+  kind: "call" | "event";
+  origin: WireOrigin;
+  caseId?: string;
+  /** Correlation key before a case exists (the test capture id); linked to the case later. */
+  ref?: string;
+  method?: string;
+  /** API path without query string. */
+  path?: string;
+  /** Call: PayPal's HTTP status (0 = network error). Event: the status we answered PayPal with. */
+  status?: number;
+  debugId?: string;
+  durationMs?: number;
+  eventId?: string;
+  eventType?: string;
+  /** Webhook signature verification result, e.g. SUCCESS, FAILURE. */
+  verify?: string;
+  detail?: Record<string, unknown>;
+};
+
+export type NewWireEntry = Omit<WireEntry, "id" | "at"> & { at?: string };
+
+export type WireRepo = {
+  append(e: NewWireEntry): Promise<WireEntry>;
+  /** Oldest first (time order); the latest `limit` rows (default 500). */
+  listByCase(caseId: string, opts?: { limit?: number }): Promise<WireEntry[]>;
+  /** The latest `limit` rows (default 50, max 200) across cases, after `since` if given; returned oldest first. */
+  listRecent(opts?: { since?: string; limit?: number }): Promise<WireEntry[]>;
+  /** Sets `ref` (and the case, if known) on rows written before the case existed. */
+  tag(ids: string[], patch: { ref?: string; caseId?: string }): Promise<void>;
+  /** Attaches rows tagged with `ref` and no case yet to `caseId`. */
+  linkRef(ref: string, caseId: string): Promise<void>;
+};
+
 export type Repo = {
   kind: "memory" | "postgres";
   cases: CasesRepo;
@@ -159,4 +201,5 @@ export type Repo = {
   rateLimit: RateLimitRepo;
   locks: LocksRepo;
   testCaptures: TestCapturesRepo;
+  wire: WireRepo;
 };
