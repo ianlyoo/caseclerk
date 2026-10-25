@@ -179,7 +179,7 @@ export type WireEntry = {
   detail?: Record<string, unknown>;
 };
 
-export type NewWireEntry = Omit<WireEntry, "id" | "at"> & { at?: string };
+export type NewWireEntry = Omit<WireEntry, "id" | "at"> & { at?: string; /** default: a new UUID */ id?: string };
 
 export type WireRepo = {
   append(e: NewWireEntry): Promise<WireEntry>;

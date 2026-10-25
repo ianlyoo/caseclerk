@@ -11,7 +11,12 @@ const m = vi.hoisted(() => ({
   getDispute: vi.fn(),
   executeApproved: vi.fn(),
   deny: vi.fn(),
+  afterTasks: [] as (() => Promise<void>)[],
 }));
+vi.mock("next/server", () => ({ after: (fn: () => Promise<void>) => m.afterTasks.push(fn) }));
+const flushAfter = async () => {
+  for (const t of m.afterTasks.splice(0)) await t();
+};
 // openTestDispute reports one call per PayPal request, as W1's paypalFetch does through the observer.
 vi.mock("@/lib/paypal/testDispute", () => ({
   openTestDispute: m.openTestDispute,
@@ -47,6 +52,7 @@ beforeEach(() => {
   db = createMemoryRepo();
   setDbForTests(db);
   vi.clearAllMocks();
+  m.afterTasks.length = 0;
 });
 
 describe("cases", () => {
@@ -167,8 +173,12 @@ describe("approvals", () => {
 
   it("approves through the agent and refuses a second decision", async () => {
     const a = await pending();
-    m.executeApproved.mockImplementation(async (id: string) => {
+    let deferredRan = false;
+    m.executeApproved.mockImplementation(async (id: string, opts: { defer: (t: () => Promise<void>) => void }) => {
       await recordPayPalCall({ method: "POST", path: "/v2/payments/captures/CAP-1/refund", status: 201, debugId: "dbg-r", durationMs: 700, at: new Date().toISOString() });
+      opts.defer(async () => {
+        deferredRan = true;
+      });
       return {
         ok: true,
         message: "Sent to PayPal",
@@ -179,6 +189,11 @@ describe("approvals", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({ action: { status: "executed" }, status: 201, debugId: "dbg-r", at: body.action.updatedAt });
+    // The response doesn't wait for the wire row or other deferred work; after() runs them.
+    expect(deferredRan).toBe(false);
+    expect(await db.wire.listByCase("PP-R-A")).toEqual([]);
+    await flushAfter();
+    expect(deferredRan).toBe(true);
     // The refund path names no dispute: the call is still filed under the case, origin seller.
     expect(await db.wire.listByCase("PP-R-A")).toEqual([expect.objectContaining({ origin: "seller", status: 201, debugId: "dbg-r" })]);
     const again = await deny.POST(req(`/api/actions/${a.id}/deny`, { method: "POST" }), params(a.id));
