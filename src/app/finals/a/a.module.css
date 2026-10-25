@@ -809,6 +809,7 @@
   line-height: 18px;
   color: var(--ink3);
   overflow: hidden;
+  container-type: inline-size;
 }
 .cell:first-child {
   border-left: 0;
@@ -826,13 +827,16 @@
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-variant-numeric: tabular-nums;
 }
-.mark > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* The surname shows only when the day cell is 120 px or wider, and is never cut. */
+.mark > span + span {
+  display: none;
+}
+@container (min-width: 120px) {
+  .mark > span + span {
+    display: block;
+  }
 }
 .mark.markRed {
   border-left-color: var(--red);
@@ -1294,4 +1298,48 @@
 }
 .rowReal {
   color: var(--kept);
+}
+
+/* ---- Policy as a sentence ---- */
+.sentence {
+  margin: 28px 0 8px;
+  padding: 20px 0;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+}
+.sentenceText {
+  margin: 0;
+  max-width: 34em;
+  font-family: var(--serif);
+  font-size: 26px;
+  line-height: 38px;
+}
+.dollar {
+  white-space: nowrap;
+}
+.dollarIn {
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.dollarIn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.consequence {
+  margin: 14px 0 6px;
+  font-size: 18px;
+}
+.landNow {
+  margin: 0;
+  max-width: 40em;
+  padding: 14px 0;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+  font-size: 17px;
 }

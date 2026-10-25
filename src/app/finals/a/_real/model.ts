@@ -4,8 +4,10 @@
 import type { AgentAction } from "@/lib/types";
 import type { WireLine } from "../../_shared/cases";
 
-/** The real disputes Final A shows, newest first. Ids come from REAL-CASES.md. */
-export const REAL_CASE_IDS = ["PP-R-JKB-10194463", "PP-R-RCJ-10194476"];
+/** The real disputes Final A shows, newest first. Ids come from REAL-CASES.md.
+ *  VPY waits for the seller's approval on camera: nothing in this repo approves it. */
+export const HERO_ID = "PP-R-VPY-10194485";
+export const REAL_CASE_IDS = [HERO_ID, "PP-R-NJA-10194486", "PP-R-JKB-10194463", "PP-R-RCJ-10194476"];
 export const REAL_HREF = "/finals/a/case/PP-R-JKB-10194463";
 
 type Money = { value: string; currency_code?: string };
@@ -87,6 +89,8 @@ export function actionPath(r: ApiCase, a: AgentAction): string {
 
 /** When PayPal answered an action: the audit's execution entry, else the demo control's, else the action's update. */
 function answeredAt(r: ApiCase, a: AgentAction): string {
+  const call = a.result?.debugId && r.wire?.find((w) => w.debugId === a.result!.debugId);
+  if (call) return call.at;
   const hit = r.audit.find((x) => (a.result?.debugId && x.data?.debugId === a.result.debugId) || x.data?.actionId === a.id);
   return hit?.at ?? r.audit.find((x) => x.kind === `demo.${a.kind}`)?.at ?? a.updatedAt;
 }
@@ -151,6 +155,7 @@ export function headline(r: ApiCase): string {
   }
   if (state === "pending") return `${who} a ${amt} ${thing}. The evidence is ready, and it waits for your yes.`;
   const n = executed(r, "provide_evidence").length;
+  if (n && r.audit.some((x) => x.kind === "action.approved")) return `${who} a ${amt} ${thing}. You approved the evidence, CaseClerk filed it, and PayPal is deciding.`;
   return n ? `${who} a ${amt} ${thing}. CaseClerk filed the evidence ${TIMES[n] ?? `${n} times`}; PayPal is deciding.` : `${who} a ${amt} ${thing}. PayPal is reviewing it.`;
 }
 
@@ -164,12 +169,16 @@ export type StoryRow = { at: string; who: "From PayPal" | "To PayPal" | "CaseCle
 
 /** "What happened, newest first": PayPal's traffic plus the agent's own decisions. */
 export function story(r: ApiCase, plainOf: (l: WireLine) => string): StoryRow[] {
-  const rows: StoryRow[] = realLines(r).map((l) =>
+  // The page tells the story at the boundary that matters: webhooks and the calls that change the case.
+  // Reads and signature checks stay on the Wire.
+  const rows: StoryRow[] = realLines(r).filter((l) => l.dir === "in" || l.path.startsWith("POST /v1/customer/disputes/")).map((l) =>
     l.dir === "in"
       ? { at: l.at, who: "From PayPal", title: l.name, plain: plainOf(l), id: l.eventId, idKind: "event", status: "verified", line: l }
       : { at: l.at, who: "To PayPal", title: l.path.split("/").at(-1)!, plain: plainOf(l), id: l.debugId, idKind: "debug id", status: l.status, line: l },
   );
   for (const x of r.audit) {
+    if (x.kind === "action.approved") rows.push({ at: x.at, who: "CaseClerk", title: "You approved it", plain: "The seller approved the evidence filing in CaseClerk." });
+    if (x.kind === "action.awaiting_approval") rows.push({ at: x.at, who: "CaseClerk", title: "Waiting for you", plain: x.summary.replace(/\.?$/, ".") });
     if (x.kind === "decision" || x.kind === "triage") rows.push({ at: x.at, who: "CaseClerk", title: x.kind === "decision" ? "Decision" : "Sorted the case", plain: x.summary.replace(/^(Decision|Triage): /, "").replace(/\.?$/, ".") });
   }
   return rows.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
@@ -197,4 +206,33 @@ export function slipSummary(r: ApiCase, a: AgentAction): string {
   if (a.kind === "provide_evidence" && ex.length)
     return `What PayPal receives: the seller's letter and ${ex.length} exhibit${ex.length === 1 ? "" : "s"}: ${ex.map((e) => e.title.toLowerCase()).join(", ")}.`;
   return a.rationale.split(/(?<=\.)\s/).slice(0, 2).join(" ");
+}
+
+/** The inbox row for a real case: what it is, where it stands, and its last PayPal call. */
+export type RealRow = { id: string; item: string; amount: string; state: RealState; standing: string; lastCall?: { at: string; path: string; status: string; debugId?: string }; lastEvent?: { at: string; eventId: string } };
+
+export function realRow(r: ApiCase, ptTime: (iso: string) => string): RealRow {
+  const lines = realLines(r);
+  const calls = lines.filter((l) => l.dir === "out" && l.path.startsWith("POST /v1/customer/disputes/") && !/\/(adjudicate|require-evidence)$/.test(l.path));
+  const call = calls.at(-1);
+  const ev = lines.filter((l) => l.dir === "in").at(-1);
+  const state = realState(r);
+  const asked = rulingAsked(r);
+  const standing =
+    state === "resolved"
+      ? `Closed by PayPal: ${r.case.snapshot.outcome === "RESOLVED_WITH_PAYOUT" ? "it paid the buyer itself" : (r.case.snapshot.outcome ?? "resolved").toLowerCase().replaceAll("_", " ")}`
+      : state === "pending"
+        ? "Waiting for you: the evidence is ready to file"
+        : asked
+          ? `PayPal is deciding; sandbox ruling requested ${ptTime(asked)}`
+          : "PayPal is deciding";
+  return {
+    id: r.case.id,
+    item: (r.case.order?.items?.[0]?.name ?? r.case.id).split(",")[0],
+    amount: r.case.snapshot.amount.value,
+    state,
+    standing,
+    lastCall: call && { at: call.at, path: call.path, status: call.status, debugId: call.debugId },
+    lastEvent: ev?.eventId ? { at: ev.at, eventId: ev.eventId } : undefined,
+  };
 }

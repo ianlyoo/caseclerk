@@ -10,10 +10,13 @@ import type { WireLine } from "../_shared/cases";
 import { SELLER, TZ } from "../_shared/data";
 import { REAL_LAST } from "../_shared/real";
 import { usePendingApprovals } from "../_shared/store";
+import { REAL_CASE_IDS, realState, type ApiCase } from "./_real/model";
 import s from "./a.module.css";
 
 export const BASE = "/finals/a";
-export const HERO_HREF = `${BASE}/case/PP-R-NKT-10227591`;
+/** The case waiting for you: the real $412.00 sandbox chargeback. The $412.00 sample is SAMPLE_HERO_HREF. */
+export const HERO_HREF = `${BASE}/case/PP-R-VPY-10194485`;
+export const SAMPLE_HERO_HREF = `${BASE}/case/PP-R-NKT-10227591`;
 export const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 export const SPRING = { type: "spring", stiffness: 420, damping: 41, mass: 1 } as const;
 
@@ -36,8 +39,35 @@ export function Num({ value, money = true, cause, className }: { value: number; 
 }
 
 const WORDS = ["Nothing", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+/** The real cases, read once per page load through the same-origin proxy. */
+let realOnce: Promise<ApiCase[]> | null = null;
+export function useRealCases(): ApiCase[] | null {
+  const [got, setGot] = useState<ApiCase[] | null>(null);
+  useEffect(() => {
+    realOnce ??= Promise.all(
+      REAL_CASE_IDS.map((id) =>
+        fetch(`${BASE}/live/case/${id}`, { cache: "no-store" })
+          .then((r) => (r.ok ? (r.json() as Promise<ApiCase>) : null))
+          .catch(() => null),
+      ),
+    ).then((xs) => xs.filter((x): x is ApiCase => x !== null));
+    let live = true;
+    realOnce.then((xs) => live && setGot(xs));
+    return () => {
+      live = false;
+    };
+  }, []);
+  return got;
+}
+
+/** Waiting for you: the sample approvals plus every real case with an action waiting for the seller. */
+function useWaiting(): number {
+  const real = useRealCases();
+  return usePendingApprovals() + (real ?? []).filter((r) => realState(r) === "pending").length;
+}
+
 export function WaitingCount() {
-  const n = usePendingApprovals();
+  const n = useWaiting();
   return <Num value={n} money={false} cause="approve" />;
 }
 export const countWord = (n: number, cap = false) => {
@@ -46,7 +76,7 @@ export const countWord = (n: number, cap = false) => {
 };
 
 export function Masthead({ here }: { here: "landing" | "inbox" | "case" | "deadlines" | "policy" }) {
-  const waiting = usePendingApprovals();
+  const waiting = useWaiting();
   return (
     <header className={s.mast}>
       <Link href={BASE} className={s.word} aria-label="CaseClerk home">
@@ -134,8 +164,10 @@ export function plainOf(l: WireLine): string {
   if (path.endsWith("/adjudicate")) return "Sandbox control: PayPal was asked to rule for the seller";
   if (path.includes("verify-webhook-signature")) return "CaseClerk checked PayPal's signature on a webhook";
   if (path.startsWith("/v2/checkout/orders")) return "CaseClerk read the order from PayPal";
+  if (l.path.startsWith("POST /v1/shipping/trackers")) return "CaseClerk added the tracking to the PayPal payment";
   if (path.startsWith("/v1/shipping/trackers")) return "CaseClerk read the tracking from PayPal";
   if (path.startsWith("/v1/customer/disputes")) return "CaseClerk read the case from PayPal";
+  if (path.startsWith("/v2/payments/captures")) return "CaseClerk read the payment from PayPal";
   return "CaseClerk called PayPal";
 }
 

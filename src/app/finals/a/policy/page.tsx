@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState, type ReactNode } from "react";
 import { CASES, EVIDENCE_GATE_USD, POLICY, usd } from "../../_shared/data";
 import { REAL, REAL_ID, REAL_WIRE } from "../../_shared/real";
-import { BASE, EASE_OUT, HERO_HREF, Masthead, Wire, countWord, realDay } from "../ui";
+import { BASE, EASE_OUT, SAMPLE_HERO_HREF, Masthead, Num, Wire, countWord, realDay } from "../ui";
 import s from "../a.module.css";
 
 const byId = (id: string) => CASES.find((c) => c.id === id)!;
@@ -20,7 +20,8 @@ const thing = (item: string) => item.split(",")[0];
 
 type Rule = { key: string; rule: ReactNode; where: ReactNode };
 
-const RULES: Rule[] = [
+function rules(money: number, evidence: number): Rule[] {
+  return [
   {
     key: "auto",
     rule: <>Refunds of {usd(POLICY.autoRefundMaxUsd)} or less go out without asking you.</>,
@@ -32,7 +33,7 @@ const RULES: Rule[] = [
   },
   {
     key: "money",
-    rule: <>Any money action above {usd(POLICY.approvalAboveUsd)} waits for you.</>,
+    rule: <>Any money action above {usd(money)} waits for you.</>,
     where: (
       <>
         <Link href={`${BASE}/case/${grace.id}`}>
@@ -44,10 +45,10 @@ const RULES: Rule[] = [
   },
   {
     key: "evidence",
-    rule: <>Filing evidence on a case of {usd(EVIDENCE_GATE_USD)} or more waits for you.</>,
+    rule: <>Filing evidence on a case of {usd(evidence)} or more waits for you.</>,
     where: (
       <>
-        <Link href={HERO_HREF}>
+        <Link href={SAMPLE_HERO_HREF}>
           {first(daniel.buyer)} {daniel.buyer.split(" ")[1]}&rsquo;s {usd(daniel.amount)} {thing(daniel.item)}
         </Link>
         : the evidence pack is ready to file when you say so.
@@ -59,7 +60,7 @@ const RULES: Rule[] = [
     rule: <>It fights only at {pct(POLICY.minWinProbabilityToFight * 100)} or better to win; below that it refunds or offers, if that costs you less.</>,
     where: (
       <>
-        <Link href={HERO_HREF}>{thing(daniel.item)}</Link>: 55% to win, so it fights. In <Link href={BASE}>the real run</Link>, PayPal&rsquo;s second ask came at {second.winPct}%, but fighting still cost less ({usd(second.evFight.slice(1))} against {usd(second.evRefund.slice(1))} for a refund), so it filed again.
+        <Link href={SAMPLE_HERO_HREF}>{thing(daniel.item)}</Link>: 55% to win, so it fights. In <Link href={BASE}>the real run</Link>, PayPal&rsquo;s second ask came at {second.winPct}%, but fighting still cost less ({usd(second.evFight.slice(1))} against {usd(second.evRefund.slice(1))} for a refund), so it filed again.
       </>
     ),
   },
@@ -80,11 +81,71 @@ const RULES: Rule[] = [
     rule: <>Every message to a buyer is written in your voice: &ldquo;{POLICY.voice}&rdquo;</>,
     where: (
       <>
-        <Link href={HERO_HREF}>The letter for {first(daniel.buyer)}&rsquo;s case</Link> answers the claim point by point and doesn&rsquo;t blame him.
+        <Link href={SAMPLE_HERO_HREF}>The letter for {first(daniel.buyer)}&rsquo;s case</Link> answers the claim point by point and doesn&rsquo;t blame him.
       </>
     ),
   },
+  ];
+}
+
+/** Each open case's next step: what the agent will do next, and the money it moves. */
+const NEXT: { id: string; kind: "evidence" | "refund" | "message" | "none" }[] = [
+  { id: "PP-R-PLZ-10225917", kind: "evidence" },
+  { id: "PP-R-HBW-10226180", kind: "message" },
+  { id: "PP-R-TVA-10227066", kind: "refund" },
+  { id: "PP-R-NKT-10227591", kind: "evidence" },
+  { id: "PP-R-JDM-10228390", kind: "none" },
+  { id: "PP-R-CQF-10228844", kind: "none" },
+  { id: "PP-R-WEX-10226653", kind: "none" },
 ];
+const waits = (money: number, evidence: number) =>
+  NEXT.filter((n) => {
+    const amt = Number(byId(n.id).amount);
+    return (n.kind === "evidence" && amt >= evidence) || (n.kind === "refund" && amt > money);
+  }).map((n) => byId(n.id));
+
+/** A dollar value inside the sentence, edited in place. */
+function Dollars({ value, set, label, name }: { value: number; set: (n: number) => void; label: string; name: string }) {
+  const [text, setText] = useState(value.toFixed(2));
+  return (
+    <span className={s.dollar}>
+      $
+      <input
+        className={s.dollarIn}
+        value={text}
+        inputMode="decimal"
+        aria-label={label}
+        data-policy-input={name}
+        size={Math.max(4, text.length)}
+        onChange={(e) => {
+          const v = e.target.value.replace(/[^0-9.]/g, "");
+          setText(v);
+          const n = Number(v);
+          if (v !== "" && Number.isFinite(n)) set(n);
+        }}
+        onBlur={() => setText(value.toFixed(2))}
+      />
+    </span>
+  );
+}
+
+function Sentence({ money, evidence, setMoney, setEvidence }: { money: number; evidence: number; setMoney: (n: number) => void; setEvidence: (n: number) => void }) {
+  const open = NEXT.length;
+  const w = waits(money, evidence);
+  return (
+    <div className={s.sentence} data-policy-sentence>
+      <p className={s.sentenceText}>
+        Act on my own when the money is under <Dollars value={money} set={setMoney} label="Money line, in dollars" name="money" />. File evidence on my own when the case is under{" "}
+        <Dollars value={evidence} set={setEvidence} label="Evidence line, in dollars" name="evidence" />. Otherwise, wait for me.
+      </p>
+      <p className={s.consequence} data-consequence={w.length}>
+        With this policy, <Num value={w.length} money={false} cause="policy-edit" /> of your {open} open cases would wait for you
+        {w.length ? <>: {w.map((c) => `${first(c.buyer)}\u2019s ${usd(c.amount)}`).join(", ")}.</> : "."}
+      </p>
+      <p className={s.ruleWhere}>A preview: change the numbers to see who would wait. This page saves nothing.</p>
+    </div>
+  );
+}
 
 /** Preview mode: the switch is real on the live app; here it only changes this page. */
 function PreviewSwitch() {
@@ -124,12 +185,16 @@ function PreviewSwitch() {
 }
 
 export default function FinalAPolicy() {
+  const [money, setMoney] = useState(POLICY.approvalAboveUsd);
+  const [evidence, setEvidence] = useState(EVIDENCE_GATE_USD);
+  const RULES = rules(money, evidence);
   return (
     <div className={`${s.app} ${s.wInbox}`}>
       <div className={s.paper}>
         <Masthead here="policy" />
         <main className={s.inbox}>
           <h1 className={s.headline}>{countWord(RULES.length + 1, true)} rules CaseClerk follows on every case, and where each one applied.</h1>
+          <Sentence money={money} evidence={evidence} setMoney={setMoney} setEvidence={setEvidence} />
           <ol className={s.rules}>
             {RULES.map((r) => (
               <li key={r.key} className={s.rule} data-rule={r.key}>

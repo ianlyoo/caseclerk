@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { WireLine } from "../../_shared/cases";
+import { REAL_CASE_IDS, wireRowLines, type ApiWireRow, type RealRow } from "../_real/model";
 import { caseDetail } from "../../_shared/cases";
 import { CASES, countdown, day, dayOffset, hoursLeft, nextDays, sortedCases, time, usd, usd0, weekday, type InboxCase } from "../../_shared/data";
 import { PHOTOS } from "../../_shared/photos";
 import { usePendingApprovals, usePhase } from "../../_shared/store";
-import { BASE, Num, countWord } from "../ui";
+import { BASE, Num, countWord, realDay, wireClock } from "../ui";
 import s from "../a.module.css";
 
 const thing = (item: string) => item.split(",")[0];
@@ -109,3 +112,64 @@ export function Strip() {
   );
 }
 
+
+/** A real sandbox case row: where PayPal has it, and the last call CaseClerk made, with PayPal's debug id. */
+export function RealRowView({ r }: { r: RealRow }) {
+  const photo = PHOTOS[r.id];
+  const c = r.lastCall;
+  return (
+    <li className={s.row}>
+      <Link href={`${BASE}/case/${r.id}`} className={s.rowLink} data-case-row={r.id} data-real-row>
+        <span className={s.rowDue}>{r.state === "resolved" ? "Closed" : r.state === "pending" ? <span className={s.green}>Waiting for you</span> : "With PayPal"}</span>
+        {photo ? <img className={s.thumb} src={photo.src} alt={photo.alt} data-credit={photo.credit} width={56} height={42} /> : <span className={s.thumbEmpty} />}
+        <span>
+          <span className={s.rowItem}>{r.item}</span>
+          <span className={s.rowWho}>
+            <span className={s.rowReal}>Real sandbox case</span> {r.id}
+          </span>
+          <span className={s.rowLast}>
+            {r.standing}.
+            {c ? (
+              <>
+                {" "}
+                Last PayPal call: {c.path.split("/").at(-1)} {c.status}, {realDay(c.at)} {wireClock(c.at)} PT{c.debugId && <>, <span className={s.mono}>debug {c.debugId}</span></>}.
+              </>
+            ) : r.lastEvent ? (
+              <>
+                {" "}
+                Last webhook {realDay(r.lastEvent.at)} {wireClock(r.lastEvent.at)} PT, <span className={s.mono}>event {r.lastEvent.eventId}</span>.
+              </>
+            ) : null}
+          </span>
+        </span>
+        <span className={s.rowAmt}>{usd(r.amount)}</span>
+      </Link>
+    </li>
+  );
+}
+
+/** The real lines plus any new production wire rows for the real cases, polled every 5 s with a 60 s look-back. */
+export function useLiveWire(base: WireLine[]): WireLine[] {
+  const [extra, setExtra] = useState<WireLine[]>([]);
+  useEffect(() => {
+    const events = new Set(base.flatMap((l) => (l.eventId ? [l.eventId] : [])));
+    const debugs = new Set(base.flatMap((l) => (l.debugId ? [l.debugId] : [])));
+    let stop = false;
+    const pull = async () => {
+      try {
+        const since = new Date(Date.now() - 60_000).toISOString();
+        const res = await fetch(`${BASE}/live/wire?since=${encodeURIComponent(since)}`, { cache: "no-store" });
+        if (!res.ok || stop) return;
+        const rows = ((await res.json()).wire ?? []) as ApiWireRow[];
+        const fresh = wireRowLines(rows.filter((w) => w.caseId && REAL_CASE_IDS.includes(w.caseId)), null, events, debugs);
+        if (fresh.length) setExtra((x) => [...x, ...fresh]);
+      } catch {}
+    };
+    const t = setInterval(pull, 5000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [base]);
+  return [...base, ...extra];
+}

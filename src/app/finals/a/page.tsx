@@ -5,7 +5,8 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { usd } from "../_shared/data";
 import { REAL, REAL_ID, REAL_WIRE } from "../_shared/real";
-import { BASE, EASE_OUT, HERO_HREF, Masthead, Wire, realDay, realTime } from "./ui";
+import { BASE, EASE_OUT, HERO_HREF, Masthead, SAMPLE_HERO_HREF, Wire, realDay, realTime, useRealCases, wireClock } from "./ui";
+import { HERO_ID, REAL_HREF, realState, thingOf } from "./_real/model";
 import s from "./a.module.css";
 
 const GAP_MS = 800;
@@ -13,7 +14,10 @@ const START_MS = 400;
 const spanMin = Math.round((Date.parse(REAL_WIRE.at(-1)!.at) - Date.parse(REAL_WIRE[0].at)) / 60000);
 const firstAsk = REAL_WIRE.find((l) => l.status === "WAITING_FOR_SELLER_RESPONSE")!;
 const firstFile = REAL_WIRE.find((l) => l.path.endsWith("/provide-evidence"))!;
-const askToFile = Math.round((Date.parse(firstFile.at) - Date.parse(firstAsk.at)) / 1000);
+// Whole seconds, so the sum matches the clocks shown on the Wire (21:36:07 to 21:36:37 is 30 s).
+const sec = (iso: string) => Math.floor(Date.parse(iso) / 1000);
+const askToFile = sec(firstFile.at) - sec(firstAsk.at);
+const ruling = REAL_WIRE.find((l) => l.path.endsWith("/adjudicate"))!;
 const fileIdx = REAL_WIRE.indexOf(firstFile);
 
 /** How many real lines have landed: a 9 s replay, or all at once under reduced motion. */
@@ -46,7 +50,7 @@ function OpenTest() {
       <button className={s.btn} onClick={() => t0 === null && (setT0(Date.now()), setNow(Date.now()))} disabled={t0 !== null} data-open-test>
         Open a test dispute
       </button>
-      <p className={s.ctaNote}>On the live app this opens a real PayPal sandbox dispute; its webhook usually reaches us in about 3 minutes.</p>
+      <p className={s.ctaNote}>A sandbox chargeback. PayPal&rsquo;s webhook reaches us in about 3 minutes.</p>
       {t0 !== null && (
         <motion.div className={s.wellBox} data-well initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.32 }} data-cause="paypal-call">
           <ol>
@@ -66,20 +70,32 @@ function OpenTest() {
   );
 }
 
+/** The real case waiting for the seller right now, read live; nothing shows if none is waiting. */
+function WaitingNow() {
+  const real = useRealCases();
+  const r = real?.find((x) => x.case.id === HERO_ID && realState(x) === "pending");
+  if (!r) return null;
+  return (
+    <motion.p className={s.landNow} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.32 }} data-cause="webhook" data-waiting-now>
+      <span className={s.green}>Waiting for you now:</span> a real {usd(r.case.snapshot.amount.value)} chargeback on an {thingOf(r)}. The evidence is ready, and it files when you say yes.{" "}
+      <Link href={HERO_HREF}>Open it</Link>
+    </motion.p>
+  );
+}
+
 export default function FinalALanding() {
   const n = useReplay();
   const reduce = useReducedMotion();
   const filed = n > fileIdx;
-  const last = REAL_WIRE.at(-1)!;
   return (
     <div className={`${s.app} ${s.wLanding}`}>
       <div className={s.paper}>
         <Masthead here="landing" />
         <main className={s.land}>
-          <p className={s.lede}>CaseClerk answers PayPal disputes for small online sellers. It reads the case, gathers the order and the tracking, files the evidence, and asks you before any money moves.</p>
           <h1 className={s.landH1}>
-            A {usd(REAL.amount)} chargeback came in at {realTime(REAL.createdAt)}. CaseClerk filed the evidence {askToFile} seconds after PayPal asked for it.
+            A {usd(REAL.amount)} chargeback came in at {realTime(REAL_WIRE[0].at)} PT. CaseClerk filed the evidence {askToFile} seconds after PayPal asked for it.
           </h1>
+          <p className={s.lede}>CaseClerk answers PayPal disputes for small online sellers. It reads the case, gathers the order and the tracking, files the evidence, and asks you before any money moves.</p>
           <div className={s.landCase}>
             <div className={s.dossier} style={{ gridTemplateColumns: "1fr", marginTop: 0 }}>
               <AnimatePresence>
@@ -108,14 +124,15 @@ export default function FinalALanding() {
               The buyer&rsquo;s card issuer said it never arrived, four seconds after payment. The agent pulled the order and the USPS tracking, decided to fight ({REAL.decisions[0].winPct}% to win; fighting costs {usd(REAL.decisions[0].evFight.slice(1))} on average against {usd(REAL.decisions[0].evRefund.slice(1))} for a refund), and filed. When PayPal asked again, it filed again.{" "}
               {n >= REAL_WIRE.length ? (
                 <>
-                  PayPal has been reviewing it since {realTime(last.at)}; the seller-favour ruling was requested with the sandbox simulator, and PayPal hasn&rsquo;t decided yet.
+                  <span data-replay-end>PayPal is deciding; sandbox ruling requested {wireClock(ruling.at)} PT.</span>
                 </>
               ) : null}
             </p>
           </div>
+          <WaitingNow />
           <OpenTest />
           <p style={{ margin: 0, fontSize: 15 }}>
-            <Link href={`${BASE}/inbox`}>See the disputes desk</Link> or <Link href={HERO_HREF}>open the $412.00 sample case</Link>.
+            <Link href={REAL_HREF} data-open-real>Open this case</Link>, see <Link href={`${BASE}/inbox`}>the disputes desk</Link>, or try <Link href={SAMPLE_HERO_HREF}>a sample case</Link>.
           </p>
         </main>
         <p className={s.foot}>Built on PayPal Disputes, Orders, Tracking and Webhooks (sandbox). Claude Haiku 5.5 sorts each case; Opus 5.5 decides.</p>
