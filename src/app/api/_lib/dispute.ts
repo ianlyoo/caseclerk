@@ -60,7 +60,10 @@ export function fallbackSnapshot(raw: RawDispute): DisputeSnapshot {
 export async function fetchDisputeSnapshot(id: string): Promise<DisputeSnapshot> {
   const w1 = await loadDisputes();
   if (w1) return w1.getDispute(id);
-  const res = await paypalFetch(`/v1/customer/disputes/${encodeURIComponent(id)}`);
-  if (!res.ok) throw new Error(`GET dispute ${res.status} debug_id=${res.headers.get("paypal-debug-id") ?? "-"}`);
-  return fallbackSnapshot((await res.json()) as RawDispute);
+  // W1's module is on main; this path only runs if it fails to load.
+  const res = await paypalFetch<RawDispute>(`/v1/customer/disputes/${encodeURIComponent(id)}`);
+  if (res.status < 200 || res.status >= 300 || !res.json) {
+    throw new Error(`GET dispute ${res.status} debug_id=${res.debugId ?? "-"}`);
+  }
+  return fallbackSnapshot(res.json);
 }

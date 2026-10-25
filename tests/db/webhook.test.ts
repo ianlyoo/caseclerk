@@ -40,7 +40,7 @@ beforeEach(() => {
   m.agentLoaded = true;
   m.verify.mockReset().mockResolvedValue({ verified: true, status: "SUCCESS" });
   m.runAgent.mockReset().mockResolvedValue(undefined);
-  m.paypalFetch.mockReset().mockImplementation(async () => Response.json(dispute));
+  m.paypalFetch.mockReset().mockImplementation(async () => ({ status: 200, json: dispute }));
 });
 
 describe("POST /api/webhooks/paypal", () => {
@@ -105,7 +105,7 @@ describe("POST /api/webhooks/paypal", () => {
   });
 
   it("returns 503 and forgets the event when PayPal can't be read, so the retry works", async () => {
-    m.paypalFetch.mockResolvedValueOnce(new Response("{}", { status: 500 }));
+    m.paypalFetch.mockResolvedValueOnce({ status: 500, debugId: "test", json: {} });
     expect((await post()).status).toBe(503);
     expect(m.afterTasks).toHaveLength(0);
     expect((await post()).status).toBe(200);
