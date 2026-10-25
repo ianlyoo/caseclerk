@@ -36,12 +36,12 @@ export function createMemoryRepo(): Repo {
         const prev = cases.get(snapshot.id);
         if (!prev) {
           const t = now();
-          const isTest =
-            opts?.isTestDispute ??
-            (snapshot.sellerTransactionId ? captures.has(snapshot.sellerTransactionId) : false);
+          const capture = snapshot.sellerTransactionId ? captures.get(snapshot.sellerTransactionId) : undefined;
+          const isTest = opts?.isTestDispute ?? Boolean(capture);
           const record: CaseRecord = {
             id: snapshot.id,
             snapshot: clone(snapshot),
+            ...(capture?.order ? { order: clone(capture.order) } : {}),
             status: statusAfterSnapshot(undefined, snapshot),
             isTestDispute: isTest,
             createdAt: t,

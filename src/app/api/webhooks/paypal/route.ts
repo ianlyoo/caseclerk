@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { audit, cases, webhookEvents } from "@/lib/db";
+import { getDispute } from "@/lib/paypal/disputes";
 import { verifyWebhookSignature } from "@/lib/paypal/webhook";
-import { fetchDisputeSnapshot } from "../../_lib/dispute";
 import { errMessage } from "../../_lib/http";
 import { loadAgent } from "../../_lib/modules";
 
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
   let caseId: string;
   let changed: boolean;
   try {
-    const snapshot = await fetchDisputeSnapshot(disputeId);
+    const snapshot = await getDispute(disputeId);
     const up = await cases.upsertFromSnapshot(snapshot);
     caseId = up.record.id;
     changed = up.changed;

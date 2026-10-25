@@ -34,7 +34,7 @@ export type CasesRepo = {
   /**
    * Inserts or refreshes a case from a PayPal snapshot. Snapshots older than the stored one
    * are ignored. A new case is marked `isTestDispute` when its capture id was recorded by
-   * `testCaptures.record`. A RESOLVED snapshot sets status "resolved".
+   * `testCaptures.record` (and gets that capture's order context). A RESOLVED snapshot sets status "resolved".
    */
   upsertFromSnapshot(snapshot: DisputeSnapshot, opts?: { isTestDispute?: boolean }): Promise<UpsertResult>;
   get(id: string): Promise<CaseRecord | null>;
@@ -137,6 +137,8 @@ export type TestCapture = {
   orderId?: string;
   disputeId?: string;
   scenario?: string;
+  /** Order context from openTestDispute; copied onto the case when it is created. */
+  order?: OrderContext;
   createdAt: string;
 };
 

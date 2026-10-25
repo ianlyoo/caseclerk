@@ -64,6 +64,7 @@ function toCapture(r: Row): TestCapture {
     ...(r.order_id ? { orderId: r.order_id as string } : {}),
     ...(r.dispute_id ? { disputeId: r.dispute_id as string } : {}),
     ...(r.scenario ? { scenario: r.scenario as string } : {}),
+    ...(r.order_ctx ? { order: r.order_ctx as TestCapture["order"] } : {}),
     createdAt: iso(r.created_at),
   };
 }
@@ -97,10 +98,11 @@ export function createPostgresRepo(url: string, query?: Query): Repo {
       async upsertFromSnapshot(snapshot, opts) {
         const rows = await q(
           `INSERT INTO cases (id, snapshot, status, is_test_dispute, dispute_status, capture_id,
-                              seller_response_due, snapshot_updated_at)
+                              seller_response_due, snapshot_updated_at, order_ctx)
            VALUES ($1, $2::jsonb, $3,
                    COALESCE($4::boolean, EXISTS (SELECT 1 FROM test_captures t WHERE t.capture_id = $5)),
-                   $6, $5, $7::timestamptz, $8::timestamptz)
+                   $6, $5, $7::timestamptz, $8::timestamptz,
+                   (SELECT t.order_ctx FROM test_captures t WHERE t.capture_id = $5))
            ON CONFLICT (id) DO UPDATE SET
              snapshot = EXCLUDED.snapshot,
              dispute_status = EXCLUDED.dispute_status,
@@ -324,13 +326,15 @@ export function createPostgresRepo(url: string, query?: Query): Repo {
     testCaptures: {
       async record(c) {
         const rows = await q(
-          `INSERT INTO test_captures (capture_id, order_id, dispute_id, scenario) VALUES ($1, $2, $3, $4)
+          `INSERT INTO test_captures (capture_id, order_id, dispute_id, scenario, order_ctx)
+           VALUES ($1, $2, $3, $4, $5::jsonb)
            ON CONFLICT (capture_id) DO UPDATE SET
+             order_ctx = COALESCE(EXCLUDED.order_ctx, test_captures.order_ctx),
              order_id = COALESCE(EXCLUDED.order_id, test_captures.order_id),
              dispute_id = COALESCE(EXCLUDED.dispute_id, test_captures.dispute_id),
              scenario = COALESCE(EXCLUDED.scenario, test_captures.scenario)
            RETURNING *`,
-          [c.captureId, c.orderId ?? null, c.disputeId ?? null, c.scenario ?? null],
+          [c.captureId, c.orderId ?? null, c.disputeId ?? null, c.scenario ?? null, json(c.order)],
         );
         return toCapture(rows[0]);
       },

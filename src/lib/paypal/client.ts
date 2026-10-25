@@ -75,6 +75,9 @@ export type PayPalFetchInit = Omit<RequestInit, "body"> & {
   requestId?: string;
 };
 
+/** 400 issues that are real refusals, not the sandbox's transient ones: never retried. */
+const DEFINITIVE_400 = new Set(["ACTION_NOT_ALLOWED_IN_CURRENT_DISPUTE_STATE", "INVALID_EVIDENCE_FILE", "DUPLICATE_REQUEST"]);
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Retry schedule (ms). Overridable in tests through setRetryDelays. */
@@ -200,7 +203,7 @@ export async function paypalFetch<T = any>(path: string, init: PayPalFetchInit =
       await sleep(retryAfterMs(res) ?? delays.server[serverAttempts++]);
       continue;
     }
-    if (res.status === 400 && retryOn400 && badRequestAttempts < delays.badRequest.length) {
+    if (res.status === 400 && retryOn400 && !DEFINITIVE_400.has(json?.details?.[0]?.issue) && badRequestAttempts < delays.badRequest.length) {
       await sleep(delays.badRequest[badRequestAttempts++]);
       continue;
     }

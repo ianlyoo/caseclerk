@@ -13,10 +13,13 @@ const m = vi.hoisted(() => ({
   deny: vi.fn(),
   approvalsLoaded: true,
 }));
+vi.mock("@/lib/paypal/testDispute", () => ({
+  openTestDispute: m.openTestDispute,
+  TEST_SCENARIOS: { not_received: {}, not_as_described: {} },
+}));
+vi.mock("@/lib/paypal/simulators", () => ({ adjudicate: m.adjudicate, requireEvidence: m.requireEvidence }));
+vi.mock("@/lib/paypal/disputes", () => ({ getDispute: m.getDispute }));
 vi.mock("@/app/api/_lib/modules", () => ({
-  loadTestDispute: async () => ({ openTestDispute: m.openTestDispute }),
-  loadSimulators: async () => ({ adjudicate: m.adjudicate, requireEvidence: m.requireEvidence }),
-  loadDisputes: async () => ({ getDispute: m.getDispute }),
   loadApprovals: async () => (m.approvalsLoaded ? { executeApproved: m.executeApproved, deny: m.deny } : null),
   loadAgent: async () => null,
 }));
@@ -78,8 +81,9 @@ describe("policy", () => {
 });
 
 describe("test-dispute", () => {
-  it("opens a test dispute, records the capture, and rate-limits per IP", async () => {
-    m.openTestDispute.mockResolvedValue({ captureId: "CAP-9", orderId: "ORD-9" });
+  it("opens a test dispute, records the capture with its order, and rate-limits per IP", async () => {
+    const order = { orderId: "ORD-9", captureId: "CAP-9", items: [], shipping: [{ carrier: "USPS", trackingNumber: "9400" }] };
+    m.openTestDispute.mockResolvedValue({ captureId: "CAP-9", orderId: "ORD-9", amount: { value: "30.00", currency_code: "USD" }, order });
     const post = (ip: string) => testDispute.POST(req("/api/test-dispute", { method: "POST", body: "{}", ip }));
     for (let i = 0; i < 3; i++) expect((await post("9.9.9.9")).status).toBe(202);
     const limited = await post("9.9.9.9");
@@ -87,7 +91,12 @@ describe("test-dispute", () => {
     expect((await limited.json()).error.code).toBe("rate_limited");
     expect((await post("8.8.8.8")).status).toBe(202);
     expect(m.openTestDispute).toHaveBeenCalledTimes(4);
-    expect(await db.testCaptures.get("CAP-9")).toMatchObject({ orderId: "ORD-9" });
+    expect(m.openTestDispute).toHaveBeenCalledWith({ scenario: "not_received", waitMs: 0 });
+    expect(await db.testCaptures.get("CAP-9")).toMatchObject({ orderId: "ORD-9", scenario: "not_received", order });
+    // The webhook's upsert then gives the case the test badge and the order context.
+    const { record } = await db.cases.upsertFromSnapshot(snapshot({ id: "PP-R-9", sellerTransactionId: "CAP-9" }));
+    expect(record).toMatchObject({ isTestDispute: true, order });
+    expect((await testDispute.POST(req("/api/test-dispute", { method: "POST", body: '{"scenario":"bogus"}', ip: "7.7.7.7" }))).status).toBe(400);
   });
 
   it("reports sandbox failures as JSON", async () => {
@@ -114,10 +123,11 @@ describe("simulate", () => {
     m.getDispute.mockResolvedValue(
       snapshot({ id: "PP-R-T", allowed: ["adjudicate", "require_evidence"], updateTime: "2026-10-25T03:00:00.000Z" }),
     );
+    m.adjudicate.mockResolvedValue({ status: 200, debugId: "dbg1" });
     const ok = await post("PP-R-T", { action: "adjudicate", outcome: "SELLER_FAVOR" });
     expect(ok.status).toBe(200);
     expect(m.adjudicate).toHaveBeenCalledWith("PP-R-T", "SELLER_FAVOR");
-    expect((await db.actions.listByCase("PP-R-T"))[0]).toMatchObject({ kind: "adjudicate", status: "executed" });
+    expect((await db.actions.listByCase("PP-R-T"))[0]).toMatchObject({ kind: "adjudicate", status: "executed", result: { httpStatus: 200, debugId: "dbg1" } });
     expect((await db.audit.listByCase("PP-R-T")).map((a) => a.kind)).toEqual(["demo.adjudicate"]);
 
     m.requireEvidence.mockRejectedValueOnce(new Error("400"));

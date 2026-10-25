@@ -1,6 +1,8 @@
 // Applies db/migrations/*.sql in name order, once each (tracked in schema_migrations).
 // One-off command (Node >= 22.18 strips types natively), with DATABASE_URL in the environment:
 //   node src/lib/db/migrate.ts
+// Uses DATABASE_URL_UNPOOLED when present (Neon recommends a direct connection for schema changes);
+// the pooled DATABASE_URL also works, since each file runs as one HTTP transaction.
 // Self-contained on purpose (no "@/" imports) so plain Node can run it.
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -44,7 +46,7 @@ export async function migrate(url: string, dir = join(process.cwd(), "db", "migr
 
 const isMain = typeof process !== "undefined" && process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
 if (isMain) {
-  const url = process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
   if (!url) {
     console.error("[migrate] DATABASE_URL is not set");
     process.exit(1);
