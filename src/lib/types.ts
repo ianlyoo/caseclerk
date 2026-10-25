@@ -72,8 +72,12 @@ export type Triage = {
 export type Decision = {
   strategy: "fight" | "refund_full" | "offer_partial" | "accept_claim" | "message_buyer" | "wait";
   winProbability: number; // 0..1, the agent's estimate
+  /** Expected result in USD vs. keeping the full amount (0 = no loss; negative = expected loss). */
   expectedValueUsd: { fight: number; refund: number; offer?: number };
   rationale: string; // short, shown in the UI
+  evidenceStrength?: "strong" | "medium" | "weak";
+  /** Set when the seller policy changed the agent's proposed strategy. */
+  policyNote?: string;
   model: string;
   at: string;
 };
@@ -156,5 +160,8 @@ export type AuditEntry = {
   data?: Record<string, unknown>; // no secrets, no full PII
   costUsd?: number; // LLM cost of this step, if any
 };
+
+/** What started an agent run. */
+export type AgentTrigger = { kind: "webhook" | "approval" | "manual"; eventType?: string };
 
 export type SpendTotals = { totalUsd: number; todayUsd: number; runsToday: number };

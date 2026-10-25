@@ -1,0 +1,23 @@
+{
+  "scenario": "chargeback-snad",
+  "reasons": ["MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED", "MERCHANDISE_OR_SERVICE_NOT_RECEIVED"],
+  "stage": "CHARGEBACK",
+  "recordedAt": "2026-10-25T00:00:00.000Z",
+  "sourceDisputeId": "provisional",
+  "costUsd": 0,
+  "triage": { "category": "not_as_described", "summary": "Card chargeback: the card holder says the item was not as described." },
+  "decision": {
+    "strategy": "fight",
+    "winProbability": 0.7,
+    "expectedValueUsd": { "fight": -9.13, "refund": -28.91 },
+    "rationale": "Tracking shows the parcel was delivered; the evidence pack makes this chargeback winnable.",
+    "evidenceStrength": "strong",
+    "model": "claude-opus-5-5 (medium)"
+  },
+  "timeline": [
+    { "actor": "agent", "kind": "triage", "summary": "Triage: not as described." },
+    { "actor": "agent", "kind": "tool.get_tracking", "summary": "Read tracking: delivered" },
+    { "actor": "agent", "kind": "decision", "summary": "Decision: fight with evidence." },
+    { "actor": "paypal", "kind": "action.executed", "summary": "PayPal accepted the evidence submission" }
+  ]
+}
