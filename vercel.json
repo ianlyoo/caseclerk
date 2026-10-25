@@ -1,5 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "crons": [{ "path": "/api/cron/test-dispute", "schedule": "0 15 * * *" }]
+  "crons": [
+    {
+      "path": "/api/cron/test-dispute",
+      "schedule": "0 15 * * *"
+    }
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "spike": false,
+      "s3-w1-paypal": false,
+      "s3-w2-agent": false,
+      "s3-w4-data": false
+    }
+  }
 }
