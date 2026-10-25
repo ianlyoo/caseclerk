@@ -10,6 +10,7 @@ const Policy = z
   .object({
     autoRefundMaxUsd: z.number().min(0).max(10_000),
     approvalAboveUsd: z.number().min(0).max(10_000),
+    evidenceApprovalAtUsd: z.number().min(0).max(100_000).optional(),
     minWinProbabilityToFight: z.number().min(0).max(1),
     maxOfferPercent: z.number().min(0).max(100),
     dryRun: z.boolean(),

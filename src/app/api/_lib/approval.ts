@@ -1,5 +1,6 @@
 // Shared by POST /api/actions/:id/approve and /deny. W2's executeApproved/deny claim the action
 // (compare-and-set), write the seller's audit entry and call PayPal; this maps their result to HTTP.
+import { after } from "next/server";
 import { z } from "zod";
 import { actions } from "@/lib/db";
 import { withWire } from "@/lib/db/wire";
@@ -20,8 +21,13 @@ export async function handleApproval(req: Request, id: string, verdict: "approve
   }
 
   try {
-    const r = await withWire({ origin: "seller", caseId: action.caseId }, () =>
-      verdict === "approve" ? executeApproved(id) : deny(id, body.note),
+    // Approve answers as soon as PayPal has answered: the wire rows, filing, audit entry, case status
+    // and tracker restore are deferred and run after the response.
+    const tasks: (() => Promise<void>)[] = [];
+    const defer = (task: () => Promise<void>) => void tasks.push(task);
+    after(() => drain(tasks, action.caseId, id));
+    const r = await withWire({ origin: "seller", caseId: action.caseId, actionId: id, defer }, () =>
+      verdict === "approve" ? executeApproved(id, { defer }) : deny(id, body.note),
     );
     if (!r.ok) {
       const current = r.action ?? (await actions.get(id).catch(() => null));
@@ -45,4 +51,16 @@ export async function handleApproval(req: Request, id: string, verdict: "approve
 /** PayPal's answer to the executed action, for the approval slip: HTTP status, debug id, time. */
 function paypalAnswer(a: AgentAction): { status: number | null; debugId: string | null; at: string } {
   return { status: a.result?.httpStatus ?? null, debugId: a.result?.debugId ?? null, at: a.updatedAt };
+}
+
+/** Runs deferred work (in parallel; tasks may add more), PayPal calls inside it logged as seller calls. */
+async function drain(tasks: (() => Promise<void>)[], caseId: string, actionId: string): Promise<void> {
+  await withWire({ origin: "seller", caseId, actionId }, async () => {
+    while (tasks.length) {
+      const results = await Promise.allSettled(tasks.splice(0).map((t) => t()));
+      for (const x of results) {
+        if (x.status === "rejected") console.error(`[api/actions/${actionId}] deferred task failed: ${errMessage(x.reason)}`);
+      }
+    }
+  });
 }

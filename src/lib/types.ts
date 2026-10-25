@@ -135,6 +135,7 @@ export type AgentAction = {
 export type SellerPolicy = {
   autoRefundMaxUsd: number; // refunds/offers at or below run without asking
   approvalAboveUsd: number; // any money action above this waits for the seller
+  evidenceApprovalAtUsd?: number; // filing evidence on a dispute of this amount or more waits for the seller (default 250)
   minWinProbabilityToFight: number; // below this, prefer refund/offer when cheaper
   maxOfferPercent: number; // cap for partial-refund offers, % of dispute amount
   dryRun: boolean; // propose only, never call PayPal write endpoints
@@ -144,6 +145,7 @@ export type SellerPolicy = {
 export const DEFAULT_POLICY: SellerPolicy = {
   autoRefundMaxUsd: 15,
   approvalAboveUsd: 50,
+  evidenceApprovalAtUsd: 250,
   minWinProbabilityToFight: 0.45,
   maxOfferPercent: 40,
   dryRun: false,

@@ -53,7 +53,14 @@ export type PaypalPort = {
   makeOffer(id: string, o: { offerType: OfferType; amount?: Money; note: string }): Promise<ActionResult>;
   provideEvidence(
     id: string,
-    req: { evidences: EvidenceItem[]; files: { name: string; bytes: Uint8Array; contentType: string }[] },
+    req: {
+      evidences: EvidenceItem[];
+      files: { name: string; bytes: Uint8Array; contentType: string }[];
+      /** Saves PayPal a dispute lookup when tracking is filed. */
+      captureId?: string;
+      /** Runs the post-filing tracker restore later (after the response) instead of inline. */
+      deferRestore?: (task: () => Promise<void>) => void;
+    },
   ): Promise<ActionResult>;
   acceptClaim(id: string, o: { note: string; refundAmount?: Money }): Promise<ActionResult>;
   acknowledgeReturn(id: string, note: string): Promise<ActionResult>;
@@ -65,6 +72,7 @@ export type EvidencePort = {
     order: OrderContext;
     narrative: string;
     exhibits: { title: string; body: string }[];
+    generatedAt?: Date;
   }): Promise<Uint8Array>;
 };
 
