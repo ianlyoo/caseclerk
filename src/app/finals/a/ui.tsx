@@ -200,7 +200,7 @@ function shortName(l: WireLine): string {
 const OUTCOME_WORDS: Record<string, string> = {
   RESOLVED_SELLER_FAVOUR: "PayPal decided for the seller",
   RESOLVED_BUYER_FAVOUR: "PayPal decided for the buyer",
-  RESOLVED_WITH_PAYOUT: "PayPal closed it and paid the buyer itself",
+  RESOLVED_WITH_PAYOUT: "PayPal closed the chargeback",
 };
 
 /** One sentence per real PayPal entry, about the boundary only: what PayPal did, or what we asked of it. */

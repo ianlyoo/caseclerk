@@ -79,7 +79,7 @@ PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the
 PASS  in-flight rule under the POST entry while PayPal answers (1)
 PASS  G2 every animation has a data-cause, slip in flight (5 animations)
 PASS  G3 animations <= 900 ms, loops only on the live dot / in-flight rule, slip in flight (undo rule (4 s) and in-flight rule (1.4 s) exempt by spec)
-PASS  after the 200 the nav count rolls down at 1440x810 (4 to 3)
+PASS  after the 200 the nav count rolls down at 1440x810 (3 to 2)
 PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 1440x810
 PASS  after the 200 no "until you decide" anywhere at 1440x810
 PASS  after the 200 no Approve button and no in-flight rule at 1440x810
@@ -107,15 +107,15 @@ PASS  G9 text >= 13 px, Wire >= 14 px, case resolved at 1440
 PASS  G9 contrast >= 4.5:1, case resolved at 1440
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, case resolved at 1440
 PASS  undo window with Undo and Send now at 1920x940
-PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 1920x940 (5 animations, 555 px closer)
-PASS  after the 200 the nav count rolls down at 1920x940 (4 to 3)
+PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 1920x940 (5 animations, 554 px closer)
+PASS  after the 200 the nav count rolls down at 1920x940 (3 to 2)
 PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 1920x940
 PASS  after the 200 no "until you decide" anywhere at 1920x940
 PASS  after the 200 no Approve button and no in-flight rule at 1920x940
 PASS  the sample filing lands on the Wire as staged, not 200, at 1920x940
 PASS  undo window with Undo and Send now at 1536x752@1.25
 PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 1536x752@1.25 (5 animations, 462 px closer)
-PASS  after the 200 the nav count rolls down at 1536x752@1.25 (4 to 3)
+PASS  after the 200 the nav count rolls down at 1536x752@1.25 (3 to 2)
 PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 1536x752@1.25
 PASS  after the 200 no "until you decide" anywhere at 1536x752@1.25
 PASS  after the 200 no Approve button and no in-flight rule at 1536x752@1.25
@@ -154,8 +154,8 @@ PASS  G9 text >= 13 px, Wire >= 14 px, inbox first screen 1440x810
 PASS  G9 h1 >= 46 px, inbox first screen 1440x810 (46 px)
 PASS  G9 contrast >= 4.5:1, inbox first screen 1440x810
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, inbox first screen 1440x810
-PASS  G13 inbox first screen: Wire with a PayPal event, a debug id >= 14 px, an amount with cents ({"event":true,"debug":3,"cents":true,"replay":false})
-PASS  G12 every debug id and event id on the inbox Wire exists in the production API for the real cases (25 debug ids, 43 event ids)
+PASS  G13 inbox first screen: Wire with a PayPal event, a debug id >= 14 px, an amount with cents ({"event":true,"debug":1,"cents":true,"replay":false})
+PASS  G12 every debug id and event id on the inbox Wire exists in the production API for the real cases (26 debug ids, 47 event ids)
 PASS  inbox row 1 is a real sandbox case, labelled Real sandbox case (Olympus OM-1n body)
 PASS  the JKB row shows its last PayPal call, debug f2843364d3500 (With PayPal Ceramic ring dish Real sandbox case PP-R-JKB-10194463 PayPal is deciding; sandbox ruling requested 22:16:27 )
 PASS  G12 no debug id is attached to two lines
@@ -219,8 +219,10 @@ PASS  landing: the test-dispute note says it opens a real sandbox chargeback (Op
 PASS  landing: Open this $389.00 resolved case goes to the real case it replays (/finals/a/case/PP-R-NJA-10194486 Open this $389.00 resolved case)
 PASS  landing: the primary ink button Review the $412.00 case waiting for you goes to VPY, above the 810 px fold (/finals/a/case/PP-R-VPY-10194485 Review the $412.00 case waiting for you true)
 PASS  landing: Open a test dispute is the secondary, outlined button
-PASS  landing: the case paragraph is about 3 lines (4 lines)
-PASS  landing replay ends on the seller's money, from PayPal's fund_movements (The seller keeps $378.43: the $389.00 sale less PayPal's usual fee. PayPal paid the buyer itself.)
+PASS  landing: the case paragraph is about 3 lines (3 lines)
+PASS  landing replay ends on the seller's money, from PayPal's fund_movements (The seller keeps $378.43: the $389.00 sale less PayPal's $10.57 fee.)
+PASS  landing: the sandbox-ruling disclosure sits under the intro (Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.)
+PASS  landing: no 'paid the buyer itself' or RESOLVED_WITH_PAYOUT in prose; the Wire's RESOLVED line says you keep $378.43
 PASS  landing makes no sample You kept claim
 PASS  G5 one dark plane, landing first screen 1440
 PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, landing first screen 1440
@@ -281,7 +283,7 @@ PASS  preview switch flips aria-checked and its consequence line (Preview mode i
 PASS  G2 every animation has a data-cause, policy switch (1 animations)
 PASS  G3 animations <= 900 ms, loops only on the live dot / in-flight rule, policy switch (undo rule (4 s) and in-flight rule (1.4 s) exempt by spec)
 PASS  Policy is in the nav and marked current
-PASS  policy reads as a sentence with editable values; 4 of 12 open cases would wait
+PASS  policy reads as a sentence with editable values; 4 of 10 open cases would wait
 PASS  editing the lines rolls the consequence: $80.00 money line -> 3, $500.00 evidence line -> 0 (3, 0)
 PASS  policy page loads without errors at 1920x940
 PASS  G5 one dark plane, policy whole page 1920x940
@@ -317,6 +319,8 @@ PASS  PP-R-VPY-10194485: real-case label and What happened, newest first
 PASS  PP-R-VPY-10194485: every id on the page and the Wire is in its production API record; no sample lines (1 story ids, 0 debug, 2 events)
 PASS  PP-R-VPY-10194485: times are Pacific, marked PT
 PASS  VPY: the real slip waits for you, button and margin sentence (not clicked: camera only) (File the evidence on the $412.00 case)
+PASS  VPY: PayPal asked for evidence pinned on the Wire (PayPal asked for evidenceCUSTOMER.DISPUTE.UPDATED 01:38:08 PTWH-1N7866874L255162D-02531183F1918181W)
+PASS  PP-R-VPY-10194485: no raw PayPal paths in the paper
 PASS  real case PP-R-VPY-10194485 loads at 1920x940
 PASS  G5 one dark plane, real case PP-R-VPY-10194485 first screen 1920x940
 PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, real case PP-R-VPY-10194485 first screen 1920x940
@@ -340,16 +344,19 @@ PASS  G20 Wire blue hue 205-225, no teal on the Wire, real case PP-R-VPY-1019448
 PASS  real case PP-R-NJA-10194486 loads at 1440x810
 PASS  PP-R-NJA-10194486 renders the API's state (deciding|resolved) (resolved)
 PASS  PP-R-NJA-10194486: real-case label and What happened, newest first
-PASS  PP-R-NJA-10194486: every id on the page and the Wire is in its production API record; no sample lines (3 story ids, 4 debug, 5 events)
+PASS  PP-R-NJA-10194486: every id on the page and the Wire is in its production API record; no sample lines (2 story ids, 4 debug, 5 events)
 PASS  PP-R-NJA-10194486: times are Pacific, marked PT
-PASS  NJA: the real filing shows debug f8469524f503f and the money outcome from fund_movements (resolved)
+PASS  NJA: 2-line h1, the big figure is You keep $378.43 with the sale and fee beside it (PayPal closed the Olympus OM-1n body chargeback. You keep $378.43. | You keep $378.43)
+PASS  PP-R-NJA-10194486: sandbox-ruling disclosure, no payout jargon in prose, Closed by PayPal pinned (Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.)
+PASS  PP-R-NJA-10194486: no raw PayPal paths in the paper
 PASS  real case PP-R-JKB-10194463 loads at 1440x810
 PASS  PP-R-JKB-10194463 renders the API's state (deciding) (deciding)
 PASS  PP-R-JKB-10194463: real-case label and What happened, newest first
-PASS  PP-R-JKB-10194463: every id on the page and the Wire is in its production API record; no sample lines (5 story ids, 4 debug, 6 events)
+PASS  PP-R-JKB-10194463: every id on the page and the Wire is in its production API record; no sample lines (1 story ids, 4 debug, 6 events)
 PASS  PP-R-JKB-10194463: times are Pacific, marked PT
 PASS  JKB ends honestly: PayPal is deciding; sandbox ruling requested 22:16:27 PT
 PASS  JKB shows a credited ring dish photo (Cleveland Museum of Art, CC0, via Wikimedia Commons)
+PASS  PP-R-JKB-10194463: no raw PayPal paths in the paper
 PASS  G5 one dark plane, real case PP-R-JKB-10194463 first screen 1440
 PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, real case PP-R-JKB-10194463 first screen 1440
 PASS  G6 blue only inside [data-origin=paypal], real case PP-R-JKB-10194463 first screen 1440
@@ -365,7 +372,9 @@ PASS  PP-R-RCJ-10194476 renders the API's state (resolved) (resolved)
 PASS  PP-R-RCJ-10194476: real-case label and What happened, newest first
 PASS  PP-R-RCJ-10194476: every id on the page and the Wire is in its production API record; no sample lines (2 story ids, 0 debug, 5 events)
 PASS  PP-R-RCJ-10194476: times are Pacific, marked PT
-PASS  RCJ: resolved with payout, no You kept claim
+PASS  RCJ: You keep $26.74 from its fund_movements (You keep $26.74)
+PASS  PP-R-RCJ-10194476: sandbox-ruling disclosure, no payout jargon in prose, Closed by PayPal pinned (Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.)
+PASS  PP-R-RCJ-10194476: no raw PayPal paths in the paper
 PASS  no check sent an approve request (VPY is camera only) (0)
 PASS  G5 one dark plane, deadlines whole page 1440
 PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, deadlines whole page 1440
@@ -406,4 +415,4 @@ PASS  G9 text >= 13 px, Wire >= 14 px, /inbox whole page 1440
 PASS  G9 contrast >= 4.5:1, /inbox whole page 1440
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, /inbox whole page 1440
 PASS  end of run: no approve request was ever sent (0)
-408 PASS, 0 FAIL
+417 PASS, 0 FAIL

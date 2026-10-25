@@ -95,7 +95,7 @@ function answeredAt(r: ApiCase, a: AgentAction): string {
   const call = a.result?.debugId && r.wire?.find((w) => w.debugId === a.result!.debugId);
   if (call) return call.at;
   const hit = r.audit.find((x) => (a.result?.debugId && x.data?.debugId === a.result.debugId) || ((x.kind === "action.executed" || x.kind === "action.failed") && x.data?.actionId === a.id));
-  return hit?.at ?? r.audit.find((x) => x.kind === `demo.${a.kind}`)?.at ?? a.updatedAt;
+  return hit?.at ?? r.audit.find((x) => x.kind === `demo.${a.kind}`)?.at ?? filedAt(a);
 }
 
 /** Every PayPal boundary crossing on the case, oldest first: verified webhooks and our calls with PayPal's answer. */
@@ -111,7 +111,7 @@ export function realLines(r: ApiCase): WireLine[] {
     if (!eventId || !type || events.has(eventId)) continue;
     events.add(eventId);
     const status = type.endsWith(".RESOLVED") ? (r.case.snapshot.outcome ?? String(x.data?.status ?? "RESOLVED")) : String(x.data?.status ?? "");
-    out.push({ at: x.at, dir: "in", name: type, status, path: type, eventId, origin: "paypal" });
+    out.push({ at: x.at, dir: "in", name: type, status, path: type, eventId, origin: "paypal", plain: type.endsWith(".RESOLVED") ? closedPlain(id) : undefined });
   }
   for (const a of r.actions) {
     if (a.status !== "executed" && a.status !== "failed") continue;
@@ -131,7 +131,7 @@ export function wireRowLines(rows: ApiWireRow[], caseId: string | null, events: 
     if (caseId && w.caseId !== caseId) continue;
     if (w.kind === "event" && w.eventId && w.eventType && w.verify === "SUCCESS" && !events.has(w.eventId)) {
       events.add(w.eventId);
-      out.push({ at: w.at, dir: "in", name: w.eventType, status: "", path: w.eventType, eventId: w.eventId, origin: "paypal" });
+      out.push({ at: w.at, dir: "in", name: w.eventType, status: "", path: w.eventType, eventId: w.eventId, origin: "paypal", plain: w.eventType.endsWith(".RESOLVED") ? closedPlain(w.caseId) : undefined });
     } else if (w.kind === "call" && w.debugId && w.path && !debugs.has(w.debugId)) {
       debugs.add(w.debugId);
       out.push({ at: w.at, dir: "out", name: w.path.includes("/shipping/trackers/") ? "tracker" : (w.path.split("/").at(-1) ?? w.path), status: String(w.status ?? ""), path: `${w.method ?? "GET"} ${w.path}`, debugId: w.debugId, origin: "paypal" });
@@ -143,19 +143,38 @@ export function wireRowLines(rows: ApiWireRow[], caseId: string | null, events: 
 // What the seller kept on the resolved real cases, from PayPal's capture and the dispute's fund_movements (REAL-CASES.md,
 // "fund movements", read 2026-10-25): PayPal held the seller's net, released all of it, left the capture COMPLETED and paid
 // the buyer itself. The net is the sale less PayPal's ordinary transaction fee; PayPal shows no chargeback fee and no debit.
-const KEPT: Record<string, string> = {
-  "PP-R-NJA-10194486": "378.43",
-  "PP-R-UDP-10194489": "394.02",
-  "PP-R-LTK-10194490": "387.20",
-  "PP-R-TZD-10194493": "391.10",
+// Verified by hand for tonight; tomorrow the API serves it live.
+const MONEY: Record<string, { kept: string; fee: string }> = {
+  "PP-R-NJA-10194486": { kept: "378.43", fee: "10.57" },
+  "PP-R-UDP-10194489": { kept: "394.02", fee: "10.98" },
+  "PP-R-LTK-10194490": { kept: "387.20", fee: "10.80" },
+  "PP-R-TZD-10194493": { kept: "391.10", fee: "10.90" },
+  "PP-R-AAJ-10194495": { kept: "385.25", fee: "10.75" },
+  "PP-R-IMW-10194496": { kept: "382.33", fee: "10.67" },
+  "PP-R-RCJ-10194476": { kept: "26.74", fee: "1.21" },
+};
+/** The fallback for a resolved case with no verified money (PM ruling). */
+export const NO_DEBIT = "PayPal closed the chargeback with no debit to your account.";
+
+/** The verified net kept and PayPal's fee for a case PayPal closed, or null. */
+export function money(r: ApiCase): { kept: string; fee: string } | null {
+  return r.case.snapshot.status === "RESOLVED" && r.case.snapshot.outcome === "RESOLVED_WITH_PAYOUT" ? (MONEY[r.case.id] ?? null) : null;
+}
+
+/** The Wire's sentence under CUSTOMER.DISPUTE.RESOLVED for a case, when its money is verified. */
+export const closedPlain = (caseId: string | null | undefined) => {
+  const m = caseId ? MONEY[caseId] : undefined;
+  return m ? `PayPal closed it; you keep ${usd(m.kept)}` : undefined;
 };
 
-/** "You keep $378.43: the $389.00 sale less PayPal's usual fee. PayPal paid the buyer itself.", only where PayPal's data shows it. */
+/** "The seller keeps $378.43: the $389.00 sale less PayPal's $10.57 fee.", only where PayPal's data shows it. */
 export function keptLine(r: ApiCase, who = "You keep"): string | null {
-  const kept = KEPT[r.case.id];
-  if (!kept || r.case.snapshot.outcome !== "RESOLVED_WITH_PAYOUT") return null;
-  return `${who} ${usd(kept)}: the ${usd(r.case.snapshot.amount.value)} sale less PayPal's usual fee. PayPal paid the buyer itself.`;
+  const m = money(r);
+  return m ? `${who} ${usd(m.kept)}: the ${usd(r.case.snapshot.amount.value)} sale less PayPal's ${usd(m.fee)} fee.` : null;
 }
+
+/** On a live account PayPal rules alone; on these sandbox cases the operator asked the sandbox to (PM wording). */
+export const SANDBOX_RULING = "Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.";
 
 const executed = (r: ApiCase, kind: string) => r.actions.filter((a) => a.kind === kind && a.status === "executed");
 const TIMES = ["", "once", "twice", "three times", "four times"];
@@ -168,11 +187,9 @@ export function headline(r: ApiCase): string {
   const state = realState(r);
   if (state === "resolved") {
     const o = r.case.snapshot.outcome ?? "";
-    const approved = r.audit.some((x) => x.kind === "action.approved") && executed(r, "provide_evidence").length > 0;
-    const kept = keptLine(r);
-    if (kept) return `${approved ? "You approved the evidence and PayPal" : "PayPal"} closed the ${thing} chargeback. ${kept}`;
-    if (o === "RESOLVED_WITH_PAYOUT" && approved) return `You approved the evidence, CaseClerk filed it, and PayPal closed the ${amt} ${thing} chargeback, paying the buyer itself.`;
-    if (o === "RESOLVED_WITH_PAYOUT") return `PayPal closed the ${amt} ${thing} chargeback and paid the buyer itself.`;
+    const m = money(r);
+    if (m) return `PayPal closed the ${thing} chargeback. You keep ${usd(m.kept)}.`;
+    if (o === "RESOLVED_WITH_PAYOUT") return `PayPal closed the ${thing} chargeback with no debit to your account.`;
     if (o === "RESOLVED_SELLER_FAVOUR") return `PayPal ruled for you on the ${amt} ${thing}.`;
     if (o === "RESOLVED_BUYER_FAVOUR") return `PayPal ruled for the buyer on the ${amt} ${thing}.`;
     return `PayPal closed the ${amt} ${thing} case.`;
@@ -219,8 +236,9 @@ export function story(r: ApiCase, plainOf: (l: WireLine) => string): StoryRow[] 
   const keep = (l: WireLine) => (l.dir === "in" ? /\.(CREATED|RESOLVED)$/.test(l.name) : l.path.startsWith("POST /v1/customer/disputes/"));
   const rows: StoryRow[] = realLines(r).filter(keep).map((l) =>
     l.dir === "in"
-      ? { at: l.at, who: "From PayPal", title: l.name, plain: plainOf(l), id: l.eventId, idKind: "event", status: "verified", line: l }
-      : { at: l.at, who: "To PayPal", title: l.path.split("/").at(-1)!, plain: plainOf(l), id: l.debugId, idKind: "debug id", status: l.status, line: l },
+      ? { at: l.at, who: "From PayPal", title: l.name, plain: l.plain ?? plainOf(l), id: l.eventId, idKind: "event", status: "verified", line: l }
+      : // The path and debug id of a filing stay on the Wire and the receipt; the paper says what happened.
+        { at: l.at, who: "To PayPal", title: l.path.split("/").at(-1)!, plain: plainOf(l), status: l.status, line: l },
   );
   for (const x of r.audit) {
     if (x.kind === "action.approved") rows.push({ at: x.at, who: "CaseClerk", title: "You approved it", plain: "The seller approved the evidence filing in CaseClerk." });
@@ -272,7 +290,9 @@ export function realRow(r: ApiCase, ptTime: (iso: string) => string): RealRow {
   const asked = rulingAsked(r);
   const standing =
     state === "resolved"
-      ? `Closed by PayPal: ${({ RESOLVED_WITH_PAYOUT: "it paid the buyer itself", RESOLVED_SELLER_FAVOUR: "it decided for the seller", RESOLVED_BUYER_FAVOUR: "it decided for the buyer" } as Record<string, string>)[r.case.snapshot.outcome ?? ""] ?? "resolved"}`
+      ? money(r)
+        ? `Closed by PayPal; you keep ${usd(money(r)!.kept)}`
+        : `Closed by PayPal${({ RESOLVED_WITH_PAYOUT: " with no debit to your account", RESOLVED_SELLER_FAVOUR: ": it decided for the seller", RESOLVED_BUYER_FAVOUR: ": it decided for the buyer" } as Record<string, string>)[r.case.snapshot.outcome ?? ""] ?? ""}`
       : state === "pending"
         ? "Waiting for you: the evidence is ready to file"
         : asked

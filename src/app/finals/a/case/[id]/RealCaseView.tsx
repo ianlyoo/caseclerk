@@ -11,7 +11,7 @@ import type { AgentAction } from "@/lib/types";
 import { POLICY, EVIDENCE_GATE_USD } from "../../../_shared/data";
 import { PHOTOS } from "../../../_shared/photos";
 import { EASE_OUT, Masthead, Wire, foldRoutine, plainOf, putRealCase, realDay, realTime, wireClock, type ShownLine } from "../../ui";
-import { buttonFor, filedAction, filedAt, headline, pendingAction, ptify, realLines, realState, recommendation, rulingAsked, slipSummary, story, usd, whyWaits, type ApiCase } from "../../_real/model";
+import { buttonFor, filedAction, filedAt, headline, money, SANDBOX_RULING, pendingAction, ptify, realLines, realState, recommendation, rulingAsked, slipSummary, story, usd, whyWaits, type ApiCase } from "../../_real/model";
 import s from "../../a.module.css";
 
 const POLL_MS = 5000;
@@ -78,7 +78,7 @@ export function RealCaseView({ initial }: { initial: ApiCase }) {
   const filed = filedAction(r);
   const c = r.case;
   const resolvedLine = lines.find((l) => l.dir === "in" && l.name.endsWith(".RESOLVED"));
-  const filedLine = filed && lines.find((l) => l.debugId && l.debugId === filed.result?.debugId);
+  const askedLine = action ? lines.filter((l) => l.dir === "in" && l.status === "WAITING_FOR_SELLER_RESPONSE").at(-1) : undefined;
   const sections = useMemo(() => {
     const shown: ShownLine[] = lines.map((l) => ({ ...l, key: `${l.eventId ?? l.debugId ?? l.at}` }));
     if (sending && send.at === "sending" && action)
@@ -93,13 +93,20 @@ export function RealCaseView({ initial }: { initial: ApiCase }) {
     ) : filed ? (
       <>
         <span className={s.wirePinHead}>Filed with PayPal</span>
-        <span className={s.mono}>POST provide-evidence {filed.result?.httpStatus ?? ""}</span> {pt(filedLine?.at ?? filedAt(filed))}
+        <span className={s.mono}>POST provide-evidence {filed.result?.httpStatus ?? ""}</span> {pt(filedAt(filed))}
         <br />
         <span className={`${s.mono} ${s.lDebug}`}>debug {filed.result?.debugId}</span>
       </>
+    ) : askedLine ? (
+      <>
+        <span className={s.wirePinHead}>PayPal asked for evidence</span>
+        <span className={s.mono}>{askedLine.name}</span> {pt(askedLine.at)}
+        <br />
+        <span className={`${s.mono} ${s.lDebug}`}>{askedLine.eventId}</span>
+      </>
     ) : undefined;
     return [{ key: "case", label: <>PayPal traffic for {c.id}</>, lines: foldRoutine(shown), pin }];
-  }, [lines, sending, send, action, c.id, elapsed, resolvedLine, filed, filedLine]);
+  }, [lines, sending, send, action, c.id, elapsed, resolvedLine, filed, askedLine]);
 
   const photoIn = action ? "slip" : filed ? "receipt" : "story";
   return (
@@ -110,6 +117,14 @@ export function RealCaseView({ initial }: { initial: ApiCase }) {
           <Header r={r} />
           {action && <Slip r={r} send={send} setSend={setSend} pull={pull} merge={merge} sending={sending} elapsed={elapsed} photo={photoIn === "slip"} />}
           {!action && filed && <Receipt r={r} a={filed} photo={photoIn === "receipt"} />}
+          {!action && !filed && state === "resolved" && (
+            <>
+              <div className={`${s.margin} ${s.section}`} />
+              <p className={`${s.col} ${s.section} ${s.sandboxNote}`} data-sandbox-ruling>
+                {SANDBOX_RULING}
+              </p>
+            </>
+          )}
           <Story r={r} photo={photoIn === "story"} />
           <Decision r={r} />
         </article>
@@ -140,6 +155,7 @@ function Header({ r }: { r: ApiCase }) {
   const asked = rulingAsked(r);
   const resolvedAt = r.audit.find((x) => x.kind === "webhook.received" && String(x.data?.eventType).endsWith(".RESOLVED"))?.at;
   const h1 = headline(r);
+  const m = money(r);
   return (
     <>
       <div className={`${s.margin} ${s.marginStack} ${s.marginStill}`}>
@@ -153,16 +169,27 @@ function Header({ r }: { r: ApiCase }) {
         </p>
       </div>
       <div className={s.col}>
-        <AnimatePresence mode="wait" initial={false}>
-          {/* A clean 150 ms swap: 75 ms out, 75 ms in, never two sentences on top of each other. */}
-          <motion.h1 key={h1} className={s.h1} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reduce ? 0.05 : 0.075, ease: EASE_OUT }} data-cause="webhook">
-            {h1}
-          </motion.h1>
-        </AnimatePresence>
+        {/* The new sentence replaces the old one at once and settles in 150 ms: never blank, never two on top of each other. */}
+        <motion.h1 key={h1} className={s.h1} initial={{ opacity: 0.45 }} animate={{ opacity: 1 }} transition={{ duration: reduce ? 0.05 : 0.15, ease: EASE_OUT }} data-cause="webhook">
+          {h1}
+        </motion.h1>
         <div className={s.figureRow}>
-          <span className={s.figure}>{usd(c.snapshot.amount.value)}</span>
+          <span className={s.figure} data-real-figure>
+            {m ? (
+              <>
+                <span className={s.figureLabel}>You keep </span>
+                {usd(m.kept)}
+              </>
+            ) : (
+              usd(c.snapshot.amount.value)
+            )}
+          </span>
           <span className={s.due} data-real-status>
-            {state === "resolved" && resolvedAt ? (
+            {m && resolvedAt ? (
+              <>
+                {usd(c.snapshot.amount.value)} sale less PayPal&rsquo;s {usd(m.fee)} fee &middot; Closed {realDay(resolvedAt)}, {pt(resolvedAt)}
+              </>
+            ) : state === "resolved" && resolvedAt ? (
               <>
                 PayPal closed it {realDay(resolvedAt)}, {pt(resolvedAt)}
               </>
@@ -232,7 +259,7 @@ function Slip({ r, send, setSend, pull, merge, sending, elapsed, photo }: { r: A
   const sheets = readerSheets(a);
   return (
     <>
-      <div className={`${s.margin} ${s.section}`}>
+      <div className={`${s.margin} ${s.section} ${s.slipMargin}`}>
         <span className={s.green}>Waiting for you</span>
         <p className={s.policy}>{why}</p>
         {photo && <Photo r={r} />}
@@ -253,7 +280,7 @@ function Slip({ r, send, setSend, pull, merge, sending, elapsed, photo }: { r: A
           <div className={s.slipRow1}>
             <h2 className={s.slipHead}>{a.kind === "provide_evidence" ? "File the evidence with PayPal" : a.rationale.split(".")[0]}</h2>
           </div>
-          <p className={s.slipNote}>{slipSummary(r, a)}</p>
+          <p className={`${s.slipNote} ${s.slipNoteFull}`}>{slipSummary(r, a)}</p>
           <p className={s.slipWhy}>{why}</p>
           {sheets.length > 0 && (
             <button className={`${s.link} ${s.showAll}`} onClick={() => setReading(0)} data-review-evidence>
@@ -400,6 +427,11 @@ function Receipt({ r, a, photo }: { r: ApiCase; a: AgentAction; photo: boolean }
           )}
           .{realState(r) === "resolved" ? "" : " PayPal and the card issuer usually decide within 30 days."}
         </p>
+        {realState(r) === "resolved" && (
+          <p className={s.sandboxNote} data-sandbox-ruling>
+            {SANDBOX_RULING}
+          </p>
+        )}
       </motion.div>
     </>
   );
@@ -431,7 +463,6 @@ function Story({ r, photo }: { r: ApiCase; photo: boolean }) {
                 <p className={s.storyPlain}>{x.plain}</p>
                 {x.id && (
                   <p className={`${s.mono} ${s.storyId}`} data-story-id={x.id}>
-                    {x.line?.dir === "out" ? `${x.line.path}  ` : ""}
                     {x.idKind} {x.id}
                   </p>
                 )}

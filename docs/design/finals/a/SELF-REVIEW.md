@@ -86,3 +86,27 @@ Every capture comes from a production build on the Mac (`next build --webpack &&
 Also fixed: on real cases the sticky header margin rode over the slip's margin photo when the page scrolled, so it is now static there. The filing time no longer falls back to the action's creation time.
 
 Known risk: in the real take, about 0.2 s at the answer (around 13.4 s into the trimmed video) still shows the old in-flight Wire line while the new rows slide in. Wire lines used a position layout animation, which has since been removed (the hosted build has it). The take used the one allowed click, so it was not re-recorded.
+
+## Judge round 3: Final A's 6 items
+
+Every capture comes from one production build on the Mac (`next build --webpack && next start`). No new click: AAJ was approved once in round 2. Checks: `check-results.txt`, 417 PASS, 0 FAIL.
+
+1. **Video.** `case-approve-real.mp4` is re-cut from the round-2 raw AAJ take. It runs 24.8 s at 2880×1620 and 30 fps, at 1× speed throughout (PayPal answered in 6.6 s). The cut has three parts:
+   - Raw take 2.0–14.6 s: pending, approve, sending.
+   - A 0.4 s hold on the 14.6 s frame replaces the old build's 14.6–15.0 s transition, which held the overprint and the 04:24:54 → 04:24:52 flip. This is a still frame, not new footage. Then raw 15.0–18.8 s, filed and settled.
+   - A card, "7 min 48 s later: PayPal closed it. Same case, PP-R-AAJ-10194495. Approved 04:24:48 PT; PayPal's RESOLVED webhook arrived 04:32:37 PT.", then AAJ's own resolved page, recorded fresh as a read-only view (every action and test-dispute request is aborted), with the sandbox disclosure as a caption. There is no static tail.
+
+   In code, the Wire lines have no layout animation, the h1 is keyed with no exit overlap, and the "Filed" time is locked to the filing time. Evidence: `case-approve-real.mp4`, `case-approve-real-resolved.png`.
+2. **Sandbox-ruling disclosure.** "Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own." It appears on the landing below the intro, under the receipt on every resolved real case, and at the end of the video. Evidence: `landing-1440.png`, `case-real-resolved-1440.png`, `case-real-aaj-1440.png`.
+3. **Money copy.** A verified map keyed by dispute id covers NJA, UDP, LTK, TZD, AAJ, IMW and RCJ. Any other case reads "PayPal closed the chargeback with no debit to your account." The inbox rows, the Wire RESOLVED subtitles and the paper story read "PayPal closed it; you keep $X". RESOLVED_WITH_PAYOUT appears only as raw Wire data. Evidence: `inbox-1440.png`, `landing-1440.png`.
+4. **Resolved pages.** The h1 reads "PayPal closed the Olympus OM-1n body chargeback. You keep $378.43." The figure reads "You keep $378.43", with "$389.00 sale less PayPal's $10.57 fee · Closed Oct 25, 01:52:42 PT" beside it. Evidence: `case-real-resolved-1440.png`, `case-real-aaj-1440.png`.
+5. **Pending Wire and paper.** The pending Wire pins "PayPal asked for evidence · CUSTOMER.DISPUTE.UPDATED · WH-…". Paper story rows no longer carry the POST path or the debug id. Those stay in the Wire and the top receipt. Evidence: `case-real-pending-1440.png`, `case-real-full-1440.png`.
+6. **Cleanup.**
+   - `case-approved-*` is recaptured without `?controls=1`.
+   - At 390, the duplicate "Waiting for you" margin label is gone and "What PayPal receives" is no longer clamped.
+   - The landing's orphaned "Order details" card is removed.
+   - `case-approve-real-jump.png` (the NJA borrow) and the stale `case-real-rcj-1440.png` are removed.
+
+   Evidence: `case-approved-1440.png`, `case-real-pending-390.png`, `landing-1440.png`.
+
+Known limit: the first 18.8 s of the video show the round-2 build, so its paper rows still show the POST path that item 5 removes from the current build. The only way to change that was a new click, which the PM ruled out.

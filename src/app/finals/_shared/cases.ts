@@ -17,6 +17,7 @@ export type WireLine = {
   debugId?: string; // real calls only
   eventId?: string; // real webhooks only
   origin: "paypal" | "sample";
+  plain?: string; // a case-specific sentence for the line, when the generic one would say less
 };
 
 export type Step = {

@@ -404,7 +404,7 @@
 .figureLabel {
   font-family: var(--serif);
   font-size: clamp(26px, 1.25vw + 14px, 38px);
-  margin-right: -8px;
+  margin-right: 0.3em;
 }
 .due {
   color: var(--ink2);
@@ -475,8 +475,15 @@
   overflow: hidden;
   white-space: pre-line;
 }
-.open .slipNote {
+.open .slipNote,
+.slipNote.slipNoteFull {
   display: block;
+}
+.sandboxNote {
+  margin: 12px 0 0 !important;
+  color: var(--ink2);
+  font-size: 15px;
+  line-height: 22px;
 }
 .slipRow3 {
   display: flex;
@@ -1473,6 +1480,9 @@ a.btn {
     border: 0;
   }
   .matFig {
+    display: none;
+  }
+  .slipMargin {
     display: none;
   }
 }

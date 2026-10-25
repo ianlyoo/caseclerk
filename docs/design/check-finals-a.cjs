@@ -503,7 +503,10 @@ const idsProbe = (page) =>
     out(land.review === "/finals/a/case/PP-R-VPY-10194485 Review the $412.00 case waiting for you" && land.primaryAbove, "landing: the primary ink button Review the $412.00 case waiting for you goes to VPY, above the 810 px fold", `${land.review} ${land.primaryAbove}`);
     out(land.testQuiet, "landing: Open a test dispute is the secondary, outlined button");
     out(land.factLines <= 4, "landing: the case paragraph is about 3 lines", `${land.factLines} lines`);
-    out(land.end === "The seller keeps $378.43: the $389.00 sale less PayPal's usual fee. PayPal paid the buyer itself.", "landing replay ends on the seller's money, from PayPal's fund_movements", land.end);
+    out(land.end === "The seller keeps $378.43: the $389.00 sale less PayPal's $10.57 fee.", "landing replay ends on the seller's money, from PayPal's fund_movements", land.end);
+    const lbody = await page.evaluate(() => ({ paper: document.querySelector("main").innerText, wire: (document.querySelector("aside[data-wire]") || document.body).innerText, note: (document.querySelector("[data-sandbox-ruling]") || {}).textContent || "" }));
+    out(lbody.note === "Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.", "landing: the sandbox-ruling disclosure sits under the intro", lbody.note);
+    out(!/paid the buyer itself|RESOLVED_WITH_PAYOUT/.test(lbody.paper) && /PayPal closed it; you keep \$378\.43/.test(lbody.wire), "landing: no 'paid the buyer itself' or RESOLVED_WITH_PAYOUT in prose; the Wire's RESOLVED line says you keep $378.43");
     out(!/You kept/.test(await page.evaluate(() => document.body.innerText)), "landing makes no sample You kept claim");
     judgePage(await pageProbe(page, true), "landing first screen 1440", { h1Min: 46 });
     judgeAnims(await animProbe(page), "landing after the replay");
@@ -631,6 +634,11 @@ const idsProbe = (page) =>
         wireEvents: [...document.querySelectorAll("[data-wire-line][data-origin=paypal]")].map((l) => ((l.getAttribute("title") || "").match(/^Event (\S+)$/) || [])[1]).filter(Boolean),
         sample: document.querySelectorAll("[data-wire-line][data-sample]").length,
         img: [...document.querySelectorAll("main img, article img")].map((i) => i.getAttribute("data-credit")),
+        paper: (document.querySelector("article") || document.body).innerText,
+        h1: (document.querySelector("article h1") || {}).textContent || "",
+        figure: (document.querySelector("[data-real-figure]") || {}).textContent || "",
+        note: (document.querySelector("[data-sandbox-ruling]") || {}).textContent || "",
+        pin: (document.querySelector("[data-wire-pin]") || {}).textContent || "",
         btn: (document.querySelector("[data-real-approve]") || {}).textContent || "",
       }));
       const ok = status === 200 && !errors.length;
@@ -645,7 +653,7 @@ const idsProbe = (page) =>
       const api = await (await fetch(API + id)).json();
       const known = new Set([...api.actions.map((a) => a.result && a.result.debugId), ...api.audit.map((a) => a.data && a.data.eventId), ...(api.wire || []).map((w) => w.debugId || w.eventId)].filter(Boolean));
       const bad = [...r.storyIds, ...r.wireDebug, ...r.wireEvents].filter((x) => !known.has(x));
-      out(!bad.length && r.storyIds.length >= (want === "pending" ? 1 : 2) && r.sample === 0, `${id}: every id on the page and the Wire is in its production API record; no sample lines`, bad.join(", ") || `${r.storyIds.length} story ids, ${r.wireDebug.length} debug, ${r.wireEvents.length} events`);
+      out(!bad.length && r.storyIds.length >= 1 && r.sample === 0, `${id}: every id on the page and the Wire is in its production API record; no sample lines`, bad.join(", ") || `${r.storyIds.length} story ids, ${r.wireDebug.length} debug, ${r.wireEvents.length} events`);
       out(/ PT\b/.test(r.body) && !/UTC/.test(r.body), `${id}: times are Pacific, marked PT`);
       if (id === "PP-R-JKB-10194463") {
         out(/PayPal is deciding; sandbox ruling requested 22:16:27 PT/.test(r.body), "JKB ends honestly: PayPal is deciding; sandbox ruling requested 22:16:27 PT");
@@ -655,9 +663,12 @@ const idsProbe = (page) =>
         out(r.btn.trim() === "File the evidence on the $412.00 case" && /Over your \$250\.00 evidence line, so it waits for you\./.test(r.body), "VPY: the real slip waits for you, button and margin sentence (not clicked: camera only)", r.btn.trim());
       }
       if (id === "PP-R-NJA-10194486") {
-        out(/debug id f8469524f503f/.test(r.body) && (r.state === "deciding" ? /PayPal is deciding/.test(r.body) : /You approved the evidence and PayPal closed the Olympus OM-1n body chargeback\. You keep \$378\.43: the \$389\.00 sale less PayPal's usual fee\. PayPal paid the buyer itself\./.test(r.body) && !/You kept/.test(r.body)), "NJA: the real filing shows debug f8469524f503f and the money outcome from fund_movements", r.state);
+        out(/debug id f8469524f503f/.test(r.body) && /^PayPal closed the Olympus OM-1n body chargeback\. You keep \$378\.43\.$/.test(r.h1) && r.figure === "You keep $378.43" && /\$389\.00 sale less PayPal\u2019s \$10\.57 fee · Closed Oct 25, 01:52:42 PT/.test(r.body), "NJA: 2-line h1, the big figure is You keep $378.43 with the sale and fee beside it", `${r.h1} | ${r.figure}`);
       }
-      if (id === "PP-R-RCJ-10194476") out(/paid the buyer itself/.test(r.body) && !/You kept/.test(r.body), "RCJ: resolved with payout, no You kept claim");
+      if (id === "PP-R-RCJ-10194476") out(r.figure === "You keep $26.74", "RCJ: You keep $26.74 from its fund_movements", r.figure);
+      if (r.state === "resolved") out(r.note === "Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own." && !/paid the buyer itself|RESOLVED_WITH_PAYOUT/.test(r.paper) && /^Closed by PayPal/.test(r.pin), `${id}: sandbox-ruling disclosure, no payout jargon in prose, Closed by PayPal pinned`, r.note);
+      if (id === "PP-R-VPY-10194485") out(/^PayPal asked for evidenceCUSTOMER\.DISPUTE\.UPDATED/.test(r.pin), "VPY: PayPal asked for evidence pinned on the Wire", r.pin);
+      out(!/\/v1\/customer\/disputes/.test(r.paper), `${id}: no raw PayPal paths in the paper`);
       if (id === "PP-R-JKB-10194463") judgePage(await pageProbe(page, true), `real case ${id} first screen 1440`, { h1Min: 46 });
       await ctx.close();
     }

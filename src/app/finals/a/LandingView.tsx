@@ -3,11 +3,11 @@
 // The landing: a real PayPal sandbox case replayed from chargeback to ruling, from the production API.
 
 import Link from "next/link";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { usd } from "../_shared/data";
-import { BASE, EASE_OUT, HERO_HREF, Masthead, SAMPLE_HERO_HREF, Wire, realDay, realTime, wireClock } from "./ui";
-import { keptLine, REAL_HREF, realState, replayLines, thingOf, type ApiCase } from "./_real/model";
+import { BASE, HERO_HREF, Masthead, SAMPLE_HERO_HREF, Wire, realDay, realTime, wireClock } from "./ui";
+import { keptLine, NO_DEBIT, REAL_HREF, SANDBOX_RULING, realState, replayLines, thingOf, type ApiCase } from "./_real/model";
 import s from "./a.module.css";
 
 const REPLAY_MS = 9000;
@@ -104,7 +104,6 @@ function OpenTest() {
 export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | null }) {
   const lines = r ? replayLines(r) : [];
   const n = useReplay(lines.length);
-  const reduce = useReducedMotion();
   if (!r || !lines.length) return <Unavailable />;
   const c = r.case;
   const amt = usd(c.snapshot.amount.value);
@@ -112,10 +111,8 @@ export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | nu
   const filing = lines.find((l) => l.path.endsWith("/provide-evidence"));
   const resolved = lines.find((l) => l.name.endsWith(".RESOLVED"));
   const approved = r.audit.find((x) => x.kind === "action.approved");
-  const filingIdx = filing ? lines.indexOf(filing) : lines.length;
   const done = n >= lines.length;
   const pending = hero ? realState(hero) === "pending" : false;
-  const ex = (r.actions.find((a) => a.kind === "provide_evidence")?.params?.exhibits as { title: string }[] | undefined) ?? [];
   const item = c.order?.items?.[0]?.name ?? thingOf(r);
   const spanMin = mins(lines[0].at, lines.at(-1)!.at);
   return (
@@ -136,6 +133,9 @@ export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | nu
             )}
           </h1>
           <p className={s.lede}>CaseClerk answers PayPal disputes for small online sellers. It reads the case, gathers the order and the tracking, files the evidence, and asks you before any money moves.</p>
+          <p className={s.sandboxNote} style={{ margin: 0 }} data-sandbox-ruling>
+            {SANDBOX_RULING}
+          </p>
           <div className={s.landActions}>
             {pending && (
               <Link href={HERO_HREF} className={s.btn} data-review-waiting>
@@ -146,28 +146,7 @@ export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | nu
               Open this {amt} {realState(r) === "resolved" ? "resolved " : ""}case
             </Link>
           </div>
-          <div className={s.landCase}>
-            <div className={s.dossier} style={{ gridTemplateColumns: "1fr", marginTop: 0 }}>
-              <AnimatePresence>
-                {n > filingIdx && (
-                  <motion.div
-                    key="filed"
-                    className={s.sheet}
-                    style={{ cursor: "default", minHeight: 120 }}
-                    initial={{ opacity: 0, y: reduce ? 0 : 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: reduce ? 0.1 : 0.32, ease: EASE_OUT }}
-                    data-cause="paypal-call"
-                  >
-                    <span className={s.sheetRef}>Filed with PayPal, {ex.length} exhibits</span>
-                    <span className={s.sheetName}>{ex[0]?.title ?? "Evidence"}</span>
-                    <span className={s.sheetBody}>
-                      {item}, {amt}
-                    </span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+          <div className={s.landCase} style={{ gridTemplateColumns: "1fr" }}>
             <p className={s.landFacts}>
               <strong>
                 {item}, {amt}.
@@ -181,7 +160,7 @@ export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | nu
               ) : (
                 "."
               )}{" "}
-              {done && resolved ? <span data-replay-end>{keptLine(r, "The seller keeps") ?? "PayPal closed the case and paid the buyer itself."}</span> : null}
+              {done && resolved ? <span data-replay-end>{keptLine(r, "The seller keeps") ?? NO_DEBIT}</span> : null}
             </p>
           </div>
           <OpenTest />
