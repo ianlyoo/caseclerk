@@ -4,21 +4,21 @@
     "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED"
   ],
   "stage": "CHARGEBACK",
-  "recordedAt": "2026-10-25T04:20:30.092Z",
-  "sourceDisputeId": "PP-R-STD-10194453",
-  "costUsd": 0.077324,
+  "recordedAt": "2026-10-25T04:26:00.665Z",
+  "sourceDisputeId": "PP-R-JZN-10194461",
+  "costUsd": 0.051208000000000004,
   "triage": {
     "category": "not_as_described",
-    "summary": "Buyer disputes the $24.00 payment under a not-as-described reason; no buyer text was provided, so the specific complaint is unknown."
+    "summary": "Buyer filed a chargeback under not-as-described for $31.00 USD; no buyer message was included, so the specific complaint is unknown."
   },
   "decision": {
     "strategy": "fight",
-    "winProbability": 0.45,
+    "winProbability": 0.5,
     "expectedValueUsd": {
-      "fight": -27.18,
-      "refund": -41.33
+      "fight": -28.78,
+      "refund": -48.57
     },
-    "rationale": "The chargeback was filed 4 seconds after payment, while USPS tracking still shows the item only as shipped, so the buyer could not yet have inspected it. We have the item description and tracking but no proof of delivery or photos, so this is a medium-strength case.",
+    "rationale": "The not-as-described chargeback was opened 4 seconds after payment, before the dripper could have reached the buyer, and USPS tracking shows it shipped (not yet delivered). We have the item description and tracking, so contesting it is reasonable.",
     "evidenceStrength": "medium",
     "model": "claude-opus-5-5 (medium)"
   },
@@ -26,14 +26,14 @@
     {
       "actor": "agent",
       "kind": "triage",
-      "summary": "Triage: not as described. Buyer disputes the $24.00 payment under a not-as-described reason; no buyer text was provided, so the specific complaint is unknown.",
+      "summary": "Triage: not as described. Buyer filed a chargeback under not-as-described for $31.00 USD; no buyer message was included, so the specific complaint is unknown.",
       "costUsd": 0.000112
     },
     {
       "actor": "agent",
       "kind": "agent.step",
       "summary": "Agent step: get order, get tracking",
-      "costUsd": 0.018151
+      "costUsd": 0.018141
     },
     {
       "actor": "agent",
@@ -43,35 +43,24 @@
     {
       "actor": "agent",
       "kind": "tool.get_tracking",
-      "summary": "Read tracking: USPS …041877, shipped"
+      "summary": "Read tracking: USPS …853014, shipped"
     },
     {
       "actor": "agent",
       "kind": "agent.step",
       "summary": "Agent step: record decision",
-      "costUsd": 0.011368
+      "costUsd": 0.012137
     },
     {
       "actor": "agent",
       "kind": "decision",
-      "summary": "Decision: fight with evidence (win chance 45%, expected result: fight -$27.18, refund -$41.33). The chargeback was filed 4 seconds after payment, while USPS tracking still shows the item only as shipped, so the buyer could not yet have inspected it. We have the item description and tracking but no proof of delivery or photos, so this is a medium-strength case."
+      "summary": "Decision: fight with evidence (win chance 50%, expected result: fight -$28.78, refund -$48.57). The not-as-described chargeback was opened 4 seconds after payment, before the dripper could have reached the buyer, and USPS tracking shows it shipped (not yet delivered). We have the item description and tracking, so contesting it is reasonable."
     },
     {
       "actor": "agent",
       "kind": "agent.step",
       "summary": "Agent step: provide evidence",
-      "costUsd": 0.021704
-    },
-    {
-      "actor": "paypal",
-      "kind": "action.failed",
-      "summary": "The evidence submission failed: ITEM_ID_IS_MANDATORY_FOR_MULTIPLE_EVIDENCES"
-    },
-    {
-      "actor": "agent",
-      "kind": "agent.step",
-      "summary": "Agent step: provide evidence",
-      "costUsd": 0.025989
+      "costUsd": 0.020818
     },
     {
       "actor": "paypal",
