@@ -17,6 +17,15 @@
 //                         (webhook → agent) to submit its own pack before this script submits one (default 4)
 //   --timeout-min N       give up after N minutes (default 90)
 //   --no-record           don't record captures in the database (DATABASE_URL); cases then lack the test badge
+//   --item "Name"         one fixed line item instead of random catalog items (free shipping, so the
+//                         dispute amount equals the price); needs --amounts
+//   --item-desc "..."     item description (optional)      --shop "Name"  shop name on the order
+//   --amounts a,b         price per dispute, in order; --count defaults to the number of amounts
+//   --reason-code X --card-brand VISA|MASTERCARD   override the scenario's code (same reason only, see README)
+//
+//   Demo case awaiting approval on camera (stops at evidence; production's agent drafts, nobody approves):
+//   scripts/run.sh scripts/demo-prep.ts --stage evidence --scenario not_as_described \
+//     --item "Olympus OM-1n body, chrome" --amounts 412.00,389.00 --shop "Northlight Camera Exchange"
 //
 // Note: production receives the webhooks for these disputes and the agent acts on them as they arrive,
 // exactly as in a live demo. Its timeline is what the video shows; this script only fills gaps.
@@ -24,8 +33,9 @@ import { buildEvidencePdf } from "../src/lib/evidence/pdf";
 import { getDispute, provideEvidence } from "../src/lib/paypal/disputes";
 import { getCapture, getOrder, toOrderContext } from "../src/lib/paypal/orders";
 import { adjudicate } from "../src/lib/paypal/simulators";
-import { openTestDispute, TEST_SCENARIOS, type TestScenario } from "../src/lib/paypal/testDispute";
+import { openTestDispute, SHOP_NAME, TEST_SCENARIOS, type TestScenario } from "../src/lib/paypal/testDispute";
 import { getTracking } from "../src/lib/paypal/tracking";
+import type { CardBrand } from "../src/lib/paypal/simulators";
 import type { DisputeSnapshot } from "../src/lib/types";
 
 type Stage = "evidence" | "review" | "resolved";
@@ -36,7 +46,10 @@ function arg(name: string): string | undefined {
   return i > 0 ? process.argv[i + 1] : undefined;
 }
 const stage = (arg("stage") ?? "evidence") as Stage;
-const count = Number(arg("count") ?? (arg("ids") ? 0 : 1));
+const amounts = (arg("amounts") ?? "").split(",").filter(Boolean);
+const itemName = arg("item");
+const count = Number(arg("count") ?? (amounts.length || (arg("ids") ? 0 : 1)));
+const cardBrand = arg("card-brand") as CardBrand | undefined;
 const scenarioArg = arg("scenario") ?? "mix";
 const outcome = (arg("outcome") ?? "SELLER_FAVOR") as "SELLER_FAVOR" | "BUYER_FAVOR";
 const graceMs = Number(arg("agent-grace-min") ?? 4) * 60_000;
@@ -44,8 +57,13 @@ const timeoutMs = Number(arg("timeout-min") ?? 90) * 60_000;
 const record = !process.argv.includes("--no-record") && Boolean(process.env.DATABASE_URL);
 const scenarios = Object.keys(TEST_SCENARIOS) as TestScenario[];
 
-if (!STAGES.includes(stage) || !(scenarioArg === "mix" || scenarios.includes(scenarioArg as TestScenario)) || !(count >= 0 && count <= 10)) {
-  console.error("usage: demo-prep.ts --count N(<=10) --stage evidence|review|resolved [--scenario mix|" + scenarios.join("|") + "] [--ids a,b] [--outcome SELLER_FAVOR|BUYER_FAVOR]");
+const badItem =
+  (itemName !== undefined) !== (amounts.length > 0) ||
+  (itemName !== undefined && amounts.length < count) ||
+  amounts.some((a) => !/^\d+\.\d{2}$/.test(a)) ||
+  (cardBrand !== undefined && cardBrand !== "VISA" && cardBrand !== "MASTERCARD");
+if (badItem || !STAGES.includes(stage) || !(scenarioArg === "mix" || scenarios.includes(scenarioArg as TestScenario)) || !(count >= 0 && count <= 10)) {
+  console.error("usage: demo-prep.ts --count N(<=10) --stage evidence|review|resolved [--scenario mix|" + scenarios.join("|") + "] [--ids a,b] [--outcome SELLER_FAVOR|BUYER_FAVOR] [--item NAME --amounts 412.00,389.00 [--item-desc D] [--shop S]] [--reason-code X --card-brand VISA|MASTERCARD]");
   process.exit(2);
 }
 
@@ -59,7 +77,18 @@ const items: Item[] = (arg("ids") ?? "").split(",").filter(Boolean).map((id) => 
 // 1. Create
 for (let i = 0; i < count; i++) {
   const scenario = scenarioArg === "mix" ? scenarios[i % 2] : (scenarioArg as TestScenario); // mix alternates INR / SNAD
-  const r = await openTestDispute({ scenario });
+  const r = await openTestDispute({
+    scenario,
+    ...(itemName
+      ? {
+          items: [{ name: itemName, quantity: 1, unitAmount: { currency_code: "USD", value: amounts[i] }, ...(arg("item-desc") ? { description: arg("item-desc") } : {}) }],
+          shippingFee: null,
+        }
+      : {}),
+    reasonCode: arg("reason-code"),
+    cardBrand,
+    shopName: arg("shop"),
+  });
   if (!r.disputeId) {
     console.error(`capture ${r.captureId}: dispute id not returned; rerun later with --ids once it is listed`);
     continue;
@@ -73,7 +102,7 @@ for (let i = 0; i < count; i++) {
     }
   }
   items.push({ id: r.disputeId, scenario });
-  log(r.disputeId, `created ${scenario} ${r.amount.value} ${r.amount.currency_code} capture=${r.captureId}${record ? " (recorded)" : ""}`);
+  log(r.disputeId, `created ${scenario} (${r.reasonCode}) ${r.amount.value} ${r.amount.currency_code} capture=${r.captureId}${record ? " (recorded)" : ""}`);
 }
 if (!items.length) process.exit(1);
 if (!record) console.log("note: not recording test captures (no DATABASE_URL or --no-record); cases won't show the test badge");
@@ -93,7 +122,7 @@ async function submitEvidence(s: DisputeSnapshot) {
     order,
     narrative: `We shipped this order with tracking to the address on the PayPal transaction${tracking ? `: ${tracking}` : ""}. The item matches its listing description and photos. We ask that the chargeback be decided in the seller's favor.`,
     exhibits: [{ title: "Carrier tracking", body: tracking || "No tracking on file." }],
-    seller: { name: "Juniper & Clay Studio" },
+    seller: { name: arg("shop") ?? SHOP_NAME },
     amountCharged: cap.amount,
   });
   const r = await provideEvidence(s.id, {
