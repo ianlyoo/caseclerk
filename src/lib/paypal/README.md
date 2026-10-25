@@ -13,7 +13,7 @@ Server-only. Import from `@/lib/paypal` (barrel) or the single files. Sandbox on
 | `tracking.ts` | `addTracking`, `getTracking`, `trackingUrl` | `/v1/shipping/trackers-batch` on the capture id. A 200 that contains only `errors` is thrown as `PayPalError`. |
 | `refunds.ts` | `refundCapture(captureId, amount?)` | Throws `RefundBlockedError` when any dispute on the capture isn't RESOLVED (refund + chargeback = double payout), or the capture isn't COMPLETED/PARTIALLY_REFUNDED. |
 | `transactions.ts` | `searchTransactions({transactionId} \| {dateRange})` | Throws `NotEnabledError` on 403/NOT_AUTHORIZED (Transaction Search not ticked on the app). Window max 31 days. |
-| `testDispute.ts` | `openTestDispute({scenario})` | Order from a handmade-goods shop (1–2 items + $5.95 shipping) → USPS tracking DELIVERED → chargeback. Returns `{disputeId, orderId, captureId, amount, order: OrderContext, debugIds}`. |
+| `testDispute.ts` | `openTestDispute({scenario})` | Scenarios `not_received`, `not_as_described`, `unauthorized`. Order from a handmade-goods shop (1–2 items + $5.95 shipping) → USPS tracking DELIVERED → chargeback. Returns `{disputeId, orderId, captureId, amount, order: OrderContext, debugIds}`. |
 | `webhook.ts` | `verifyWebhookSignature(headers, raw)` | Raw body spliced in unchanged. |
 | `consent.ts` | `consentUrl`, `consentRedirectUri` | Buyer consent for the inquiry simulator. |
 | `../evidence/pdf.ts` | `buildEvidencePdf({case, order, narrative, exhibits, seller?, amountCharged?})` | pdf-lib, US Letter, 1–3 pages, ~6 KB. Sample: `docs/samples/evidence-sample.pdf`. |
@@ -24,8 +24,9 @@ Server-only. Import from `@/lib/paypal` (barrel) or the single files. Sandbox on
 |---|---|---|
 | `not_received` | Visa `13.1` | MERCHANDISE_OR_SERVICE_NOT_RECEIVED |
 | `not_as_described` | Visa `C2` | MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED |
+| `unauthorized` | Mastercard `4837` | UNAUTHORISED (PayPal's spelling) |
 
-Mastercard `4855` and Visa `30` also give NOT_RECEIVED. Visa `10.4` (fraud), `12.6.1` (duplicate) and `13.7` (cancelled) all come back as reason `OTHER`, so those scenarios aren't offered.
+Also tried, 12 codes in all: Mastercard `4855` and Visa `30` → NOT_RECEIVED; Mastercard `4853` → NOT_AS_DESCRIBED. Visa `10.4`, `12.6.1`, `13.2`, `13.3`, `13.7` and `83` all give reason `OTHER`. Those disputes sit in UNDER_REVIEW with only `provide_supporting_info` and never reach WAITING_FOR_SELLER_RESPONSE, so don't use them. The card brand only labels the chargeback; every test order is paid with the sandbox Visa.
 
 ## Sandbox quirks
 
@@ -36,7 +37,7 @@ Mastercard `4855` and Visa `30` also give NOT_RECEIVED. Visa `10.4` (fraud), `12
 - **`RESOLVED_WITH_PAYOUT`:** adjudicating SELLER_FAVOR on a chargeback ends with this outcome (`outcome_reason REPRESENTED_BY_PAYPAL`, adjudication `PAYOUT_TO_BUYER`). PayPal covered the buyer and released the seller's hold (`fund_movements` HOLD_PLACED then HOLD_RELEASED), so the seller keeps the money. Show it as "won: PayPal covered the chargeback".
 - **Tracking:** `last_updated_time` comes back as epoch ms in a string; `getTracking` converts it to ISO.
 - **Refund guard blind spot:** a chargeback filed less than about a minute ago isn't listed by capture yet, so `refundCapture` can't see it.
-- **Transaction Search:** 403 NOT_AUTHORIZED until the feature is ticked on the REST app → `NotEnabledError`.
+- **Transaction Search:** 403 NOT_AUTHORIZED until the feature is ticked on the REST app → `NotEnabledError`. Ticked 2026-10-25 ~13:05 KST, still 403 at 13:20 KST (PayPal says enabling can take up to a few hours to propagate).
 
 ## Tests
 

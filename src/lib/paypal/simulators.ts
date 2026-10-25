@@ -7,11 +7,12 @@ export type CardBrand = "VISA" | "MASTERCARD";
 
 /**
  * Card-network reason codes for the process-chargeback simulator, verified live in the sandbox
- * (see README "Reason codes"). Visa codes go with card brand VISA.
+ * (see README). The brand only labels the chargeback; the order itself is paid with the sandbox Visa.
  */
 export const CHARGEBACK_REASON_CODES = {
   not_as_described: { reasonCode: "C2", cardBrand: "VISA" as CardBrand },
   not_received: { reasonCode: "13.1", cardBrand: "VISA" as CardBrand },
+  unauthorized: { reasonCode: "4837", cardBrand: "MASTERCARD" as CardBrand },
 } as const;
 
 /** POST /v2/customer-support/process-chargeback: files a card chargeback against a capture. */
