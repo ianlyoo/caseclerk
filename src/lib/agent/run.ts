@@ -82,9 +82,11 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
   if (doneFor && trigger.kind === "webhook") {
     return { status: "skipped", summary: "Already handled this version of the dispute", costUsd: 0 };
   }
+  // Costs live on the step entries (triage, agent.step); the run total is data.runCostUsd, never the
+  // entry's costUsd, so a timeline that sums costUsd counts each call once.
   const finish = async (status: CaseStatus | null, summary: string, costUsd: number, data: Record<string, unknown> = {}) => {
     if (status) await deps.db.cases.setStatus(caseId, status);
-    await audit(deps, caseId, "agent", "agent.run.done", summary, { updateTime: snap.updateTime, trigger: trigger.kind, ...data }, costUsd || undefined);
+    await audit(deps, caseId, "agent", "agent.run.done", summary, { updateTime: snap.updateTime, trigger: trigger.kind, runCostUsd: costUsd, ...data });
   };
 
   if (snap.status === "RESOLVED") {
@@ -160,7 +162,7 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
     return { status: "done", summary: runSummary(ctx), costUsd: ctx.costUsd };
   } catch (e) {
     if (e instanceof SpendCapError) {
-      await audit(deps, caseId, "system", "spend.blocked", `Demo budget reached (${e.cap} cap): no new AI calls.`, { cap: e.cap }, ctx.costUsd || undefined);
+      await audit(deps, caseId, "system", "spend.blocked", `Demo budget reached (${e.cap} cap): no new AI calls.`, { cap: e.cap, runCostUsd: ctx.costUsd });
       if (!ctx.decision) {
         const replayed = await replayStoredRun(deps, ctx.c);
         await finish(null, replayed ? "Showing the agent's last recorded run for this kind of dispute." : "No recorded run to show.", 0, {
@@ -172,7 +174,7 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
       return { status: "replayed", summary: "Demo budget reached mid-run", costUsd: ctx.costUsd };
     }
     await deps.db.cases.setStatus(caseId, "error");
-    await audit(deps, caseId, "system", "agent.error", `The agent stopped on an error: ${errMsg(e)}`, undefined, ctx.costUsd || undefined);
+    await audit(deps, caseId, "system", "agent.error", `The agent stopped on an error: ${errMsg(e)}`, { runCostUsd: ctx.costUsd });
     return { status: "error", summary: errMsg(e), costUsd: ctx.costUsd };
   }
 }

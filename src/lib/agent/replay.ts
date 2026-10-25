@@ -43,7 +43,8 @@ export async function replayStoredRun(deps: AgentDeps, c: CaseRecord, runs: Reco
     tag,
   );
   for (const e of run.timeline) {
-    await audit(deps, c.id, e.actor, `replay.${e.kind}`, `Replay · ${e.summary}`, tag, e.costUsd);
+    // The recorded cost was spent once, when recorded; keep it as data so spend totals stay true.
+    await audit(deps, c.id, e.actor, `replay.${e.kind}`, `Replay · ${e.summary}`, { ...tag, ...(e.costUsd ? { recordedCostUsd: e.costUsd } : {}) });
   }
   const at = (deps.now?.() ?? new Date()).toISOString();
   if (!c.triage) await deps.db.cases.setTriage(c.id, { ...run.triage, model: "replay", at });

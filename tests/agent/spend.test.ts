@@ -81,6 +81,9 @@ describe("over a cap the agent makes no LLM call and replays a stored run", () =
     const c = await db.cases.get("PP-R-TST-10000001");
     expect(c?.decision?.model).toMatch(/^replay of claude-opus-5-5/);
     expect(c?.triage?.model).toBe("replay");
+    // A replay spends nothing now: no costUsd on its timeline entries (the recorded cost is data).
+    expect(db._audit.filter((e) => e.costUsd)).toHaveLength(0);
+    expect(db._audit.some((e) => typeof e.data?.recordedCostUsd === "number")).toBe(true);
   });
 
   it("runs-per-day cap → no LLM call", async () => {
