@@ -82,6 +82,51 @@ export async function addTracking(
   return { status: res.status, debugId: res.debugId };
 }
 
+/** PUT /v1/shipping/trackers/{captureId}-{trackingNumber}: changes the status of an existing tracker. */
+export async function updateTracking(
+  captureId: string,
+  t: { carrier: string; trackingNumber: string; status: TrackerStatus; shipmentDate?: string },
+): Promise<{ status: number; debugId?: string }> {
+  const res = await paypalFetch(`/v1/shipping/trackers/${encodeURIComponent(`${captureId}-${t.trackingNumber}`)}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      transaction_id: captureId,
+      tracking_number: t.trackingNumber,
+      status: t.status,
+      carrier: t.carrier,
+      shipment_date: t.shipmentDate,
+    }),
+  });
+  return { status: res.status, debugId: res.debugId };
+}
+
+const STATUS_RANK: Record<string, number> = { CANCELLED: 0, ON_HOLD: 1, SHIPPED: 2, DELIVERED: 3 };
+
+/**
+ * Sandbox/PayPal quirk: provide-evidence with evidence_info.tracking_info rewrites the capture's tracker
+ * as SHIPPED (shipment_date = submission day, Pacific time), even when it was DELIVERED. Puts back any
+ * tracker whose status went down. Returns the tracking numbers it restored.
+ */
+export async function restoreTrackers(captureId: string, before: Tracker[]): Promise<string[]> {
+  if (!before.length) return [];
+  const after = await getTracking(captureId);
+  const restored: string[] = [];
+  for (const b of before) {
+    const a = after.find((t) => t.trackingNumber === b.trackingNumber);
+    if (!a || (STATUS_RANK[a.status] ?? 0) >= (STATUS_RANK[b.status] ?? 0)) continue;
+    await updateTracking(captureId, {
+      carrier: rawCarrier(b.carrier),
+      trackingNumber: b.trackingNumber,
+      status: b.status as TrackerStatus,
+      shipmentDate: b.shipmentDate,
+    });
+    restored.push(b.trackingNumber);
+  }
+  return restored;
+}
+
+const rawCarrier = (c: string) => (Object.keys(CARRIER_URLS).includes(c.toUpperCase()) ? c.toUpperCase() : c);
+
 /** Trackers on a capture. Empty when none were added. */
 export async function getTracking(captureId: string, trackingNumber?: string): Promise<Tracker[]> {
   if (trackingNumber) {

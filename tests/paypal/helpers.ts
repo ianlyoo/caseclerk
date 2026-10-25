@@ -22,7 +22,7 @@ export function mockPayPal(route: Route) {
     const c: Call = { method, path: u.pathname + u.search, headers: new Headers(init.headers), body: init.body };
     calls.push(c);
     const r = route(c) ?? { status: 404, json: { name: "RESOURCE_NOT_FOUND", debug_id: "dbg404" } };
-    return new Response(r.json === undefined ? "" : JSON.stringify(r.json), {
+    return new Response(r.json === undefined ? null : JSON.stringify(r.json), {
       status: r.status ?? 200,
       headers: { "paypal-debug-id": "dbg-" + calls.length, ...r.headers },
     });
