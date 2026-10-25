@@ -1,8 +1,9 @@
 // Browser checks for Final B ("Darkroom paper"), the verdict's guardrails that apply to it (G-numbers from
 // docs/design/VERDICT-meeting-r1.md §5, adapted where B differs: no Wire plane, the dark surface is the decision sheet,
 // PayPal blue only in the PayPal register) plus judge round 1's must-fix list for B. Also takes the shots and the video.
-// Safety: every browser context aborts POST /api/actions/** unless a test fulfils it itself, so no run of this script
-// can approve a real action (PP-R-VPY-10194485 is reserved for the owner's camera).
+// Safety: every browser context aborts POST /api/actions/** and POST /api/test-dispute unless a test fulfils it itself,
+// so no run of this script can approve a real action (PP-R-VPY-10194485 is reserved for the owner's camera) or open a
+// real test dispute (capped per visitor and per day; the PM opens those by hand).
 //   node docs/design/finals/b/check-ui-b.cjs <base-url> [--shots] [--video]
 // PW: path to playwright-core; CHROME: path to a Chromium binary (defaults below are this host's).
 const PW = process.env.PW || "/srv/company/work/web-design/terra/node_modules/playwright-core";
@@ -32,7 +33,7 @@ const PAGES = {
 };
 const VP = {
   1440: { viewport: { width: 1440, height: 810 }, deviceScaleFactor: 2 },
-  1920: { viewport: { width: 1920, height: 940 }, deviceScaleFactor: 1 },
+  1920: { viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 2 },
   1536: { viewport: { width: 1536, height: 752 }, deviceScaleFactor: 1.25 },
   2560: { viewport: { width: 2560, height: 1440 }, deviceScaleFactor: 1 },
   390: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
@@ -59,6 +60,7 @@ async function guard(ctx) {
       r.fulfill({ status: res.status, body: Buffer.from(await res.arrayBuffer()), headers: { "content-type": res.headers.get("content-type") || "application/json" } });
     });
   await ctx.route("**/api/actions/**", (r) => (r.request().method() === "GET" ? (API ? r.fallback() : r.continue()) : r.abort()));
+  await ctx.route("**/api/test-dispute", (r) => r.abort());
 }
 async function open(browser, vp, p, extra = {}, before) {
   const ctx = await browser.newContext({ ...VP[vp], ...extra });
@@ -113,7 +115,9 @@ const probeColours = () => {
     const bg = rgb(cs.backgroundColor);
     if ((bg.length === 3 || bg[3] > 0.9) && lum(bg) < 0.1) {
       const vis = Math.max(0, Math.min(r.right, W) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, H) - Math.max(r.top, 0));
-      if (vis > 0.04 * W * H && !el.closest("[data-sheet]")) darkOutside.push(el.className || el.tagName);
+      // A control is not a surface: one ink button may be wide on a phone. Surfaces (panels, bands) still count.
+      const control = el.matches("a, button") && vis < 0.08 * W * H;
+      if (vis > 0.04 * W * H && !el.closest("[data-sheet]") && !control) darkOutside.push(el.className || el.tagName);
     }
     for (const prop of ["color", "backgroundColor", "borderTopColor", "borderLeftColor"]) {
       const c = rgb(cs[prop]);
@@ -179,7 +183,7 @@ async function pageChecks(browser) {
       const { ctx, page, status, errs } = await open(browser, vp, p);
       const tag = `${name} @${vp}`;
       out(status === 200 && errs.length === 0, `${tag}: loads without errors`, errs[0]);
-      if (name === "landing") await page.waitForTimeout(9500); // the replay of the real case runs 9 s
+      if (name === "landing") await page.waitForTimeout(4000); // the three receipts of the real case land in 3 s
       const c = await page.evaluate(probeColours);
       out(c.darkOutside.length === 0, `${tag}: G5 one dark surface, only the decision sheet`, c.darkOutside.join(", "));
       out(c.blue.length === 0, `${tag}: B PayPal blue only in the PayPal register, no brass (fix 2, 8)`, c.blue.join("; "));
@@ -224,12 +228,12 @@ async function pageChecks(browser) {
           const l = document.querySelector("header [data-origin=paypal]");
           return { text: l ? l.innerText.replace(/\s+/g, " ") : "", live: l ? l.hasAttribute("data-live") : false };
         });
-        out((vp === 390 || (/PayPal sandbox/.test(m.text) && /PP-R-[A-Z]{3}-\d{8}/.test(m.text))) && /last real webhook/.test(m.text) && (m.live || !/Live/.test(m.text)) && (name !== "case-sample" || /Staged sample/.test(m.text) || vp === 390), `${tag}: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner`, m.text.slice(0, 140));
+        out((vp === 390 ? /(PayPal sandbox, last webhook|Staged sample, real webhook) .+ ago$/.test(m.text) : /PayPal sandbox/.test(m.text) && /PP-R-[A-Z]{3}-\d{8}/.test(m.text) && /last real webhook/.test(m.text)) && (m.live || !/Live/.test(m.text)) && (name !== "case-sample" || /Staged sample/.test(m.text)), `${tag}: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner`, m.text.slice(0, 140));
       }
       if (name === "case-pending" && vp === 1440) {
         const f = await page.evaluate(() => {
           const sheet = document.querySelector("[data-sheet]").getBoundingClientRect();
-          const rows = [...document.querySelectorAll("main ol[aria-label^='What happened'] li")].slice(0, 2).map((li) => ({ pp: !!li.querySelector("[data-wire-line]"), bottom: li.getBoundingClientRect().bottom }));
+          const rows = [...document.querySelectorAll("main ol[aria-label^='What happened'] li")].slice(0, 2).map((li) => ({ pp: !!li.querySelector("[data-wire-line],[data-origin=paypal]"), bottom: li.getBoundingClientRect().bottom }));
           const note = document.querySelector("[data-sheet] [class*=sdNote]");
           const lh = parseFloat(getComputedStyle(note).lineHeight) || 24;
           return { sheetH: sheet.height, sheetTop: sheet.top, rows, noteLines: Math.round(note.getBoundingClientRect().height / lh), noteText: note.innerText, clipped: note.scrollWidth > note.clientWidth };
@@ -274,14 +278,14 @@ async function honesty(browser) {
   }
   for (const p of [PAGES.landing, PAGES["case-pending"], PAGES["case-deciding"], PAGES["case-resolved"], PAGES.inbox]) {
     const { ctx, page } = await open(browser, 1440, p);
-    if (p === PAGES.landing) await page.waitForTimeout(9500);
+    if (p === PAGES.landing) await page.waitForTimeout(4000);
     const ids = await page.evaluate(() => {
       const t = document.body.innerText;
       return { debug: [...t.matchAll(/debug id ([0-9a-f]{12,13})\b/g)].map((m) => m[1]), events: [...t.matchAll(/event (WH-[A-Z0-9-]+)/g)].map((m) => m[1]) };
     });
     const unknown = [...ids.debug, ...ids.events].filter((x) => !known.has(x));
     out(ids.debug.length > 0 && unknown.length === 0, `G12 ${p}: every PayPal id shown exists in production's payload`, `${ids.debug.length} debug ids, ${ids.events.length} event ids, unknown: ${unknown.join(", ") || "none"}`);
-    const lines = await page.evaluate(() => [...document.querySelectorAll("ol [data-wire-line]")].map((l) => (l.textContent.match(/debug id ([0-9a-f]{12,13})/) || [])[1]).filter(Boolean));
+    const lines = await page.evaluate(() => [...document.querySelectorAll("ol [data-wire-line]")].filter((l) => l.checkVisibility()).map((l) => (l.textContent.match(/debug id ([0-9a-f]{12,13})/) || [])[1]).filter(Boolean));
     out(new Set(lines).size === lines.length, `G12 ${p}: no debug id is attached to two rows`, `${lines.length} rows with ids`);
     const t = await page.evaluate(() => {
       let t = document.body.innerText;
@@ -347,27 +351,41 @@ async function realLoop(browser) {
   const DEBUG = "f0000000000a1";
   let approved = false;
   let posted = null;
+  let postedAt = 0;
   const before = async (ctx) => {
     await ctx.route(`**/api/cases/${MOCK}`, (r) => {
       if (!approved) return r.fulfill({ json: pending });
       const j = JSON.parse(JSON.stringify(pending));
       j.case.status = "waiting_on_paypal";
       j.actions = j.actions.map((a) => ({ ...a, status: "executed", result: { debugId: DEBUG } }));
-      j.wire.push({ id: "mock-w-1", at: new Date().toISOString(), kind: "call", origin: "agent", caseId: MOCK, method: "POST", path: `/v1/customer/disputes/${MOCK}/provide-evidence`, status: 200, debugId: DEBUG });
+      j.wire.push({ id: "mock-w-1", at: new Date(postedAt).toISOString(), kind: "call", origin: "agent", caseId: MOCK, method: "POST", path: `/v1/customer/disputes/${MOCK}/provide-evidence`, status: 200, debugId: DEBUG });
+      j.wire.push({ id: "mock-w-2", at: new Date(postedAt + 1500).toISOString(), kind: "call", origin: "agent", caseId: MOCK, method: "PUT", path: `/v1/shipping/trackers/MOCKCAPTURE-9400111899622344435537`, status: 204, debugId: "f0000000000a2" });
       return r.fulfill({ json: j });
     });
     await ctx.route("**/api/actions/mock-action-1/approve", async (r) => {
       posted = r.request().method();
       approved = true;
-      await new Promise((z) => setTimeout(z, 900));
+      postedAt = Date.now();
+      // PayPal takes its time (the real filing took ~20 s); one poll lands while the POST is still open.
+      await new Promise((z) => setTimeout(z, 7000));
       r.fulfill({ json: { action: { id: "mock-action-1", status: "executed" }, message: "ok", status: 200, debugId: DEBUG, at: new Date().toISOString() } });
     });
   };
   const { ctx, page } = await open(browser, 1440, `/finals/b/case/${MOCK}`, {}, before);
   await page.locator("[data-sheet] button[data-phase=pending]").click();
+  const h1Before = await page.locator("h1").innerText();
   await page.getByRole("button", { name: "Send now" }).click();
+  await page.waitForTimeout(6200);
+  const mid = await page.evaluate(() => ({
+    sheet: document.querySelector("[data-sheet]").innerText,
+    tl: document.querySelector("main ol[aria-label^='What happened']").innerText,
+    h1: document.querySelector("h1").innerText,
+  }));
+  out(/Sending to PayPal/.test(mid.sheet) && !/provide-evidence\s+200/.test(mid.tl) && /provide-evidence\s+sending/.test(mid.tl) && mid.h1 === h1Before, `real loop: r2 fix 8 while the sheet says "Sending to PayPal" the timeline shows only the in-flight row and the headline holds, even after a poll that carries the filing`, mid.tl.split("\n").slice(0, 4).join(" | "));
   await page.waitForSelector("[data-sheet] [data-wire-line]", { timeout: 10000 });
   const t0 = Date.now();
+  const same = await page.evaluate(() => document.querySelector("main ol[aria-label^='What happened'] li").innerText);
+  out(/provide-evidence\s+200/.test(same), `real loop: r2 fix 8 the timeline's filing row turns 200 in the same frame the sheet shows PayPal's answer`, same.replace(/\s+/g, " ").slice(0, 90));
   const line = await page.locator("[data-sheet] [data-wire-line]").innerText();
   out(posted === "POST" && /PayPal answered/.test(line) && /\b200\b/.test(line) && line.includes(`debug id ${DEBUG}`), `real loop (mocked API): fix 4 the 200 and the debug id land inside the dark sheet`, line.replace(/\s+/g, " "));
   const blue = await page.locator("[data-sheet] [data-wire-line]").evaluate((l) => getComputedStyle(l).borderLeftColor + " " + getComputedStyle(l).borderLeftStyle + " " + l.dataset.origin);
@@ -380,7 +398,114 @@ async function realLoop(browser) {
   out(/Evidence filed with PayPal\s+\d\d:\d\d:\d\d PT/.test(bar) && bar.includes(`debug id ${DEBUG}`) && /PayPal is deciding/.test(bar) && !/defended/.test(bar), `real loop: the bar reads "Evidence filed with PayPal <time> PT  debug id <id>" and "PayPal is deciding"`, bar.replace(/\s+/g, " "));
   const n = await page.evaluate((d) => [...document.querySelectorAll("ol [data-wire-line]")].filter((l) => l.textContent.includes(d)).length, DEBUG);
   out(n === 1, `real loop: the server's row replaces the local one (no doubled debug id)`, `${n} rows`);
+  const top = await page.evaluate(() => document.querySelector("main ol[aria-label^='What happened'] li").innerText);
+  out(/provide-evidence\s+200/.test(top), `real loop: r2 fix 4 the filing's 200 is the pinned top row, above the later tracker calls`, top.replace(/\s+/g, " ").slice(0, 80));
+  for (let i = 0; i < 12 && (await page.locator("main ol[aria-label^='What happened'] button[aria-expanded=false]").count()); i++) await page.locator("main ol[aria-label^='What happened'] button[aria-expanded=false]").first().click();
+  await page.waitForTimeout(500);
+  const put = await page.evaluate(() => [...document.querySelectorAll("main ol [data-wire-line]")].map((l) => l.innerText).find((t) => /PUT \/v1\/shipping\/trackers/.test(t)) || "");
+  if (!put) console.log("debug rows:", JSON.stringify(await page.evaluate(() => [...document.querySelectorAll("main ol[aria-label^='What happened'] > li")].map((l) => l.innerText.replace(/\s+/g, " ").slice(0, 120)))));
+  out(/update tracker\s+204/.test(put) && /updated the tracking/.test(put) && !/get tracker|Read the tracking/.test(put), `real loop: r2 fix 2 a tracker PUT reads "update tracker 204", not a read`, put.replace(/\s+/g, " ").slice(0, 100));
   await ctx.close();
+}
+
+/** Judge round 2: the landing, the test dispute (mocked), timeline order, phones, the money line, one column. */
+async function round2(browser) {
+  {
+    const { ctx, page } = await open(browser, 1440, PAGES.landing);
+    await page.waitForTimeout(4000);
+    const l = await page.evaluate(() => {
+      const main = document.querySelector("main");
+      const btn = main.querySelector("a[class*=ctaBtn]");
+      const rows = [...document.querySelectorAll("[aria-label='Replay of a real case'] > ol > li")].map((li) => li.innerText.replace(/\s+/g, " "));
+      return { h1: document.querySelector("h1").innerText, btn: btn ? btn.innerText : "", href: btn ? btn.getAttribute("href") : "", test: [...main.querySelectorAll("button")].map((b) => b.innerText + "|" + b.className), rows, drawer: (document.querySelector("details summary") || {}).innerText || "" };
+    });
+    out(/filed the evidence, and PayPal closed the case \d+ minutes later\.$/.test(l.h1) && !/answered 200/.test(l.h1), `r2 fix 3 landing h1 ends on the close, not on "200"`, l.h1);
+    out(l.btn === "Review the $412.00 case waiting for you" && l.href.endsWith(PENDING) && l.test.some((t) => /^Open a test dispute\|.*ghostBtn/.test(t)), `r2 fix 3 primary: review the $412.00 case; secondary: open a test dispute`, `${l.btn} -> ${l.href}`);
+    out(l.rows.length === 3 && /CUSTOMER\.DISPUTE\.CREATED/.test(l.rows[0]) && /provide-evidence 200 .*debug id f8469524f503f/.test(l.rows[1]) && /CUSTOMER\.DISPUTE\.RESOLVED .*event WH-01G68820AD177843M-8SL79965VW8605524/.test(l.rows[2]), `r2 fix 3 the replay is the 3-row receipt: CREATED, provide-evidence 200, RESOLVED`, l.rows.map((r) => r.slice(0, 50)).join(" | "));
+    out(/^All PayPal traffic on this case \(\d+ calls and webhooks\)/.test(l.drawer), `r2 fix 3 routine traffic folds into the "All PayPal traffic" drawer`, l.drawer);
+    await ctx.close();
+  }
+  for (const mode of ["202", "429"]) {
+    let lists = 0;
+    let body = null;
+    const before = async (ctx) => {
+      await ctx.route("**/api/test-dispute", async (r) => {
+        body = r.request().postData();
+        if (mode === "429") return r.fulfill({ status: 429, json: { error: { code: "rate_limited", message: "You've opened 3 test disputes today. Try again tomorrow." } } });
+        r.fulfill({ status: 202, json: { scenario: "not_as_described", captureId: "MOCKCAPTURE0001", orderId: "MOCKORDER", disputeId: null } });
+      });
+      await ctx.route("**/api/cases?test=true*", async (r) => {
+        const res = await fetch("https://caseclerk.vercel.app/api/cases?test=true&limit=50");
+        const j = await res.json();
+        if (body && ++lists > 1) j.cases.unshift({ ...j.cases[0], id: "PP-R-MOK-00000001", snapshot: { ...j.cases[0].snapshot, id: "PP-R-MOK-00000001", sellerTransactionId: "MOCKCAPTURE0001" } });
+        r.fulfill({ json: j });
+      });
+    };
+    const { ctx, page } = await open(browser, 1440, PAGES.landing, {}, before);
+    await page.getByRole("button", { name: "Open a test dispute" }).click();
+    if (mode === "429") {
+      await page.waitForSelector("[class*=testErr]", { timeout: 10000 });
+      const t = await page.locator("[class*=testErr]").innerText();
+      out(/3 test disputes today/.test(t), `r2 test dispute (mocked 429): PayPal-side cap shows its message, nothing claimed`, t);
+    } else {
+      await page.waitForFunction(() => /PayPal is opening the chargeback\. Its webhook usually arrives in 3–5 minutes\./.test(document.body.innerText), null, { timeout: 10000 });
+      out(JSON.parse(body).scenario === "not_as_described", `r2 test dispute (mocked 202): POST /api/test-dispute {scenario}, then the honest wait line`, body);
+      await page.waitForSelector("a[href='/finals/b/case/PP-R-MOK-00000001']", { timeout: 30000 }).catch(() => {});
+      out((await page.locator("a[href='/finals/b/case/PP-R-MOK-00000001']").count()) === 1, `r2 test dispute (mocked): polls the case list and links the new case by its capture id`);
+    }
+    await ctx.close();
+  }
+  for (const [p, re, label] of [
+    [PAGES["case-resolved"], /CUSTOMER\.DISPUTE\.RESOLVED/, "RESOLVED"],
+    [PAGES["case-pending"], /CUSTOMER\.DISPUTE\.(UPDATED|CREATED)/, "the latest webhook"],
+    [PAGES["case-deciding"], /provide-evidence\s+200|CUSTOMER\.DISPUTE/, "the filing or the latest webhook"],
+  ]) {
+    const { ctx, page } = await open(browser, 1440, p);
+    const o = await page.evaluate(() => {
+      const lis = [...document.querySelectorAll("main ol[aria-label^='What happened'] > li")];
+      const routine = (li) => { const t = li.innerText; return /\b(GET|verify-webhook-signature)\b/.test(t) && !!li.querySelector("[data-wire-line]"); };
+      let runs = 0;
+      for (let i = 1; i < lis.length; i++) if (routine(lis[i]) && routine(lis[i - 1])) runs++;
+      return { top: lis[0] ? lis[0].innerText : "", runs };
+    });
+    out(re.test(o.top) && o.runs === 0, `r2 fix 4 ${p.split("/").pop()}: ${label} is the pinned top row; runs of routine reads are folded`, `${o.top.replace(/\s+/g, " ").slice(0, 60)}; ${o.runs} unfolded runs`);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 1440, PAGES["case-resolved"]);
+    const t = await page.evaluate(() => ({ h1: document.querySelector("h1").innerText, meta: document.querySelector("[class*=figMeta]").innerText, fig: document.querySelector("[class*=figure]").innerText }));
+    out(/You keep \$378\.43: the \$389\.00 sale less PayPal's usual fee\. PayPal paid the buyer itself\.$/.test(t.h1) && /\$378\.43/.test(t.fig.replace(/\s+/g, "")), `r2 fix 6 the resolved headline states the seller's money from PayPal's fund movements`, t.h1);
+    out(/released all of it\. Its usual fee on the sale was \$10\.57; PayPal shows no chargeback fee and no debit\./.test(t.meta) && /^Sandbox ruling: our operator asked PayPal's sandbox to decide for the seller/m.test(t.meta), `r2 fix 6 the money line and the sandbox-ruling disclosure`, t.meta.replace(/\s+/g, " ").slice(-160));
+    await ctx.close();
+  }
+  for (const vp of [390]) {
+    for (const p of Object.values(PAGES)) {
+      const { ctx, page } = await open(browser, vp, p);
+      const o = await page.evaluate((W) => {
+        const over = [...document.querySelectorAll("body *")].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.right > W + 0.5 && getComputedStyle(e).position !== "fixed" && !e.closest("nav"); }).map((e) => `${e.tagName}.${String(e.className).slice(0, 24)} "${(e.innerText || "").slice(0, 24)}"`);
+        const live = document.querySelector("header [data-origin=paypal]");
+        const btn = document.querySelector("[data-sheet] button[data-phase]");
+        const b = btn && btn.getBoundingClientRect();
+        // A phone widens its layout viewport to fit overflowing content, so measure against the device width.
+        return { over: over.slice(0, 3), wide: document.documentElement.scrollWidth, mast: live ? live.innerText.replace(/\s+/g, " ").trim() : "", btn: b ? [Math.round(b.left), Math.round(W - b.right)] : null };
+      }, vp);
+      out(o.over.length === 0 && o.wide <= vp, `r2 fix 5 ${p.split("/").pop()} @390: nothing runs off the right edge`, `${o.wide} px wide; ${o.over.join("; ")}`);
+      out(/^((Live on )?PayPal sandbox, last webhook|Staged sample, real webhook) (just now|\d+ (min|h \d+ min|days) ago)$/.test(o.mast), `r2 fix 5 @390 the masthead is one short line, no middot`, o.mast);
+      if (o.btn) out(o.btn[0] >= 16 && o.btn[1] >= 16, `r2 fix 5 @390 the sheet's button keeps 16 px each side`, o.btn.join(" / "));
+      await ctx.close();
+    }
+  }
+  for (const vp of [1440, 1920]) {
+    const { ctx, page } = await open(browser, vp, PAGES["case-pending"]);
+    const o = await page.evaluate(() => {
+      const m = document.querySelector("[class*=caseGrid] > aside").getBoundingClientRect();
+      const c = document.querySelector("[class*=caseGrid] > [class*=col]").getBoundingClientRect();
+      const rail = document.querySelector("[aria-label='Your disputes']");
+      return { l: m.left, r: innerWidth - c.right, rail: !!(rail && rail.checkVisibility()), w: c.right - m.left };
+    });
+    out(!o.rail && Math.abs(o.l - o.r) < 4, `r2 fix 7 @${vp}: no case-list rail; the reading column is centred`, `left ${Math.round(o.l)} right ${Math.round(o.r)} width ${Math.round(o.w)}`);
+    await ctx.close();
+  }
 }
 
 async function failurePath(browser) {
@@ -465,7 +590,7 @@ async function links(browser) {
     if (!ok) bad.push(r.href);
   }
   out(rows.length >= 11 && bad.length === 0, `G15 every inbox row opens its own case`, `${rows.length} rows, ${bad.length} bad`);
-  out(rows.slice(0, 2).every((r) => /PP-R-(VPY|NJA|JKB|GDS|RCJ)/.test(r.href)) && rows[0].href.endsWith(PENDING), `fix 7 the inbox opens on the real cases, the pending $412 first`, rows.slice(0, 3).map((r) => r.href.split("/").pop()).join(", "));
+  out(rows.slice(0, 2).every((r) => /PP-R-[A-Z]{3}-1\d{7}/.test(r.href)) && rows[0].href.endsWith(PENDING), `fix 7 the inbox opens on the real cases, the pending $412 first`, rows.slice(0, 3).map((r) => r.href.split("/").pop()).join(", "));
   await page.goto(BASE + "/finals/b/case", { waitUntil: "networkidle" });
   out(page.url().endsWith(PENDING), `fix 7 /finals/b/case opens the real pending case`, page.url().split("/").pop());
   await page.goto(BASE + PAGES["case-pending"], { waitUntil: "networkidle" });
@@ -531,13 +656,14 @@ function durationOf(f) {
     if (process.argv.includes("--video-only")) return await video(browser);
     const only = (process.argv.find((x) => x.startsWith("--only=")) || "").slice(7);
     if (only) {
-      const fns = { realLoop, honesty, failurePath, reader, links, pageChecks, approve: (b) => approvePath(b, 1440, false) };
+      const fns = { realLoop, round2, honesty, failurePath, reader, links, pageChecks, approve: (b) => approvePath(b, 1440, false) };
       for (const n of only.split(",")) await fns[n](browser);
       return;
     }
     await pageChecks(browser);
     await honesty(browser);
     await realLoop(browser);
+    await round2(browser);
     for (const vp of [1440, 1920, 1536, 390]) await approvePath(browser, vp, false);
     await approvePath(browser, 1440, true);
     await failurePath(browser);

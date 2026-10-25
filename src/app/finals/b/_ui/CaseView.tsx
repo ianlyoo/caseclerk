@@ -4,9 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import NumberFlow from "@number-flow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { clock, countdown, day, dayOf, getCase, hoursLeft, isOpen, SAMPLE_NOW, sorted, usd, weekday, type Case, type Row } from "../_lib/data";
+import { clock, countdown, day, dayOf, getCase, hoursLeft, isOpen, SAMPLE_NOW, sorted, usd, weekday, type Case } from "../_lib/data";
 import { fromApi, SNAPSHOTS, type ApiCase } from "../_lib/live";
-import { CaseList, deskLine } from "./CaseList";
+import { deskLine } from "./CaseList";
 import { Dossier } from "./Dossier";
 import { Masthead } from "./Masthead";
 import { Photo } from "./Photo";
@@ -130,12 +130,19 @@ export function CaseView({ id }: { id: string }) {
   return <CaseBody c={c} refresh={live.refresh} />;
 }
 
-function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
+function CaseBody({ c: polled, refresh }: { c: Case; refresh: () => void }) {
   const T = useT();
   const q = useSearchParams();
   const want = q.get("state");
   const forceFail = q.get("fail") === "1";
   const desk = useDesk();
+  // From the click until PayPal's answer lands, the page holds the case as it was: a poll that already carries the
+  // filing must not change the headline or the timeline while the sheet still says "Sending to PayPal".
+  const busy = polled.real && ["undo", "sending"].includes(desk.phase(polled.id) ?? "");
+  const held = useRef<Case | null>(null);
+  if (busy) held.current ??= polled;
+  else held.current = null;
+  const c = held.current ?? polled;
   const start = useRef(Date.now());
   const extra = desk.rows(c.id);
   const setExtra = useCallback((f: LiveRow[] | ((r: LiveRow[]) => LiveRow[])) => desk.setRows(c.id, typeof f === "function" ? f : () => f), [desk, c.id]);
@@ -192,7 +199,7 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
     timers.current = [];
     desk.set(c.id, "sending");
     const a = approval!;
-    const inflight: LiveRow = { kind: "paypal", at: c.real ? new Date().toISOString() : sampleClock(start.current), dir: "out", name: a.name, method: a.method, path: a.path, say: c.real ? "CaseClerk is filing the evidence" : "Staged: on a real case, CaseClerk files the evidence and PayPal returns a debug id here.", inflight: true, fresh: true };
+    const inflight: LiveRow = { kind: "paypal", k: `act-${a.name}`, at: c.real ? new Date().toISOString() : sampleClock(start.current), dir: "out", name: a.name, method: a.method, path: a.path, say: c.real ? "CaseClerk is filing the evidence" : "Staged: on a real case, CaseClerk files the evidence and PayPal returns a debug id here.", inflight: true, fresh: true };
     setExtra((x) => [...x.filter((r) => !(r.kind === "paypal" && r.inflight)), inflight]);
     const clear = () => setExtra((x) => x.filter((r) => !(r.kind === "paypal" && r.inflight)));
 
@@ -201,14 +208,15 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
       fetch(`/api/actions/${a.actionId}/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
         .then(async (r) => {
           const j = (await r.json().catch(() => ({}))) as { status?: number; debugId?: string; at?: string; error?: { code?: string; message?: string; debugId?: string; status?: number } };
-          clear();
           if (!r.ok || (j.status && j.status >= 300)) {
+            clear();
             setError({ name: j.error?.message ?? j.error?.code ?? `HTTP ${r.status}`, debugId: j.error?.debugId ?? j.debugId ?? undefined });
             desk.set(c.id, "failed");
             return;
           }
           const at = j.at ?? new Date().toISOString();
-          setExtra((x) => [...x, { kind: "paypal", at, dir: "out", name: a.name, method: a.method, path: a.path, status: String(j.status ?? 200), debugId: j.debugId ?? undefined, say: "CaseClerk filed the evidence; PayPal answered 200", fresh: true }]);
+          // The in-flight row becomes PayPal's answer in place (same key), in the same render as the sheet's landed line.
+          setExtra((x) => [...x.filter((r) => !(r.kind === "paypal" && r.inflight)), { kind: "paypal", k: `act-${a.name}`, at, dir: "out", name: a.name, method: a.method, path: a.path, status: String(j.status ?? 200), debugId: j.debugId ?? undefined, say: "Filed the evidence" }]);
           landed(at, j.debugId ?? undefined);
           refresh();
         })
@@ -252,10 +260,13 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
   }, [c, desk]);
 
   // Local rows stand in for PayPal's answer until the next poll brings the same debug id from the server.
+  // The server's copy of the filing keeps the local row's key, so the swap is not an exit and an entrance.
+  const sentId = desk.sentAt(c.id)?.debugId;
   const rows: LiveRow[] = useMemo(() => {
     const ids = new Set(c.rows.flatMap((r) => (r.kind === "paypal" && r.debugId ? [r.debugId] : [])));
-    return [...(c.rows as Row[]), ...extra.filter((r) => !(r.kind === "paypal" && r.debugId && ids.has(r.debugId)))];
-  }, [c.rows, extra]);
+    const server = (c.rows as LiveRow[]).map((r) => (r.kind === "paypal" && sentId && r.debugId === sentId ? { ...r, k: `act-${r.name}` } : r));
+    return [...server, ...extra.filter((r) => !(r.kind === "paypal" && r.debugId && ids.has(r.debugId)))];
+  }, [c.rows, extra, sentId]);
   const resolved = phase === "resolved";
   const resolvedEvent = rows.flatMap((r) => (r.kind === "paypal" && r.name === "CUSTOMER.DISPUTE.RESOLVED" && r.eventId ? [r.eventId] : []))[0];
   const sent = phase === "sent" || phase === "landed" || resolved;
@@ -267,7 +278,6 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
     <>
       <Masthead sample={!c.real} />
       <div className={s.desk}>
-        <CaseList current={c.id} />
         <main className={`${s.main} ${approval && !resolved ? s.mainSheet : ""}`} id="case">
           <div className={s.caseGrid}>
             <aside className={s.margin}>
@@ -306,17 +316,21 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
                     <NumberFlow value={Number(c.amount)} format={{ style: "currency", currency: "USD" }} />
                   )}
                 </p>
-                <p className={s.figMeta}>
+                <p className={`${s.figMeta} ${decided && c.real ? s.figMetaEnd : ""}`}>
                   {decided ? (
                     c.real ? (
                       <>
-                        PayPal closed the case on {day(c.ending!.at)} at {clock(c.ending!.at)} PT
-                        {resolvedEvent ? (
-                          <>
-                            , webhook <code className={s.ppId} data-origin="paypal">event {resolvedEvent}</code>
-                          </>
-                        ) : null}
-                        . The agent spent ${(c.costUsd ?? 0).toFixed(2)} on it.
+                        <span>
+                          PayPal closed the case on {day(c.ending!.at)} at {clock(c.ending!.at)} PT
+                          {resolvedEvent ? (
+                            <>
+                              , webhook <code className={s.ppIdWrap} data-origin="paypal">event {resolvedEvent}</code>
+                            </>
+                          ) : null}
+                          . The agent spent ${(c.costUsd ?? 0).toFixed(2)} on it.
+                        </span>
+                        {c.ending!.money ? <span>{c.ending!.money}</span> : null}
+                        {c.ending!.sandbox ? <span className={s.figSandbox}>{c.ending!.sandbox}</span> : null}
                       </>
                     ) : (
                       <>Staged ending. On a real case this is PayPal&apos;s RESOLVED webhook and the money it released.</>

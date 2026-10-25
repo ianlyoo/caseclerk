@@ -37,14 +37,32 @@ export const REPLAY_REAL = "PP-R-NJA-10194486";
 export const isRealId = (id: string) => /^PP-R-[A-Z]{3}-\d{8}$/.test(id);
 
 /**
- * Facts PayPal reported outside this payload (GET /v1/customer/disputes fund movements, read by W1 on Oct 25,
- * see s3/finals/REAL-CASES.md). Only the money line of a resolved case comes from here.
+ * Facts PayPal reported outside this payload: GET /v1/customer/disputes/{id} fund_movements and GET
+ * /v2/payments/captures/{id}, read by W1 on Oct 25 (s3/finals/REAL-CASES.md, "Fund movements"). Only the money lines
+ * of a resolved case come from here. PayPal states no chargeback fee on any of them, and the lines say so.
  */
-const KNOWN: Record<string, { kept: string; ending: string }> = {
+type Money = { gross: string; fee: string; net: string; heldAt: string; releasedAt: string };
+const MONEY: Record<string, Money> = {
+  "PP-R-NJA-10194486": { gross: "389.00", fee: "10.57", net: "378.43", heldAt: "2026-10-25T08:36:50Z", releasedAt: "2026-10-25T08:45:34Z" },
+  "PP-R-LTK-10194490": { gross: "398.00", fee: "10.80", net: "387.20", heldAt: "2026-10-25T09:40:04Z", releasedAt: "2026-10-25T09:55:04Z" },
+  "PP-R-UDP-10194489": { gross: "405.00", fee: "10.98", net: "394.02", heldAt: "2026-10-25T09:40:04Z", releasedAt: "2026-10-25T09:58:34Z" },
+  "PP-R-TZD-10194493": { gross: "402.00", fee: "10.90", net: "391.10", heldAt: "2026-10-25T10:15:34Z", releasedAt: "2026-10-25T10:30:34Z" },
+};
+const KNOWN: Record<string, { kept: string; ending: string; money?: string }> = {
   "PP-R-RCJ-10194476": {
     kept: "26.74",
     ending: "PayPal closed the chargeback and paid the buyer itself. The $26.74 it held from you was released, so you kept it.",
   },
+  ...Object.fromEntries(
+    Object.entries(MONEY).map(([id, m]) => [
+      id,
+      {
+        kept: m.net,
+        ending: `You keep $${m.net}: the $${m.gross} sale less PayPal's usual fee. PayPal paid the buyer itself.`,
+        money: `PayPal held your $${m.net} while it decided, then released all of it. Its usual fee on the sale was $${m.fee}; PayPal shows no chargeback fee and no debit.`,
+      },
+    ]),
+  ),
 };
 
 /** Item photos for real cases, by case id (credited in public/finals/b/CREDITS.md). */
@@ -68,6 +86,7 @@ const CALL_SAY: [RegExp, string][] = [
   [/\/make-offer$/, "Made an offer to the buyer"],
   [/\/send-message$/, "Sent the buyer a message"],
   [/\/v2\/checkout\/orders\//, "Read the order"],
+  [/\/v2\/payments\/captures\//, "Read the payment"],
   [/\/v1\/shipping\/trackers/, "Read the tracking"],
   [/\/v1\/customer\/disputes\/[^/]+$/, "Read the dispute"],
 ];
@@ -75,6 +94,7 @@ const callName = (path: string) => {
   const last = path.split("/").pop() ?? path;
   if (/verify-webhook-signature/.test(path)) return "verify-webhook-signature";
   if (/\/v2\/checkout\/orders\//.test(path)) return "get order";
+  if (/\/v2\/payments\/captures\//.test(path)) return "get capture";
   if (/\/v1\/shipping\/trackers/.test(path)) return "get tracker";
   if (/\/v1\/customer\/disputes\/[^/]+$/.test(path)) return "get dispute";
   return last;
@@ -109,7 +129,7 @@ export function rowsOf(j: ApiCase): Row[] {
       const method = (w.method ?? "GET").toUpperCase() as "GET" | "POST" | "PUT" | "PATCH";
       // A tracker write (PUT/PATCH while filing) is not a read; name it for what it did.
       const write = method !== "GET" && /\/v1\/shipping\/trackers/.test(w.path);
-      const say = write ? "Updated the tracking on PayPal" : CALL_SAY.find(([re]) => re.test(w.path!))?.[1] ?? "Called PayPal";
+      const say = write ? "CaseClerk updated the tracking on the PayPal payment" : CALL_SAY.find(([re]) => re.test(w.path!))?.[1] ?? "Called PayPal";
       const tool = write ? "" : /orders/.test(w.path) ? "tool.get_order" : /trackers/.test(w.path) ? "tool.get_tracking" : "";
       const detail = tool ? auditNear(tool, w.at)?.summary : undefined;
       out.push({
@@ -163,6 +183,13 @@ export function rowsOf(j: ApiCase): Row[] {
   return out.sort((x, y) => Date.parse(x.at) - Date.parse(y.at));
 }
 
+/**
+ * Every resolved real case here was decided through the sandbox simulator: W1's demo script (outside CaseClerk) asked
+ * PayPal's sandbox to decide for the seller (REAL-CASES.md). The resolved screen says so, in PayPal's terms.
+ */
+const sandboxRuling = (outcome?: string) =>
+  `Sandbox ruling: our operator asked PayPal's sandbox to decide for the seller, outside CaseClerk. PayPal recorded ${outcome ?? "the result"}, represented by PayPal. On a live account PayPal decides alone.`;
+
 const ITEM = (o?: OrderContext) => (o?.items?.[0] ? o.items[0].name : "order");
 
 function packOf(j: ApiCase, act?: AgentAction): EvidencePdfInput | undefined {
@@ -203,8 +230,9 @@ export function fromApi(j: ApiCase): Case {
   // The amount is in the figure and the sheet; the headline names the thing instead.
   const lead = `A buyer's bank ${what} the ${said} you sold.`;
   const desk: Desk = resolved ? "won" : waitsForYou ? "approval" : "paypal";
+  const closed = known?.ending ?? outcome;
   const headline = resolved
-    ? `${lead} ${outcome}`
+    ? `${lead} ${closed}`
     : waitsForYou
       ? `${lead} CaseClerk built the evidence; it waits for you.`
       : filed.length
@@ -243,7 +271,7 @@ export function fromApi(j: ApiCase): Case {
     city: "",
     item: o?.items?.[0] ? `${o.items[0].name}${o.items[0].description ? `, ${o.items[0].description}` : ""}` : `PayPal case ${c.id}`,
     short: item.split(",")[0],
-    photo: REAL_PHOTO[c.id],
+    photo: REAL_PHOTO[c.id] ?? (/^Olympus OM-1n/.test(item) ? "om-1n" : undefined),
     amount,
     reason: c.snapshot.reason,
     stage: c.snapshot.stage === "INQUIRY" ? "INQUIRY" : "CHARGEBACK",
@@ -263,7 +291,7 @@ export function fromApi(j: ApiCase): Case {
         ]
       : undefined,
     approval,
-    ending: resolved ? { sentence: known?.ending ?? outcome, kept: known?.kept ?? "", at: resolvedAt } : undefined,
+    ending: resolved ? { sentence: headline, kept: known?.kept ?? "", at: resolvedAt, money: known?.money, sandbox: known ? sandboxRuling(c.snapshot.outcome) : undefined } : undefined,
     pack: packOf(j, lastEvidence),
     packNote: pending ? "Built by the agent. Not filed until you approve." : lastEvidence ? `Filed with PayPal, ${filedWord}.` : undefined,
     costUsd: cost,

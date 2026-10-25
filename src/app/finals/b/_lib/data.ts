@@ -46,7 +46,11 @@ export type Approval = {
   actionId?: string; // real cases: the action POST /api/actions/:id/approve executes
 };
 
-export type Ending = { sentence: string; kept: string; at: string };
+/**
+ * money: how the money moved, in PayPal's own figures (fund movements and the capture), with what PayPal did not state.
+ * sandbox: how the ruling came about when the sandbox simulator was asked for it.
+ */
+export type Ending = { sentence: string; kept: string; at: string; money?: string; sandbox?: string };
 
 export type Case = {
   id: string;
@@ -245,6 +249,8 @@ export function sorted(real: Case[] = []): Case[] {
   return [...real, ...LISTED].sort((a, b) => {
     const r = rank(a) - rank(b);
     if (r) return r;
+    // Real cases waiting for you: the most money first.
+    if (a.real && b.real && a.desk === "approval" && b.desk === "approval") return Number(b.amount) - Number(a.amount);
     if (a.dueAt && b.dueAt) return Date.parse(a.dueAt) - Date.parse(b.dueAt);
     return Date.parse(b.lastAt) - Date.parse(a.lastAt);
   });

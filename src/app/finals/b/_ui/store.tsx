@@ -7,7 +7,8 @@ import type { CaseRecord } from "@/lib/types";
 import { CASES, LISTED, type Case, type Row } from "../_lib/data";
 import { fromApi, fromRecord, SNAPSHOTS } from "../_lib/live";
 
-export type LiveRow = Row & { fresh?: boolean; inflight?: boolean };
+/** k: a stable key, so the in-flight row and PayPal's answer to it are one row that updates in place. */
+export type LiveRow = Row & { fresh?: boolean; inflight?: boolean; k?: string };
 
 /**
  * pending: the sheet is up. undo: 4 s to take it back. sending: the POST is open. landed: PayPal's answer shows in the

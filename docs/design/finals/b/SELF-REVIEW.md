@@ -29,3 +29,16 @@ Rows above that say "brass", "no blue", "Sample case" or "You kept $392.00" desc
 | 9 Rail | The 280 px list shows only ≥ 1680 px; below, the margin pager. | shots |
 | 10 PT, inbox | PT everywhere in the app UI; inbox meta sentence deleted; inbox widened to 1680 px. Exception: the evidence pack reader mirrors the PDF PayPal receives, which `src/lib` writes in UTC (reader/PDF parity kept). | PT check outside the pack |
 | Offer cap | 40 %, as DEFAULT_POLICY. | |
+
+## Judge round 2, B's must-fix list (2026-10-25)
+| # | Fix | Evidence |
+|---|---|---|
+| 1 | Captures from the production build on the Mac (`next start`, no dev badge), stills at DPR 2 (2880 px at 1440, 3840 px at 1920). | `*-1440.png`, `*-1920.png`, `*-390.png`, `case-real.mp4` |
+| 2 | Tracker writes are named by method: a PUT reads "update tracker", "CaseClerk updated the tracking on the PayPal payment". | `check-ui-b.log` (fix 2 PUT label) |
+| 3 | Landing: the headline states what happened on NJA; three-row receipt (CREATED, provide-evidence 200, RESOLVED); primary "Review the $412.00 case waiting for you"; secondary "Open a test dispute" calls the real `POST /api/test-dispute`, shows "PayPal is opening the chargeback. Its webhook usually arrives in 3–5 minutes." and polls until the case appears. Checks mock the route (202 and 429). | `landing-*.png`, `check-ui-b.log` (r2 fix 3) |
+| 4 | Timeline: newest PayPal receipt pinned on top; runs of routine GETs and signature checks fold into one row with its debug id. | `case-*-1440.png`, `check-ui-b.log` (r2 fix 4) |
+| 5 | Phones: no horizontal overflow on any page at 390 (measured against the device width), one short masthead line, ids wrap. | `*-390.png`, `check-ui-b.log` (r2 fix 5) |
+| 6 | Resolved headline from PayPal's fund movements only: "You keep $378.43: the $389.00 sale less PayPal's usual fee. PayPal paid the buyer itself." plus the sandbox-ruling disclosure. | `case-resolved-*.png`, `check-ui-b.log` (r2 fix 6) |
+| 7 | Rail removed; one centred column at 1440 and 1920. | `case-*-1440.png`, `case-*-1920.png`, `check-ui-b.log` (r2 fix 7) |
+| 8 | State sync: the case is held during undo and sending, and the filed row lands in the same frame the bar flips. | `check-ui-b.log` (fix 8), `case-approve-real.log.txt` (TOP AT LANDED) |
+| Ceremony | B3, PP-R-IMW-10194496 ($393.00), one click on the production build: provide-evidence 200, debug id f167343c32e7c. Then a captioned jump to NJA, labelled as a different real case. The LTK round-1 set is kept as `case-approve-real-ltk*`. | `case-approve-real.mp4`, `-before.png`, `-after.png`, `.log.txt` |

@@ -1,6 +1,10 @@
-REAL http://localhost:4102/api/actions/f4a7b703-aa55-4a59-a03d-20ed9574f0cc/approve
-LANDED PayPal answered provide-evidence 200 debug id f9050504c99e6
-BAR Evidence filed with PayPal 02:49:49 PT debug id f9050504c99e6 $398.00 PayPal is deciding
-TOP ROWS Oct 25 02:49:47 PT To PayPal get tracker 204 Read the tracking PUT /v1/shipping/trackers/3XF555001T731522H-9400111899622344435537 debug id f15717752d682 | Oct 25 02:49:47 PT To PayPal get tracker 200 Read the tracking GET /v1/shipping/trackers debug id f4610138c2e08 | Oct 25 02:49:44 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/customer/disputes/PP-R-LTK-10194490/provide-evidence debug id f9050504c99e6
+REAL http://localhost:4102/api/actions/80ededdd-6ac8-4f45-bca1-aa21ac9909f2/approve
+MID sheet: Waiting for youReal PayPal sandbox case At stake File this evidence with PayPal? What PayP | timeline: Oct 25 04:28:37 PT  To PayPal provide-evidence sending
+ANSWER 200 after 5.4 s (response body omitted)
+LANDED PayPal answered provide-evidence 200 debug id f167343c32e7c
+TOP AT LANDED Oct 25 04:28:41 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/customer/disputes/PP-R-IMW-10194496/provide-evidence debug id f167343c32e7c
+BAR Evidence filed with PayPal 04:28:43 PT debug id f167343c32e7c $393.00 PayPal is deciding
+TOP ROWS Oct 25 04:28:41 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/customer/disputes/PP-R-IMW-10194496/provide-evidence debug id f167343c32e7c | Oct 25 04:28:43 PT To PayPal 3 routine calls: update tracker, get tracker debug id f2633787db352 Show | Oct 25 04:28:38 PT You approved the evidence submission
 H1 A buyer's bank charged back the Olympus OM-1n body you sold. CaseClerk filed the evidence on PayPal once, and PayPal is deciding.
-video /Users/youngin/company-work/g251-pm-104-host/ceremony/case-approve-real.mp4 31.1 s, 1841 frames
+LATER H1 A buyer's bank charged back the Olympus OM-1n body you sold. You keep $378.43: the $389.00 sale less PayPal's usual fee. PayPal paid the buyer itself.
+video /Users/youngin/company-work/g251-pm-104-host/ceremony/case-approve-real-b3.mp4 22.3 s (wait for PayPal 5.8 s shown at 2.3x), 1527 frames

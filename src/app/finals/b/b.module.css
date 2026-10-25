@@ -20,7 +20,7 @@
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
   --object: 0 1px 0 #fff inset, 0 1px 1px rgba(22, 20, 15, 0.06), 0 12px 28px -12px rgba(22, 20, 15, 0.28);
-  --list: 280px;
+  --list: 0px; /* the case-list rail is gone at every width; the margin pager carries navigation */
   --mast: 60px;
 
   min-height: 100vh;
@@ -84,7 +84,8 @@
   z-index: 20;
   height: var(--mast);
   display: grid;
-  grid-template-columns: var(--list) 1fr auto;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
   align-items: center;
   padding: 0 32px 0 28px;
   background: var(--paper);
@@ -176,6 +177,14 @@
   color: var(--ink);
   font-size: 14px;
 }
+.liveShort {
+  display: none;
+  font-size: 14px;
+  color: var(--ink2);
+}
+.live[data-live] .liveShort {
+  color: var(--live);
+}
 .live:hover .liveLine code {
   border-bottom: 1px solid var(--ink);
 }
@@ -184,7 +193,7 @@
 
 .desk {
   display: grid;
-  grid-template-columns: var(--list) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   min-height: calc(100vh - var(--mast));
 }
 .list {
@@ -260,12 +269,13 @@
 }
 .caseGrid {
   display: grid;
-  grid-template-columns: 168px minmax(0, 760px);
+  grid-template-columns: 168px minmax(0, 860px);
+  justify-content: center;
   gap: 40px;
 }
 @media (min-width: 1800px) {
   .caseGrid {
-    grid-template-columns: 184px minmax(0, 880px);
+    grid-template-columns: 184px minmax(0, 860px);
     gap: 56px;
   }
 }
@@ -389,6 +399,20 @@
   color: var(--ink2);
   line-height: 1.5;
   padding-bottom: 2px;
+}
+.figMetaEnd {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.figSandbox {
+  font-size: 14px;
+  color: var(--ink3);
+}
+.ppIdWrap {
+  color: var(--pp);
+  overflow-wrap: anywhere;
 }
 .keptRule {
   position: absolute;
@@ -587,11 +611,36 @@
   font-size: 14px;
 }
 .ppPath {
-  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 .ppId {
   color: var(--pp);
   white-space: nowrap;
+}
+.fold {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  width: 100%;
+  text-align: left;
+  padding-left: 14px;
+  border-left: 2px solid var(--pp);
+  color: var(--ink2);
+}
+.foldSay code {
+  font-size: 15px;
+  color: var(--ink2);
+}
+.foldTog {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--hair);
+  transition: border-color 160ms var(--ease-out);
+}
+.fold:hover .foldTog {
+  border-bottom-color: var(--ink);
 }
 .pp[data-sample] {
   border-left: 2px dashed var(--ink3);
@@ -644,15 +693,17 @@
   color: var(--sheet-ink);
   box-shadow: 0 -18px 40px -24px rgba(20, 18, 14, 0.55);
 }
+/* The sheet's content lines up with the centred case column above it. */
 .sdInner {
-  max-width: calc(168px + 40px + 760px);
+  max-width: calc(168px + 40px + 860px);
+  margin: 0 auto;
   padding: 16px 48px 18px;
   display: grid;
   gap: 12px;
 }
 @media (min-width: 1800px) {
   .sdInner {
-    max-width: calc(184px + 56px + 880px);
+    max-width: calc(184px + 56px + 860px);
   }
 }
 .sdTop {
@@ -1239,6 +1290,8 @@
   flex-wrap: wrap;
 }
 .ctaBtn {
+  display: inline-flex;
+  align-items: center;
   height: 56px;
   padding: 0 28px;
   background: var(--ink);
@@ -1254,6 +1307,56 @@
 .ctaNote {
   font-size: 15px;
   color: var(--ink2);
+}
+.test {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.ghostBtn {
+  height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--ink);
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: background-color 160ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.ghostBtn:hover {
+  background: var(--raised);
+}
+.ghostBtn:active {
+  transform: scale(0.98);
+}
+.ghostBtn:disabled {
+  color: var(--ink2);
+  border-color: var(--ink3);
+}
+.testErr {
+  font-size: 15px;
+  color: var(--verm);
+  max-width: 46ch;
+}
+.drawer summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 15px;
+  color: var(--ink);
+  padding: 4px 0;
+}
+.drawer summary::-webkit-details-marker {
+  display: none;
+}
+.drawer summary::after {
+  content: " ▸";
+  color: var(--ink3);
+}
+.drawer[open] summary::after {
+  content: " ▾";
+}
+.drawer[open] summary {
+  margin-bottom: 10px;
 }
 .stages {
   background: var(--well);
@@ -1320,21 +1423,8 @@
 
 /* ---------------------------------------------------------------- narrow screens */
 
-/* Below 1680 px the case list rail goes; the margin pager (previous / next) carries the navigation. */
-@media (max-width: 1679px) {
-  .root {
-    --list: 0px;
-  }
-  .mast {
-    grid-template-columns: auto 1fr auto;
-    gap: 24px;
-  }
-  .desk {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .list {
-    display: none;
-  }
+.list {
+  display: none;
 }
 @media (max-width: 1180px) {
   .land {
@@ -1364,11 +1454,12 @@
     border-left: 0;
     padding: 0;
   }
-  .liveHead {
+  .liveHead,
+  .liveLine {
     display: none;
   }
-  .liveLine code {
-    display: none;
+  .liveShort {
+    display: block;
   }
   .main,
   .inbox {
@@ -1393,7 +1484,9 @@
   .figureRow {
     margin-top: 14px;
     padding-bottom: 14px;
-    gap: 16px;
+    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
   }
   .tlRow {
     grid-template-columns: 1fr;
@@ -1402,6 +1495,10 @@
   .tlTime {
     display: flex;
     gap: 8px;
+  }
+  .ppId {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   .sdInner {
     padding: 14px 16px 16px;

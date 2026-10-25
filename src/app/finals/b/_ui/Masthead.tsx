@@ -87,6 +87,10 @@ export function LiveState({ sample = false }: { sample?: boolean }) {
         <span className={s.liveLine}>
           last real webhook <code>{w.eventType}</code> {now === null ? at : ago(w.at, now)}, <code>{caseId}</code>
         </span>
+        {/* Phones get one short line instead of the long one cut off mid-sentence. */}
+        <span className={s.liveShort}>
+          {sample ? "Staged sample, real webhook" : live ? "Live on PayPal sandbox, last webhook" : "PayPal sandbox, last webhook"} {now === null ? at : ago(w.at, now)}
+        </span>
       </span>
     </Link>
   );
