@@ -1,0 +1,57 @@
+{
+  "PP-R-XWW-10194440": {
+    "id": "PP-R-XWW-10194440",
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    "stage": "CHARGEBACK",
+    "channel": "EXTERNAL",
+    "amount": {
+      "currency_code": "USD",
+      "value": "12.00"
+    },
+    "messages": []
+  },
+  "PP-R-SNX-10194442": {
+    "id": "PP-R-SNX-10194442",
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "stage": "CHARGEBACK",
+    "channel": "EXTERNAL",
+    "amount": {
+      "currency_code": "USD",
+      "value": "5.00"
+    },
+    "messages": []
+  },
+  "PP-R-ACH-10194448": {
+    "id": "PP-R-ACH-10194448",
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "stage": "CHARGEBACK",
+    "channel": "EXTERNAL",
+    "amount": {
+      "currency_code": "USD",
+      "value": "43.95"
+    },
+    "messages": []
+  },
+  "PP-R-RTS-10194447": {
+    "id": "PP-R-RTS-10194447",
+    "reason": "OTHER",
+    "stage": "CHARGEBACK",
+    "channel": "EXTERNAL",
+    "amount": {
+      "currency_code": "USD",
+      "value": "4.00"
+    },
+    "messages": []
+  },
+  "PP-R-ADC-10194432": {
+    "id": "PP-R-ADC-10194432",
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    "stage": "CHARGEBACK",
+    "channel": "EXTERNAL",
+    "amount": {
+      "currency_code": "USD",
+      "value": "12.00"
+    },
+    "messages": []
+  }
+}

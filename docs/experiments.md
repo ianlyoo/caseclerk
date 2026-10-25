@@ -104,3 +104,13 @@ Dispute PP-R-ADC-10194432 (all calls 200; seconds from creation 11:33:14):
 4. ~~Vercel env `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET`~~: set by Rhea; `verify=SUCCESS` confirmed (criterion 2).
 5. **Inquiry disputes (send-message / make-offer)**: tick **Log in with PayPal** on the sandbox app `CaseClerk` (developer.paypal.com → Apps & Credentials → CaseClerk → Features), set a return URL, and have the sandbox buyer `sb-7qeht53532609@personal.example.com` grant consent once (needs that buyer's sandbox login, an owner step). Then retry route (a). Follow-up: the step list for the browser worker is in the worker dir `CONSENT.md`. The code is on `spike`: `/api/paypal/consent-start` (302 to the sandbox `/connect/` consent URL, with a state cookie) and `/api/paypal/consent-callback` (state check, code exchange, shows the granted dispute scopes; never shows or logs tokens). Both are deployed and smoke-tested (302, and a bogus state gives 400 `CONSENT_STATE_MISMATCH`). Alternative: the owner opens one INR case in the sandbox buyer UI (route c).
 6. Decide how the demo shows `RESOLVED_WITH_PAYOUT` (chargeback "won").
+
+## Triage check
+
+Run 2026-10-25 04:12 UTC by W2 (`eval/triage.ts`). 15 disputes labelled by hand before the run (`eval/data/triage-cases.json`): 5 real sandbox chargebacks (snapshots in `eval/data/sandbox-snapshots.json`) and 10 synthetic inquiry-stage buyer texts, incl. 2 where the buyer's words contradict PayPal's reason code. Order: Haiku 5.5 medium → Haiku 5.5 high → Sonnet 5.5 low → Sonnet 5.5 medium, stop at the first all-correct.
+
+| Model | Effort | Correct | Cost | Misses |
+|---|---|---|---|---|
+| claude-haiku-5-5 | medium | 15/15 | $0.0016 | — |
+
+**Pick: `claude-haiku-5-5` effort `medium` (15/15).** Set in `src/lib/agent/config.ts` (`triageModel`, `triageEffort`). Eval cost $0.0016.
