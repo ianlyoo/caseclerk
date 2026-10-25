@@ -55,6 +55,8 @@ type Ctx = {
   txns?: TransactionFacts[];
   decision?: Decision;
   acted: { kind: string; result: SubmitResult }[];
+  /** A write found its PayPal link gone; stop and let the next update resume. */
+  halted?: boolean;
   costUsd: number;
 };
 
@@ -97,8 +99,15 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
     return { status: "waiting", summary: "Awaiting approval", costUsd: 0 };
   }
   const actionable = snap.allowed.some((r) => ACTIONABLE_RELS.includes(r));
+  const waitKey = `${snap.status}|${[...snap.allowed].sort().join(",")}`;
   if (!actionable && c.triage) {
-    await finish("waiting_on_paypal", `${statusLine(snap)} No action is open to the seller right now.`, 0);
+    // e.g. reason-OTHER chargebacks PayPal leaves in UNDER_REVIEW: each UPDATED event changes only the
+    // timestamp. Note the wait once per (status, links); after that stay silent and call no model.
+    const lastDone = [...history].reverse().find((e) => e.kind === "agent.run.done");
+    if (lastDone?.data?.waitKey === waitKey && (c.status === "waiting_on_paypal" || c.status === "triaged")) {
+      return { status: "skipped", summary: "Still waiting on PayPal; nothing actionable changed", costUsd: 0 };
+    }
+    await finish("waiting_on_paypal", `${statusLine(snap)} No action is open to the seller right now.`, 0, { waitKey });
     return { status: "waiting", summary: "Waiting on PayPal", costUsd: 0 };
   }
 
@@ -130,13 +139,14 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
     }
 
     if (!actionable) {
-      await finish("triaged", `${statusLine(snap)} No action is open to the seller yet; the agent continues when PayPal updates the case.`, ctx.costUsd);
+      await finish("triaged", `${statusLine(snap)} No action is open to the seller yet; the agent continues when PayPal updates the case.`, ctx.costUsd, { waitKey });
       return { status: "waiting", summary: "Triaged; waiting on PayPal", costUsd: ctx.costUsd };
     }
 
     await decideAndAct(ctx, actions, trigger);
     const status = caseStatusAfterRun(ctx);
-    await finish(status, runSummary(ctx), ctx.costUsd, { strategy: ctx.decision?.strategy });
+    // Writes move the dispute on; record the version we last saw so our own UPDATED echo is skipped.
+    await finish(status, runSummary(ctx), ctx.costUsd, { strategy: ctx.decision?.strategy, updateTime: ctx.snap.updateTime });
     return { status: "done", summary: runSummary(ctx), costUsd: ctx.costUsd };
   } catch (e) {
     if (e instanceof SpendCapError) {
@@ -205,14 +215,15 @@ async function decideAndAct(ctx: Ctx, priorActions: Awaited<ReturnType<AgentDeps
     if (message.stop_reason === "refusal") throw new Error("The model declined this request");
     if (!uses.length) break;
 
-    const results: Anthropic.ToolResultBlockParam[] = [];
+    // Run in a safe order (offer before message, see WRITE_ORDER); answer in the model's order.
+    const byId = new Map<string, Anthropic.ToolResultBlockParam>();
     let hadError = false;
-    for (const u of uses) {
+    for (const u of [...uses].sort((a, b) => writeRank(a.name) - writeRank(b.name))) {
       const r = await runTool(ctx, u.name, (u.input ?? {}) as Record<string, unknown>);
       hadError ||= !!r.isError;
-      results.push({ type: "tool_result", tool_use_id: u.id, content: JSON.stringify(r.content), ...(r.isError ? { is_error: true } : {}) });
+      byId.set(u.id, { type: "tool_result", tool_use_id: u.id, content: JSON.stringify(r.content), ...(r.isError ? { is_error: true } : {}) });
     }
-    messages.push({ role: "user", content: results });
+    messages.push({ role: "user", content: uses.map((u) => byId.get(u.id)!) });
 
     if (isFinished(ctx, uses, hadError)) break;
     if (turn === cfg.maxTurns) {
@@ -223,6 +234,7 @@ async function decideAndAct(ctx: Ctx, priorActions: Awaited<ReturnType<AgentDeps
 
 /** Done when a decision exists and either nothing is left to do or the matching action went through the gate. */
 function isFinished(ctx: Ctx, uses: Anthropic.ToolUseBlock[], hadError: boolean): boolean {
+  if (ctx.halted) return true;
   if (!ctx.decision || hadError) return false;
   if (ctx.decision.strategy === "wait") return true;
   if (!writeToolsFor(ctx.decision.strategy, ctx.snap).length) return true;
@@ -386,11 +398,46 @@ function writeToolsFor(strategy: Decision["strategy"], snap: DisputeSnapshot): s
   );
 }
 
+/**
+ * Inquiry turn-taking (seen live, PP-R-CTQ-10194465): a buyer message hands the turn to the buyer and
+ * PayPal then refuses make-offer with 422. So reads run first, then the offer, and a separate message
+ * goes only when no offer is made; the offer's note already reaches the buyer.
+ */
+const WRITE_ORDER = ["provide_evidence", "accept_claim", "make_offer", "acknowledge_return_item", "send_message"];
+
+function writeRank(name: string): number {
+  const i = WRITE_ORDER.indexOf(name);
+  return i < 0 ? -1 : i;
+}
+
+function offerInFlight(ctx: Ctx): boolean {
+  return ctx.acted.some(
+    (a) => a.kind === "make_offer" && a.result.outcome !== "blocked" && a.result.outcome !== "duplicate" && a.result.action?.status !== "failed",
+  );
+}
+
 async function toolWrite(ctx: Ctx, name: string, input: Record<string, unknown>): Promise<ToolOut> {
   const d = ctx.decision;
   if (!d) return { content: { error: "Call record_decision before any write action." }, isError: true };
   if (!TOOL_STRATEGIES[name].includes(d.strategy)) {
     return { content: { error: `${name} doesn't fit the final strategy "${d.strategy}".` }, isError: true };
+  }
+  if (name === "send_message" && (d.strategy === "offer_partial" || offerInFlight(ctx))) {
+    await audit(ctx.deps, ctx.c.id, "agent", "action.skipped", "Held the separate buyer message: the offer's note already reaches the buyer", {
+      tool: name,
+    });
+    return { content: { outcome: "skipped", detail: "Not sent: the offer note already reaches the buyer, and a message would hand the turn to the buyer before the offer." } };
+  }
+  // PayPal's links change after every write; act only on what it allows right now.
+  await refreshSnapshot(ctx);
+  const rel = REL_FOR_TOOL[name];
+  if (rel && !(ctx.snap.allowed as string[]).includes(rel)) {
+    ctx.halted = true;
+    await audit(ctx.deps, ctx.c.id, "agent", "action.blocked", `Didn't queue the ${ACTION_LABEL[name as keyof typeof ACTION_LABEL]}: PayPal no longer allows it (${statusLine(ctx.snap)})`, {
+      tool: name,
+      allowed: ctx.snap.allowed,
+    });
+    return { content: { outcome: "blocked", detail: `PayPal no longer allows ${rel}; dispute is ${ctx.snap.status}. Stop; the next update resumes the case.` } };
   }
   const money = (n: number): Money => ({ value: n.toFixed(2), currency_code: ctx.snap.amount.currency_code });
   let a: ActionParams;
@@ -431,6 +478,16 @@ async function toolWrite(ctx: Ctx, name: string, input: Record<string, unknown>)
     content: { outcome: r.outcome, status: "action" in r ? r.action?.status : undefined, detail: r.reason },
     ...(ok ? {} : { isError: true }),
   };
+}
+
+async function refreshSnapshot(ctx: Ctx) {
+  try {
+    const snap = await ctx.deps.paypal.getDispute(ctx.c.id);
+    ctx.c = (await ctx.deps.db.cases.upsertFromSnapshot(snap)).record;
+    ctx.snap = snap;
+  } catch {
+    // Keep the snapshot we have; the policy gate still checks its links.
+  }
 }
 
 async function buildEvidence(ctx: Ctx, input: Record<string, unknown>) {

@@ -158,8 +158,28 @@ export type PaypalCalls = { name: string; args: unknown[] }[];
 
 export function fakePaypal(state: { snap: DisputeSnapshot; tracking?: TrackingInfo[] }) {
   const calls: PaypalCalls = [];
+  // Like PayPal: a write needs its link right now (else 422), and on an inquiry a message or an offer
+  // hands the turn to the buyer, which removes make_offer/send_message (seen live on PP-R-CTQ-10194465).
+  const REL: Record<string, string> = {
+    sendMessage: "send_message",
+    makeOffer: "make_offer",
+    provideEvidence: "provide_evidence",
+    acceptClaim: "accept_claim",
+    acknowledgeReturn: "acknowledge_return_item",
+  };
   const ok = async (name: string, ...args: unknown[]) => {
+    if (!(state.snap.allowed as string[]).includes(REL[name])) {
+      throw Object.assign(new Error("422 ACTION_NOT_ALLOWED_IN_CURRENT_DISPUTE_STATE"), { status: 422, issue: "ACTION_NOT_ALLOWED_IN_CURRENT_DISPUTE_STATE" });
+    }
     calls.push({ name, args });
+    if ((name === "sendMessage" || name === "makeOffer") && state.snap.stage === "INQUIRY") {
+      state.snap = {
+        ...state.snap,
+        status: "WAITING_FOR_BUYER_RESPONSE",
+        allowed: state.snap.allowed.filter((r) => r !== "send_message" && r !== "make_offer"),
+        updateTime: new Date(Date.parse(state.snap.updateTime) + 60_000).toISOString(),
+      };
+    }
     return { status: 200, debugId: `dbg-${calls.length}` };
   };
   const pp: PaypalPort & { calls: PaypalCalls } = {
