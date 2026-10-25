@@ -154,6 +154,7 @@ async function pageChecks(browser) {
       const { ctx, page, status, errs } = await open(browser, vp, p);
       const tag = `${name} @${vp}`;
       out(status === 200 && errs.length === 0, `${tag}: loads without errors`, errs[0]);
+      if (name === "landing") await page.waitForTimeout(9500); // the replay of the real case runs 9 s
       const c = await page.evaluate(probeColours);
       out(c.darkOutside.length === 0, `${tag}: G5 one dark surface, only the decision sheet`, c.darkOutside.join(", "));
       out(c.blue.length === 0, `${tag}: B no blue or teal anywhere (G6/G20 for B)`, c.blue.join("; "));
@@ -173,7 +174,6 @@ async function pageChecks(browser) {
       const bad7 = lines.filter((l) => !l.ok || /claude-|\$0\.|Triage|policy/.test(l.text));
       out(bad7.length === 0, `${tag}: G7 PayPal rows are PayPal-only`, `${bad7.length} of ${lines.length}`);
       if (vp === 1440 && ["landing", "inbox", "case-real"].includes(name)) {
-        if (name === "landing") await page.waitForTimeout(9500); // let the 9 s replay of the real case finish
         const f = await page.evaluate(probeFirstScreen);
         out(f.event && f.debug && f.cents && (name !== "landing" || f.replay), `${tag}: G13 first screen shows a webhook, a debug id >= 14 px and cents`, JSON.stringify(f));
       }
@@ -184,6 +184,8 @@ async function pageChecks(browser) {
         const sheet = await page.locator("[data-sheet]").boundingBox();
         const okFold = box && box.y + box.height <= h && amt && amt.y >= 0 && amt.y + amt.height <= h;
         out(okFold, `${tag}: G14 the amount and Approve on the first screen`, box ? `button bottom ${Math.round(box.y + box.height)} of ${h}, sheet ${Math.round(sheet.height)} px` : "no button");
+        const fit = await page.locator("[data-sheet] button[data-phase]").evaluate((b) => b.scrollWidth <= b.clientWidth && b.scrollHeight <= b.clientHeight && b.getClientRects().length === 1 && b.querySelector("[class*=approveText]").getClientRects().length === 1 && parseFloat(getComputedStyle(b).height) >= 44);
+        out(fit, `${tag}: G14 the Approve label sits on one line inside the button`);
         const btn = await page.locator("[data-sheet] button[data-phase]").innerText();
         out(/\$412\.00/.test(btn), `${tag}: G14 the button names the amount`, btn);
       }
