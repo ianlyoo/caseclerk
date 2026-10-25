@@ -5,4 +5,6 @@ unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_CUSTOM_HEADERS ANTHROPIC
 set -a; . "${CASECLERK_ENV:-/srv/company/work/g251-pm-104/secrets/caseclerk.env}"; set +a
 unset ANTHROPIC_API_KEY
 cd "$(dirname "$0")"
+# Non-secret sandbox account emails (gitignored local file)
+if [ -f .env.spike ]; then set -a; . ./.env.spike; set +a; fi
 exec node "$@"

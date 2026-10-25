@@ -20,11 +20,20 @@ Worker: g251 spike, branch `spike`. Times KST. Started 10:16.
 | V2 | `vercel deploy` from a `git archive` export (no git metadata) | Works (preview) | dpl for caseclerk-kzdxmqjx9 (Ready) |
 | V3 | Turbopack build (`next build`, Next 16 default) | **OOM SIGKILL** in Vercel's 8 GB builder, ~56 s in, while bundling the 4.6 MB obfuscated Bryntum ESM | caseclerk-4km8xw4ln (Error) |
 | V4 | Webpack build (`next build --webpack`) | **Ready**, build 34 s; routes: `/`, `/board` static, `/api/webhooks/paypal` dynamic | caseclerk-kzdxmqjx9 |
-| V5 | Preview reachability | 302 → Vercel SSO login on every path (Deployment Protection `all_except_custom_domains`). PayPal can't deliver webhooks until changed | curl 2026-10-25 10:3x |
+| V5 | Preview reachability | 302 → Vercel SSO login on every path (Deployment Protection `all_except_custom_domains`) | curl 2026-10-25 10:3x |
+| V6 | Deployment Protection off | The PM ran `vercel project protection disable caseclerk --sso` (~11:1x) → `ssoProtection: null`; previews return 200 publicly (judges need a public demo anyway) | curl 11:2x: `/`, `/board`, `/api/webhooks/paypal` → 200 |
+| V7 | Git deploys with the GitHub noreply author `ianlyoo <25081480+ianlyoo@users.noreply.github.com>` | **Works**: push of 6de901c → preview `caseclerk-pi3hwgaqy` Ready (build ~2 min); 14d72a3 → `caseclerk-qtkno4f3v` Ready. `vercel deploy` (git-less) no longer needed | Vercel deployments API, GitHub status "Vercel success" |
+| V8 | Failed deployments serve HTTP 200 | `caseclerk-4km8xw4ln` (the OOM build) answers 200 with Vercel's error HTML on every path: check the body or deployment state, not the status code | curl 11:2x |
+
+### Criterion 4 — Bryntum Scheduler trial on the preview: **worked**
+- `/board` on `caseclerk-qtkno4f3v` (commit 14d72a3): 3 dispute rows, 3 bars on a deadline timeline, no console errors. Headless Playwright on the Mac (fresh context, temp dir removed): page ready in 3.8 s, `.b-sch-event` = 3. Screenshot: `docs/spike/board-2026-10-25.png`.
+- Trial watermark: diagonal "Bryntum" / "Trial Version" text tiled across the timeline background (visible but light). Fine for the demo; the license question goes to the sponsor-prize rules.
+- Bundle: Bryntum chunk is 1,395 KB over the wire (compressed), loaded only on `/board` via `next/dynamic({ ssr:false })`; no SSR issues once client-only.
+- Build: **Turbopack OOM** (V3) → `next build --webpack` required (V4). Install needs the npm alias `@bryntum/scheduler@npm:@bryntum/scheduler-trial@7.3.7`; postinstall scripts of `@bryntum/scheduler-trial(-lib)` run on Vercel (npm warns "not yet covered by allowScripts", still fine).
 
 ### Criterion 5 — Vercel Hobby limits
 - maxDuration: Hobby with fluid compute = default 300 s, max 300 s (vercel.com/docs/functions/limitations, read 2026-10-25). The webhook route sets `maxDuration = 60`.
-- Cold start of the webhook route: **not measured yet** (preview not reachable, V5).
+- Cold start of the webhook route (fresh deployment `pi3hwgaqy`, GET probe from Oracle/KR): first call TTFB 0.76 s (`coldStart:true`), warm 0.28–0.84 s. Functions run in **hkg1** (Vercel log `region:hkg1`, `nodejs24.x`), not iad1. POST with no PayPal env → 503 in 0.68 s, log line seen in `vercel logs`.
 - A ~60 s agent run fits inside 300 s. Still, ack the webhook at once and run the agent in `after()` (Next 16) / `waitUntil` (@vercel/functions): PayPal expects a fast 2xx and retries otherwise.
 - Request body limit 4.5 MB: evidence uploads must stay under it (PM delta 2).
 
@@ -42,6 +51,6 @@ Worker: g251 spike, branch `spike`. Times KST. Started 10:16.
 - require-evidence `{action: SELLER_EVIDENCE}` and adjudicate `{adjudication_outcome: SELLER_FAVOR}`: only when status `UNDER_REVIEW` and the matching HATEOAS link is present.
 
 ### Open items
-1. **Vercel Deployment Protection** on project `caseclerk` (owner decision; my API change to `ssoProtection: null` was refused by the permission guard): either turn Vercel Authentication off for this project (Settings → Deployment Protection; there's no "production only" option), or create a Protection Bypass for Automation and register the webhook as `…/api/webhooks/paypal?x-vercel-protection-bypass=<secret>` (then that URL is a secret held by PayPal). URL: https://vercel.com/ianlyoo0412-4658s-projects/caseclerk/settings/deployment-protection
-2. **Vercel ↔ Git author**: link `ahnryu0412@gmail.com` / GitHub `ianlyoo` to the Vercel login (or commit as the Vercel account's email) so pushes to `spike` deploy; until then deploy from a `git archive` export.
+1. ~~Vercel Deployment Protection~~: done by the PM (V6).
+2. ~~Vercel ↔ Git author~~: fixed by committing as the GitHub noreply address (V7).
 3. PayPal sandbox keys in the env file + sandbox account emails (PM delta pending). Vercel env (Rhea): `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`; me: `PAYPAL_WEBHOOK_ID`.
