@@ -165,6 +165,45 @@ describe("POST /api/webhooks/paypal", () => {
 
     m.verify.mockResolvedValueOnce({ verified: false, status: "FAILURE" });
     await post();
-    expect((await db.wire.listByCase(DISPUTE_ID)).at(-1)).toMatchObject({ kind: "event", verify: "FAILURE", status: 401 });
+    expect(await db.wire.listByCase(DISPUTE_ID)).toHaveLength(5); // the forged one stays off the wire
+    expect((await db.wire.listByCase(DISPUTE_ID, { includeUnverified: true })).at(-1)).toMatchObject({ kind: "event", verify: "FAILURE", status: 401 });
+  });
+
+  it("never stores a case, runs the agent or shows a row for a forged delivery", async () => {
+    // A forged POST: the signature check itself calls PayPal, which answers FAILURE.
+    const { paypalFetch } = await import("@/lib/paypal/client");
+    const forged = [
+      { verified: false, status: "FAILURE" },
+      { verified: false, status: "MISSING_HEADER" },
+      { verified: true, status: "FAILURE" }, // a malformed result must not pass either
+    ];
+    for (const v of forged) {
+      m.verify.mockImplementationOnce(async () => {
+        await paypalFetch("/v1/notifications/verify-webhook-signature", { method: "POST" });
+        return v;
+      });
+      expect((await post()).status).toBe(401);
+    }
+    m.verify.mockRejectedValueOnce(new Error("verify blew up"));
+    expect((await post()).status).toBe(401);
+    m.verify.mockResolvedValueOnce({ verified: false, status: "NOT_CONFIGURED" });
+    expect((await post()).status).toBe(503);
+    await flushAfter();
+
+    expect(await db.cases.get(DISPUTE_ID)).toBeNull();
+    expect(await db.audit.listByCase(DISPUTE_ID)).toEqual([]);
+    expect(m.runAgent).not.toHaveBeenCalled();
+    expect(m.paypalFetch).not.toHaveBeenCalledWith(`/v1/customer/disputes/${DISPUTE_ID}`, undefined);
+    expect(await db.wire.listByCase(DISPUTE_ID)).toEqual([]);
+    expect(await db.wire.listRecent()).toEqual([]);
+    const stored = await db.wire.listRecent({ includeUnverified: true });
+    expect(stored.filter((w) => w.kind === "event").map((w) => w.verify)).toEqual(["FAILURE", "MISSING_HEADER", "FAILURE", "ERROR", "NOT_CONFIGURED"]);
+    expect(stored.filter((w) => w.kind === "call")).toHaveLength(3);
+    expect(stored.every((w) => w.verify !== "SUCCESS" && w.verify !== "PENDING")).toBe(true);
+
+    // The real delivery afterwards still goes through (the forged ones didn't burn its event id).
+    expect((await post()).status).toBe(200);
+    await flushAfter();
+    expect(m.runAgent).toHaveBeenCalledTimes(1);
   });
 });

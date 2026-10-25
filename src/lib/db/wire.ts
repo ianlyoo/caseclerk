@@ -12,12 +12,19 @@ import { setPayPalCallObserver, type PayPalCall } from "@/lib/paypal/client";
 import { actions, wire } from "./index";
 import type { NewWireEntry, WireEntry, WireOrigin } from "./repo";
 
-export type WireContext = { origin: WireOrigin; caseId?: string; /** ids of the call rows written so far */ rowIds: string[] };
+export type WireContext = {
+  origin: WireOrigin;
+  caseId?: string;
+  /** Set while checking a webhook signature: written on each call row (PENDING), stamped with the result after. */
+  verify?: string;
+  /** ids of the call rows written so far */
+  rowIds: string[];
+};
 
 const als = new AsyncLocalStorage<WireContext>();
 
 /** Runs fn with PayPal calls attributed to `origin` (and `caseId` when the path doesn't name a dispute). */
-export function withWire<T>(ctx: { origin: WireOrigin; caseId?: string }, fn: (ctx: WireContext) => Promise<T>): Promise<T> {
+export function withWire<T>(ctx: { origin: WireOrigin; caseId?: string; verify?: string }, fn: (ctx: WireContext) => Promise<T>): Promise<T> {
   const store: WireContext = { ...ctx, rowIds: [] };
   return als.run(store, () => fn(store));
 }
@@ -48,6 +55,7 @@ export async function recordPayPalCall(c: PayPalCall): Promise<void> {
     ...(c.debugId ? { debugId: c.debugId } : {}),
     durationMs: c.durationMs,
     at: c.at,
+    ...(ctx?.verify ? { verify: ctx.verify } : {}),
   });
   ctx?.rowIds.push(row.id);
   if (caseId && c.method === "POST" && c.path.endsWith("/provide-evidence") && c.body instanceof FormData) {
@@ -78,11 +86,17 @@ async function attachFiling(caseId: string, c: PayPalCall, form: FormData): Prom
 }
 
 /**
- * One webhook delivery, written at receipt (so it sorts before the calls made while handling it);
- * finish it with wire.update(id, { status, verify, durationMs, detail }).
+ * One webhook delivery, written at receipt (so it sorts before the calls made while handling it)
+ * with verify PENDING, which keeps it off the public wire until stampVerify marks it SUCCESS.
+ * Finish it with wire.update(id, { status, durationMs, detail }).
  */
-export async function recordWebhookEvent(e: Omit<NewWireEntry, "kind" | "origin">): Promise<WireEntry> {
-  return wire.append({ ...e, kind: "event", origin: "webhook" });
+export async function recordWebhookEvent(e: Omit<NewWireEntry, "kind" | "origin" | "verify">): Promise<WireEntry> {
+  return wire.append({ ...e, kind: "event", origin: "webhook", verify: "PENDING" });
+}
+
+/** Stamps the signature result on a delivery's event row and the calls made to check it. */
+export async function stampVerify(rowIds: string[], verify: string): Promise<void> {
+  await Promise.all(rowIds.map((id) => wire.update(id, { verify })));
 }
 
 setPayPalCallObserver(recordPayPalCall);

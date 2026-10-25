@@ -15,6 +15,12 @@ export function wireRecentLimit(limit: number | undefined): number {
   return Math.min(clampLimit(limit, 50), 200);
 }
 
+/** Wire rows shown by default: ordinary calls, and deliveries (plus their verify calls) PayPal signed. */
+export function isVerifiedWire(w: { verify?: string }): boolean {
+  return w.verify === undefined || w.verify === "SUCCESS";
+}
+export const VERIFIED_WIRE_SQL = `(verify IS NULL OR verify = 'SUCCESS')`;
+
 /** True when `next` should replace `prev` (same or newer PayPal update_time). */
 export function isNewerSnapshot(prev: DisputeSnapshot, next: DisputeSnapshot): boolean {
   const a = Date.parse(prev.updateTime);

@@ -212,6 +212,24 @@ export function repoContract(name: string, make: () => Promise<Repo>, uniq: () =
       expect((await db.wire.listByCase(id))[0]).toMatchObject({ kind: "event", status: 200, verify: "SUCCESS", durationMs: 42, detail: { result: "processed" } });
     });
 
+    it("hides unverified webhook rows from the wire unless asked", async () => {
+      const id = `PP-R-WV-${u}`;
+      const at = new Date(Date.now() - 1000).toISOString();
+      const ok = await db.wire.append({ kind: "event", origin: "webhook", caseId: id, verify: "SUCCESS", at });
+      const forged = await db.wire.append({ kind: "event", origin: "webhook", caseId: id, verify: "PENDING", at });
+      const check = await db.wire.append({ kind: "call", origin: "webhook", caseId: id, path: "/v1/notifications/verify-webhook-signature", verify: "PENDING", at });
+      const plain = await db.wire.append({ kind: "call", origin: "agent", caseId: id, path: "/v1/x", status: 200, at });
+      expect((await db.wire.listByCase(id)).map((w) => w.id)).toEqual([ok.id, plain.id]); // pending: hidden
+      await db.wire.update(forged.id, { verify: "FAILURE", status: 401 });
+      await db.wire.update(check.id, { verify: "FAILURE" });
+      const since = new Date(Date.parse(at) - 1).toISOString();
+      const mine = (rows: { caseId?: string; id: string }[]) => rows.filter((w) => w.caseId === id).map((w) => w.id);
+      expect(mine(await db.wire.listRecent({ since, limit: 200 }))).toEqual([ok.id, plain.id]);
+      expect((await db.wire.listByCase(id)).map((w) => w.id)).toEqual([ok.id, plain.id]);
+      expect((await db.wire.listByCase(id, { includeUnverified: true })).map((w) => w.id)).toEqual([ok.id, forged.id, check.id, plain.id]);
+      expect(mine(await db.wire.listRecent({ since, limit: 200, includeUnverified: true }))).toHaveLength(4);
+    });
+
     it("stores the policy", async () => {
       const before = await db.policy.get();
       const p = { ...DEFAULT_POLICY, approvalAboveUsd: 75 + Math.floor(Math.random() * 10) };

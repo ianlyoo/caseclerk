@@ -171,7 +171,10 @@ export type WireEntry = {
   durationMs?: number;
   eventId?: string;
   eventType?: string;
-  /** Webhook signature verification result, e.g. SUCCESS, FAILURE. */
+  /**
+   * Webhook signature result on a delivery, and on the calls made while checking it: PENDING until
+   * known, then SUCCESS, FAILURE, NOT_CONFIGURED, ... Unset on ordinary calls.
+   */
   verify?: string;
   detail?: Record<string, unknown>;
 };
@@ -182,10 +185,14 @@ export type WireRepo = {
   append(e: NewWireEntry): Promise<WireEntry>;
   /** Fills in a row written before its outcome was known (a webhook delivery, at receipt). */
   update(id: string, patch: Pick<NewWireEntry, "caseId" | "status" | "verify" | "durationMs" | "detail">): Promise<void>;
-  /** Oldest first: by `at`, ties broken by insertion order. The latest `limit` rows (default 500). */
-  listByCase(caseId: string, opts?: { limit?: number }): Promise<WireEntry[]>;
-  /** The latest `limit` rows (default 50, max 200) across cases, after `since` if given; returned oldest first (same order as listByCase). */
-  listRecent(opts?: { since?: string; limit?: number }): Promise<WireEntry[]>;
+  /**
+   * Oldest first: by `at`, ties broken by insertion order. The latest `limit` rows (default 500).
+   * Leaves out rows whose `verify` is set and not SUCCESS (forged, unverified or still pending
+   * deliveries) unless `includeUnverified`.
+   */
+  listByCase(caseId: string, opts?: { limit?: number; includeUnverified?: boolean }): Promise<WireEntry[]>;
+  /** The latest `limit` rows (default 50, max 200) across cases, after `since` if given; same order and filter as listByCase. */
+  listRecent(opts?: { since?: string; limit?: number; includeUnverified?: boolean }): Promise<WireEntry[]>;
   /** Sets `ref` (and the case, if known) on rows written before the case existed. */
   tag(ids: string[], patch: { ref?: string; caseId?: string }): Promise<void>;
   /** Attaches rows tagged with `ref` and no case yet to `caseId`. */

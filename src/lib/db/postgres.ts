@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { DEFAULT_POLICY, type AgentAction, type AuditEntry, type CaseRecord, type SellerPolicy } from "@/lib/types";
 import type { ActionPatch, Repo, TestCapture, WireEntry } from "./repo";
-import { clampLimit, wireRecentLimit, LOCK_TTL_DEFAULT_S, round6, statusAfterSnapshot, utcDayStart } from "./shared";
+import { clampLimit, VERIFIED_WIRE_SQL, wireRecentLimit, LOCK_TTL_DEFAULT_S, round6, statusAfterSnapshot, utcDayStart } from "./shared";
 
 type Row = Record<string, unknown>;
 type Query = (text: string, params?: unknown[]) => Promise<Row[]>;
@@ -414,7 +414,8 @@ export function createPostgresRepo(url: string, query?: Query): Repo {
       },
       async listByCase(caseId, opts) {
         const rows = await q(
-          `SELECT * FROM (SELECT * FROM wire WHERE case_id = $1 ORDER BY at DESC, seq DESC LIMIT $2) t ORDER BY at, seq`,
+          `SELECT * FROM (SELECT * FROM wire WHERE case_id = $1 ${opts?.includeUnverified ? "" : `AND ${VERIFIED_WIRE_SQL}`}
+                          ORDER BY at DESC, seq DESC LIMIT $2) t ORDER BY at, seq`,
           [caseId, clampLimit(opts?.limit, 500)],
         );
         return rows.map(toWire);
@@ -422,6 +423,7 @@ export function createPostgresRepo(url: string, query?: Query): Repo {
       async listRecent(opts = {}) {
         const rows = await q(
           `SELECT * FROM (SELECT * FROM wire WHERE ($1::timestamptz IS NULL OR at > $1::timestamptz)
+                          ${opts.includeUnverified ? "" : `AND ${VERIFIED_WIRE_SQL}`}
                           ORDER BY at DESC, seq DESC LIMIT $2) t ORDER BY at, seq`,
           [validTime(opts.since), wireRecentLimit(opts.limit)],
         );

@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { runAgent } from "@/lib/agent/run";
 import { audit, cases, webhookEvents, wire } from "@/lib/db";
-import { recordWebhookEvent, withWire } from "@/lib/db/wire";
+import { recordWebhookEvent, stampVerify, withWire } from "@/lib/db/wire";
 import { getDispute } from "@/lib/paypal/disputes";
 import { verifyWebhookSignature } from "@/lib/paypal/webhook";
 import { errMessage } from "../../_lib/http";
@@ -69,8 +69,8 @@ async function handle(req: Request, seen: Seen, setCase: (id: string) => void): 
   }
   const r = event.resource ?? {};
   const disputeId = r.dispute_id ?? (event.resource_type === "dispute" ? r.id : undefined);
+  // Unverified input: rows written before the signature check stay PENDING (hidden from the wire).
   const caseHint = disputeId && event.event_type?.startsWith("CUSTOMER.DISPUTE.") ? disputeId : undefined;
-  if (caseHint) setCase(caseHint);
   try {
     const row = await recordWebhookEvent({
       at: seen.at,
@@ -83,12 +83,18 @@ async function handle(req: Request, seen: Seen, setCase: (id: string) => void): 
     console.error(`[paypal-webhook] wire event failed: ${errMessage(e)}`);
   }
 
-  const verify = await verifyWebhookSignature(req.headers, raw).catch((e: unknown) => ({
-    verified: false,
-    status: "ERROR",
-    reason: errMessage(e),
-  }));
+  let verifyRows: string[] = [];
+  const verify = await withWire({ origin: "webhook", ...(caseHint ? { caseId: caseHint } : {}), verify: "PENDING" }, (ctx) => {
+    verifyRows = ctx.rowIds;
+    return verifyWebhookSignature(req.headers, raw).catch((e: unknown) => ({ verified: false, status: "ERROR", reason: errMessage(e) }));
+  });
+  // Only PayPal's SUCCESS counts; anything else never reaches the case store or the agent.
+  const signed = verify.verified === true && verify.status === "SUCCESS";
   seen.verify = verify.status;
+  await stampVerify([...(seen.rowId ? [seen.rowId] : []), ...verifyRows], verify.status).catch((e: unknown) =>
+    console.error(`[paypal-webhook] wire verify stamp failed: ${errMessage(e)}`),
+  );
+  if (signed && caseHint) setCase(caseHint);
 
   // IDs and states only: no names, emails, addresses or messages.
   const line =
@@ -101,7 +107,7 @@ async function handle(req: Request, seen: Seen, setCase: (id: string) => void): 
     console.log(`${line} -> 503`);
     return new Response("not configured", { status: 503 });
   }
-  if (!verify.verified) {
+  if (!signed) {
     console.log(`${line} -> 401`);
     return new Response("signature not verified", { status: 401 });
   }

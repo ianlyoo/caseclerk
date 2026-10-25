@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { DEFAULT_POLICY, type AgentAction, type AuditEntry, type CaseRecord, type SellerPolicy } from "@/lib/types";
 import type { Repo, SpendEntry, TestCapture, WireEntry } from "./repo";
-import { clampLimit, wireRecentLimit, isNewerSnapshot, isOpenCase, LOCK_TTL_DEFAULT_S, round6, statusAfterSnapshot, utcDayStart } from "./shared";
+import { clampLimit, isVerifiedWire, wireRecentLimit, isNewerSnapshot, isOpenCase, LOCK_TTL_DEFAULT_S, round6, statusAfterSnapshot, utcDayStart } from "./shared";
 
 const clone = <T>(v: T): T => structuredClone(v);
 
@@ -250,12 +250,12 @@ export function createMemoryRepo(): Repo {
         Object.assign(w, clone(defined), defined.durationMs !== undefined ? { durationMs: Math.round(defined.durationMs) } : {});
       },
       async listByCase(caseId, opts) {
-        const rows = inTimeOrder(wire.filter((w) => w.caseId === caseId));
+        const rows = inTimeOrder(wire.filter((w) => w.caseId === caseId && (opts?.includeUnverified || isVerifiedWire(w))));
         return rows.slice(-clampLimit(opts?.limit, 500)).map(clone);
       },
       async listRecent(opts = {}) {
         const since = opts.since && !Number.isNaN(Date.parse(opts.since)) ? new Date(opts.since).toISOString() : undefined;
-        const rows = inTimeOrder(since ? wire.filter((w) => w.at > since) : wire);
+        const rows = inTimeOrder(wire.filter((w) => (!since || w.at > since) && (opts.includeUnverified || isVerifiedWire(w))));
         return rows.slice(-wireRecentLimit(opts.limit)).map(clone);
       },
       async tag(ids, patch) {
