@@ -1,4 +1,4 @@
-import { paypalFetch } from "./client";
+import { PayPalError, paypalFetch } from "./client";
 
 const HEADER_KEYS = {
   auth_algo: "paypal-auth-algo",
@@ -29,13 +29,16 @@ export async function verifyWebhookSignature(headers: Headers, rawBody: string):
   }
   const body = `${JSON.stringify(fields).slice(0, -1)},"webhook_event":${rawBody}}`;
 
-  const res = await paypalFetch("/v1/notifications/verify-webhook-signature", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-  });
-  if (!res.ok) return { verified: false, status: `HTTP_${res.status}` };
-  const json = (await res.json()) as { verification_status?: string };
-  const status = json.verification_status ?? "UNKNOWN";
-  return { verified: status === "SUCCESS", status };
+  try {
+    const res = await paypalFetch<{ verification_status?: string }>("/v1/notifications/verify-webhook-signature", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+    const status = res.json?.verification_status ?? "UNKNOWN";
+    return { verified: status === "SUCCESS", status };
+  } catch (err) {
+    if (err instanceof PayPalError) return { verified: false, status: `HTTP_${err.status}`, reason: err.debugId ? `debug_id ${err.debugId}` : undefined };
+    throw err;
+  }
 }
