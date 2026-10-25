@@ -74,7 +74,8 @@ function useRealCase(id: string, enabled: boolean): { c?: Case; refresh: () => v
 
 function Neighbours({ c }: { c: Case }) {
   const { real } = useDesk();
-  const list = sorted(real);
+  // A real case walks the real cases, the ones every count is over; a staged sample walks the samples.
+  const list = sorted(real).filter((x) => x.real === c.real);
   const i = list.findIndex((x) => x.id === c.id);
   const prev = list[i - 1];
   const next = list[i + 1];
@@ -95,7 +96,8 @@ function Neighbours({ c }: { c: Case }) {
   return (
     <div className={s.where}>
       <p>
-        {pos >= 0 ? `${pos + 1} of ${open.length} open` : `${open.length} open`}, {waiting} need you
+        {pos >= 0 ? `${pos + 1} of ${open.length} open` : `${open.length} open`}
+        {c.real ? `, ${waiting} need you` : " staged samples"}
       </p>
       {prev ? (
         <Link href={`/finals/b/case/${prev.id}`} className={s.nb}>
@@ -330,7 +332,7 @@ function CaseBody({ c: polled, refresh }: { c: Case; refresh: () => void }) {
                               , webhook <code className={s.ppIdWrap} data-origin="paypal">event {resolvedEvent}</code>
                             </>
                           ) : null}
-                          . The agent spent ${(c.costUsd ?? 0).toFixed(2)} on it.
+                          . The agent spent ${(c.costUsd ?? 0).toFixed(2)} on it, the sum of its model calls in this case&apos;s log.
                         </span>
                         {c.ending!.money ? <span>{c.ending!.money}</span> : null}
                         {c.ending!.sandbox ? <span className={s.figSandbox}>{c.ending!.sandbox}</span> : null}

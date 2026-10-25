@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { EvidencePdfInput } from "@/lib/evidence/pdf";
 import { useT } from "./motion";
+import { OPEN_PACK } from "./Sheet";
 import s from "../b.module.css";
 
 // Mirrors of the PDF builder's formatters (kept here so the page bundle doesn't carry pdf-lib).
@@ -221,6 +222,11 @@ export function Dossier({ input, real, note }: { input: EvidencePdfInput; real: 
   const [dl, setDl] = useState<"idle" | "building" | "error">("idle");
   const readerRef = useRef<HTMLDivElement>(null);
   const all = Pack({ input });
+  useEffect(() => {
+    const go = () => setOpen(0);
+    document.addEventListener(OPEN_PACK, go);
+    return () => document.removeEventListener(OPEN_PACK, go);
+  }, []);
 
   useEffect(() => {
     if (open === null) return;

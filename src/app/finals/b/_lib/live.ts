@@ -39,7 +39,7 @@ export const isRealId = (id: string) => /^PP-R-[A-Z]{3}-\d{8}$/.test(id);
 /**
  * Facts PayPal reported outside this payload: GET /v1/customer/disputes/{id} fund_movements and GET
  * /v2/payments/captures/{id}, read by W1 on Oct 25 (s3/finals/REAL-CASES.md, "Fund movements" and "A4 / B4 / A5 results"), keyed by dispute id.
- * Only the money lines of a resolved case come from here. A case missing from the map gets NO_DEBIT, nothing more.
+ * Only the money lines of a resolved case come from here. A case missing from the map gets UNVERIFIED, nothing more.
  */
 type Money = { gross: string; fee: string; net: string; heldAt: string; releasedAt: string };
 const MONEY: Record<string, Money> = {
@@ -59,8 +59,8 @@ const KNOWN: Record<string, { kept: string; ending: string; money?: string }> = 
     id,
     {
       kept: m.net,
-      ending: `You keep $${m.net}: the $${m.gross} sale less PayPal's usual fee. PayPal paid the buyer itself.`,
-      money: `PayPal held your $${m.net} while it decided, then released all of it. Its usual fee on the sale was $${m.fee}; PayPal shows no chargeback fee and no debit.`,
+      ending: "PayPal closed the case.",
+      money: `The $${m.gross} sale less PayPal's $${m.fee} fee. PayPal held your $${m.net} while it decided, then released all of it; it shows no chargeback fee and no debit.`,
     },
   ]),
 );
@@ -69,7 +69,7 @@ const KNOWN: Record<string, { kept: string; ending: string; money?: string }> = 
 const REAL_PHOTO: Record<string, string> = { "PP-R-JKB-10194463": "ring-dish", "PP-R-VPY-10194485": "om-1n", "PP-R-NJA-10194486": "om-1n" };
 
 /** The resolved line for a case PayPal closed with a payout whose fund movements are not in MONEY yet. */
-const NO_DEBIT = "PayPal closed the chargeback with no debit to your account.";
+const UNVERIFIED = "PayPal closed the chargeback. Seller money outcome not yet verified.";
 
 const REASON: Record<string, string> = {
   MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED: "Not as described",
@@ -85,7 +85,7 @@ const REASON: Record<string, string> = {
 const OUTCOME: Record<string, string> = {
   RESOLVED_SELLER_FAVOUR: "PayPal decided for you.",
   RESOLVED_BUYER_FAVOUR: "PayPal decided for the buyer.",
-  RESOLVED_WITH_PAYOUT: NO_DEBIT,
+  RESOLVED_WITH_PAYOUT: UNVERIFIED,
   CANCELED_BY_BUYER: "The buyer withdrew the claim.",
   ACCEPTED: "You accepted the claim.",
   DENIED: "PayPal denied the claim.",
@@ -132,6 +132,17 @@ export function rowsOf(j: ApiCase): Row[] {
   const actionNear = (kind: string, at: string) =>
     j.actions.find((a) => a.kind === kind && a.result?.debugId && Math.abs(Date.parse(a.updatedAt) - Date.parse(at)) < 8000)?.result;
   const seenEvents = new Set<string>();
+  // A second filing only happens when PayPal asked for more evidence; the row says so.
+  let askedAgain = false;
+  let filings = 0;
+  const filedSay = (status?: string | number) => {
+    const again = askedAgain && filings > 0;
+    filings++;
+    askedAgain = false;
+    if (again) return `PayPal asked for more evidence, so CaseClerk filed again${status ? `; PayPal answered ${status}` : ""}`;
+    const self = Number(j.case.snapshot.amount.value) <= POLICY.evidenceGateUsd && !j.audit.some((a) => a.actor === "seller" && /approv/i.test(a.kind));
+    return `${self ? `CaseClerk filed the evidence on its own, under your $${money(POLICY.evidenceGateUsd)} evidence line` : "CaseClerk filed the evidence"}${status ? `; PayPal answered ${status}` : ""}`;
+  };
 
   for (const w of wire) {
     if (w.kind === "event") {
@@ -143,7 +154,12 @@ export function rowsOf(j: ApiCase): Row[] {
       const method = (w.method ?? "GET").toUpperCase() as "GET" | "POST" | "PUT" | "PATCH";
       // A tracker write (PUT/PATCH while filing) is not a read; name it for what it did.
       const write = method !== "GET" && /\/v1\/shipping\/trackers/.test(w.path);
-      const say = write ? "CaseClerk updated the tracking on the PayPal payment" : CALL_SAY.find(([re]) => re.test(w.path!))?.[1] ?? "Called PayPal";
+      if (/\/require-evidence$/.test(w.path)) askedAgain = true;
+      const say = write
+        ? "CaseClerk updated the tracking on the PayPal payment"
+        : /\/provide-evidence$/.test(w.path) && method === "POST"
+          ? filedSay().replace(/^CaseClerk filed the evidence$/, "Filed the evidence")
+          : CALL_SAY.find(([re]) => re.test(w.path!))?.[1] ?? "Called PayPal";
       const tool = write ? "" : /orders/.test(w.path) ? "tool.get_order" : /trackers/.test(w.path) ? "tool.get_tracking" : "";
       const detail = tool ? auditNear(tool, w.at)?.summary : undefined;
       out.push({
@@ -169,8 +185,9 @@ export function rowsOf(j: ApiCase): Row[] {
       out.push({ kind: "paypal", at: a.at, dir: "in", name: String(d.eventType ?? (/resolved/i.test(a.summary) ? "CUSTOMER.DISPUTE.RESOLVED" : /opened/i.test(a.summary) ? "CUSTOMER.DISPUTE.CREATED" : "CUSTOMER.DISPUTE.UPDATED")), status: "verified", eventId: String(d.eventId), say: eventSay(a.summary) });
     } else if (a.kind === "action.executed" && early) {
       const tool = String(d.tool ?? "provide_evidence").replaceAll("_", "-");
-      out.push({ kind: "paypal", at: a.at, dir: "out", name: tool, method: "POST", path: `/v1/customer/disputes/${id}/${tool}`, status: d.httpStatus ? String(d.httpStatus) : undefined, debugId: d.debugId ? String(d.debugId) : undefined, say: tool === "provide-evidence" ? `CaseClerk filed the evidence; PayPal answered ${d.httpStatus ?? ""}`.trim() : a.summary });
+      out.push({ kind: "paypal", at: a.at, dir: "out", name: tool, method: "POST", path: `/v1/customer/disputes/${id}/${tool}`, status: d.httpStatus ? String(d.httpStatus) : undefined, debugId: d.debugId ? String(d.debugId) : undefined, say: tool === "provide-evidence" ? filedSay(d.httpStatus) : a.summary });
     } else if ((a.kind === "demo.require_evidence" || a.kind === "demo.adjudicate") && early) {
+      if (a.kind === "demo.require_evidence") askedAgain = true;
       const k = a.kind === "demo.adjudicate" ? "adjudicate" : "require-evidence";
       const r = actionNear(k.replace("-", "_"), a.at);
       out.push({ kind: "paypal", at: a.at, dir: "out", name: k, method: "POST", path: `/v1/customer/disputes/${id}/${k}`, status: r?.httpStatus ? String(r.httpStatus) : undefined, debugId: r?.debugId, say: k === "adjudicate" ? "Sandbox control: you asked PayPal to rule for the seller" : "Sandbox control: you asked PayPal to request more evidence" });
@@ -223,6 +240,15 @@ function packOf(j: ApiCase, act?: AgentAction): EvidencePdfInput | undefined {
     exhibits: p.exhibits ?? [],
     amountCharged: o.amountCharged,
     generatedAt: new Date(act!.createdAt),
+  };
+}
+
+/** The agent's call and its main limit, then what each answer costs, for the decision sheet. */
+function recOf(win: number, reason: string, tracked: boolean, amount: string): Approval["rec"] {
+  const limit = reason === "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED" && tracked ? " Tracking proves delivery, not condition." : "";
+  return {
+    call: `The agent recommends filing: ${Math.round(win * 100)}% chance PayPal decides for you.${limit}`,
+    cost: `Filing has no fee; accepting gives up the $${money(amount)}.`,
   };
 }
 
@@ -281,6 +307,7 @@ export function fromApi(j: ApiCase): Case {
       path: `/v1/customer/disputes/${c.id}/${name}`,
       name,
       sentLine: evidence ? "Evidence filed with PayPal" : "Sent to PayPal",
+      rec: evidence && d ? recOf(d.winProbability, c.snapshot.reason, !!o?.shipping?.length, amount) : undefined,
     };
   }
 
@@ -298,7 +325,9 @@ export function fromApi(j: ApiCase): Case {
     stage: c.snapshot.stage === "INQUIRY" ? "INQUIRY" : "CHARGEBACK",
     desk,
     openedAt: c.snapshot.createTime ?? c.createdAt,
-    last: resolved ? outcome.replace(/\.$/, "") : waitsForYou ? "Built the evidence; waiting for you to file it" : filed.length ? "Filed the evidence; PayPal is deciding" : "With PayPal; nothing open to you yet",
+    // PayPal's own reply-by date, while the answer is still the seller's to give.
+    dueAt: waitsForYou && !resolved ? c.snapshot.sellerResponseDueDate ?? undefined : undefined,
+    last: resolved ? (known ? "PayPal closed the case" : outcome.replace(/\.$/, "")) : waitsForYou ? "Built the evidence; waiting for you to file it" : filed.length ? "Filed the evidence; PayPal is deciding" : "With PayPal; nothing open to you yet",
     lastAt: c.updatedAt,
     kept: resolved ? known?.kept : undefined,
     headline,

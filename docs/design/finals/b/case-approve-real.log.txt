@@ -15,3 +15,12 @@ END H1 A buyer's bank charged back the Olympus OM-1n body you sold. PayPal close
 END META PayPal closed the case on Oct 25 at 05:57:34 PT, webhook event WH-0RX02168P8982734Y-9TT31773BN730571G. The agent spent $0.05 on it. Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.
 END MAST Live on PayPal sandbox last webhook on this case 1 min ago
 video case-approve-real-b4.mp4 25.9 s: take 16.7 s at 1x, card 3.6 s, PP-R-IHX-10194506 resolved 5.6 s
+
+## Round 4 re-cut (23:54 KST), no new click
+END H1 A buyer's bank charged back the Olympus OM-1n body you sold. PayPal closed the case.
+END FIGURE You kept $380.38
+END META PayPal closed the case on Oct 25 at 05:57:34 PT, webhook event WH-0RX02168P8982734Y-9TT31773BN730571G. The agent spent $0.05 on it, the sum of its model calls in this case's log. The $391.00 sale less PayPal's $10.62 fee. PayPal held your $380.38 while it decided, then released all of it; it shows no chargeback fee and no debit. Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.
+END MAST PayPal sandbox last webhook on this case 1 h 51 min ago
+caption moved to the masthead: 650,11 395x38 (frames f00383-f00579); the old spot repaired from blank paper
+card: "11 minutes after you approved, PayPal closed it. Same case, PP-R-IHX-10194506. You kept $380.38." approved 2026-10-25T12:46:22.614Z, RESOLVED WH-0RX02168P8982734Y-9TT31773BN730571G at 2026-10-25T12:57:34.976Z
+video case-approve-real-b4-r4.mp4 26.5 s: take 16.7 s at 1x (same take, no new click), card 4.2 s, PP-R-IHX-10194506 resolved 5.6 s, recorded read-only from http://localhost:4199

@@ -4,7 +4,7 @@ import NumberFlow from "@number-flow/react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import type { CaseRecord } from "@/lib/types";
-import { clock, dayOf, usd } from "../_lib/data";
+import { clock, dayOf, POLICY, usd } from "../_lib/data";
 import { DEFAULT_REAL, fromApi, REPLAY_REAL, SANDBOX_RULING, SNAPSHOTS } from "../_lib/live";
 import { Masthead, useNow } from "./Masthead";
 import type { LiveRow } from "./store";
@@ -200,9 +200,18 @@ export function Landing() {
       <main className={s.land}>
         <section className={s.landL}>
           <h1 className={s.landH1}>
-            A buyer&apos;s bank charged back a ${Math.round(Number(real.amount))} Olympus camera. The seller said yes; CaseClerk filed the evidence, and PayPal closed the case {minutes} minutes later.
+            A buyer&apos;s bank charged back a ${Math.round(Number(real.amount))} Olympus camera. The seller said yes; CaseClerk filed the evidence, and PayPal closed the case {minutes} minutes after the filing.
           </h1>
-          <p className={s.landWhat}>CaseClerk answers PayPal disputes for small sellers: it reads the case, the order and the tracking, files the evidence, and asks you before money moves.</p>
+          <p className={s.landBase}>
+            Without an answer by the deadline, PayPal rules for the buyer: the seller would have lost the {usd(real.amount)} and the fee.
+          </p>
+          <p className={s.landWhat}>
+            CaseClerk answers PayPal disputes for small sellers. Small cases it answers on its own, under your rules; over ${POLICY.evidenceGateUsd} to file, or ${POLICY.approvalAboveUsd} to refund or offer, it asks you first.{" "}
+            <Link href="/finals/b/inbox#policy" className={s.textBtn}>
+              Your policy
+            </Link>
+          </p>
+          <p className={s.ctaLead}>A separate test dispute on the same camera listing is waiting for your answer:</p>
           <div className={s.cta}>
             <Link href={`/finals/b/case/${DEFAULT_REAL}`} className={s.ctaBtn}>
               Review the {usd(waiting.amount)} case waiting for you

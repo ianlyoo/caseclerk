@@ -14,6 +14,8 @@ import s from "../b.module.css";
 const SPRING = { type: "spring", stiffness: 420, damping: 41, mass: 1 } as const;
 export const UNDO_MS = 4000;
 export const LANDED_MS = 1500;
+/** Asks the evidence pack on the page to open its reader at the first page. */
+export const OPEN_PACK = "caseclerk-b-open-pack";
 
 type Props = {
   a: Approval;
@@ -50,12 +52,12 @@ export function Sheet({ a, phase, real, sent, error, onApprove, onUndo, onSendNo
             <div className={s.sdTop}>
               <p className={s.sdLabel}>
                 <span>
-                  Waiting for you
+                  {phase === "landed" ? "Filed with PayPal" : "Waiting for you"}
                   {real ? <span className={s.sdSample}>Real PayPal sandbox case</span> : <span className={s.sdSample}>Staged sample: nothing goes to PayPal</span>}
                 </span>
                 <span className={s.sdAmtLabel}>At stake</span>
               </p>
-              <h2 className={s.sdHead}>{a.head}</h2>
+              <h2 className={s.sdHead}>{phase === "landed" ? `${a.sentLine}.` : a.head}</h2>
               <p className={s.sdAmt} data-cause="approve">
                 <NumberFlow value={Number(a.amount)} format={{ style: "currency", currency: "USD" }} />
               </p>
@@ -91,6 +93,14 @@ export function Sheet({ a, phase, real, sent, error, onApprove, onUndo, onSendNo
                 </motion.p>
               ) : (
                 <motion.div key="act" className={s.sdAct} initial={false} exit={{ opacity: 0, transition: { duration: 0 } }}>
+                  {a.rec && !declined ? (
+                    <p className={s.sdRec}>
+                      {a.rec.call} <span className={s.sdRecCost}>{a.rec.cost} </span>
+                      <button type="button" className={s.sdText} onClick={() => document.dispatchEvent(new CustomEvent(OPEN_PACK))}>
+                        Review the evidence
+                      </button>
+                    </p>
+                  ) : null}
                   <p className={s.sdPolicy}>
                     {declined ? "You declined. Nothing was sent; the case stays open and the deadline still runs." : a.policy}
                   </p>

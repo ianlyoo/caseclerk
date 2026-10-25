@@ -6,7 +6,7 @@ import { clock, countdown, day, dayOf, dayOffset, hoursLeft, isOpen, POLICY, sor
 import { deskLine } from "./CaseList";
 import { Masthead } from "./Masthead";
 import { Photo } from "./Photo";
-import { useDesk } from "./store";
+import { useDesk, waitsForYou } from "./store";
 import s from "../b.module.css";
 
 const WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
@@ -16,7 +16,7 @@ function Row({ c }: { c: Case }) {
   const { phase } = useDesk();
   const p = phase(c.id);
   const open = isOpen(c) && p !== "resolved";
-  const needs = c.desk === "approval" && (!p || p === "pending" || p === "undo" || p === "failed");
+  const needs = waitsForYou(c, p) && p !== "sending";
   const urgent = c.dueAt && open && hoursLeft(c.dueAt) < 72 && !(p === "sent");
   return (
     <li>
@@ -94,16 +94,27 @@ export function Inbox() {
   const { waiting, phase, real } = useDesk();
   const only = useSearchParams().get("show") === "waiting";
   const list = sorted(real);
-  const open = list.filter((c) => isOpen(c) && phase(c.id) !== "resolved");
+  // Every count and the deadline strip are over the real sandbox cases listed first; the staged samples sit apart.
+  const mine = list.filter((c) => c.real);
+  const open = mine.filter((c) => isOpen(c) && phase(c.id) !== "resolved");
   const stake = open.reduce((n, c) => n + Number(c.amount), 0);
-  const closed = list.filter((c) => !open.includes(c));
-  const shown = only ? list.filter((c) => c.desk === "approval" && ["pending", "undo", "failed", undefined].includes(phase(c.id))) : null;
+  const closed = mine.filter((c) => !open.includes(c));
+  const samples = list.filter((c) => !c.real);
+  // The demo opened many test disputes on one listing; name it, so the repeats read as separate cases, not an error.
+  const same = (cs: Case[]) => {
+    const n = new Map<string, number>();
+    cs.forEach((c) => n.set(c.short, (n.get(c.short) ?? 0) + 1));
+    return [...n].sort((a, b) => b[1] - a[1])[0];
+  };
+  const [listing] = same(mine) ?? [];
+  const [closedListing, closedSame] = same(closed) ?? ["", 0];
+  const shown = only ? mine.filter((c) => waitsForYou(c, phase(c.id))) : null;
   return (
     <>
       <Masthead />
       <main className={s.inbox}>
         <h1 className={s.headline}>
-          {word(open.length)} open disputes,{" "}
+          {word(open.length)} open {open.length === 1 ? "dispute" : "disputes"},{" "}
           <span data-cause="approve">
             <NumberFlow value={stake} format={{ style: "currency", currency: "USD" }} />
           </span>{" "}
@@ -122,13 +133,32 @@ export function Inbox() {
           </>
         ) : (
           <>
-            <Strip open={open.filter((c) => !c.real)} />
+            <Strip open={open.filter((c) => waitsForYou(c, phase(c.id)))} />
+            <p className={s.groupNote}>
+              Test disputes we opened on PayPal&apos;s sandbox for this demo, each with its own buyer.{listing ? ` The ${listing} rows share one listing; each is a separate case.` : ""}
+            </p>
             <ol className={s.rows}>
               {open.map((c) => (
                 <Row key={c.id} c={c} />
               ))}
-              <li className={s.rowGroup}>Closed this month</li>
-              {closed.map((c) => (
+            </ol>
+            {closed.length ? (
+              <details className={s.closedFold}>
+                <summary>
+                  {word(closed.length)} closed test {closed.length === 1 ? "dispute" : "disputes"}
+                  {closedSame > 1 ? `, ${closedSame === closed.length ? "all" : word(closedSame).toLowerCase()} on the same ${closedListing} listing` : ""}. Each is a separate sandbox case.
+                </summary>
+                <ol className={s.rows}>
+                  {closed.map((c) => (
+                    <Row key={c.id} c={c} />
+                  ))}
+                </ol>
+              </details>
+            ) : null}
+            <h2 className={s.rowGroup}>Staged samples</h2>
+            <p className={s.groupNote}>Made-up cases that show other kinds of dispute. Nothing here went to PayPal, and none is counted above.</p>
+            <ol className={s.rows}>
+              {samples.map((c) => (
                 <Row key={c.id} c={c} />
               ))}
             </ol>

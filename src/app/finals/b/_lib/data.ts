@@ -44,6 +44,7 @@ export type Approval = {
   name: string; // provide-evidence
   sentLine: string; // after the 200
   actionId?: string; // real cases: the action POST /api/actions/:id/approve executes
+  rec?: { call: string; cost: string }; // the agent's call and its main limit, then what each answer costs (sheet)
 };
 
 /**

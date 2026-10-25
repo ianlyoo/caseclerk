@@ -4,7 +4,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { MotionConfig } from "motion/react";
 import type { CaseRecord } from "@/lib/types";
-import { CASES, LISTED, type Case, type Row } from "../_lib/data";
+import { CASES, type Case, type Row } from "../_lib/data";
 import { fromApi, fromRecord, SNAPSHOTS } from "../_lib/live";
 
 /** k: a stable key, so the in-flight row and PayPal's answer to it are one row that updates in place. */
@@ -29,6 +29,9 @@ type Ctx = {
 };
 
 const C = createContext<Ctx | null>(null);
+
+// Between your click and PayPal's 200 the case still counts as yours, whatever a poll says about it meanwhile.
+export const waitsForYou = (c: Case, p?: Phase) => p === "undo" || p === "sending" || (c.desk === "approval" && (p === undefined || p === "pending" || p === "failed"));
 const SNAP = Object.values(SNAPSHOTS).map(fromApi);
 
 export function Store({ children }: { children: ReactNode }) {
@@ -73,11 +76,9 @@ export function Store({ children }: { children: ReactNode }) {
   const setRows = useCallback((id: string, f: (r: LiveRow[]) => LiveRow[]) => setExtra((x) => ({ ...x, [id]: f(x[id] ?? []) })), []);
   const updateReal = useCallback((c: Case) => setReal((x) => (x.some((y) => y.id === c.id) ? x.map((y) => (y.id === c.id ? c : y)) : [c, ...x])), []);
   const value = useMemo<Ctx>(() => {
-    const waitingNow = (c: Case) => {
-      const p = phases[c.id];
-      return c.desk === "approval" && (p === undefined || p === "pending" || p === "undo" || p === "failed");
-    };
-    const waiting = [...real, ...LISTED].filter(waitingNow).length;
+    // A case stops waiting for you when PayPal's 200 lands, not while the POST is still open. Only real cases count:
+    // the inbox lists the staged samples apart, outside every count.
+    const waiting = real.filter((c) => waitsForYou(c, phases[c.id])).length;
     return { phase: (id) => phases[id], set, sentAt: (id) => sent[id], markSent, rows: (id) => extra[id] ?? [], setRows, real, updateReal, waiting };
   }, [phases, sent, set, markSent, extra, setRows, real, updateReal]);
   return (

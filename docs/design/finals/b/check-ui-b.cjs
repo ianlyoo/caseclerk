@@ -239,7 +239,8 @@ async function pageChecks(browser) {
           const lh = parseFloat(getComputedStyle(note).lineHeight) || 24;
           return { sheetH: sheet.height, sheetTop: sheet.top, rows, noteLines: Math.round(note.getBoundingClientRect().height / lh), noteText: note.innerText, clipped: note.scrollWidth > note.clientWidth };
         });
-        out(f.sheetH <= 280, `${tag}: fix 3 the sheet is <= 280 px tall`, `${Math.round(f.sheetH)} px`);
+        // Round 4 put the agent's call and the evidence link in the sheet; the cap grew with that one line.
+        out(f.sheetH <= 340, `${tag}: fix 3 the sheet is <= 340 px tall (r4: the recommendation lines)`, `${Math.round(f.sheetH)} px`);
         out(f.rows.length === 2 && f.rows.every((r) => r.pp && r.bottom <= f.sheetTop), `${tag}: fix 3 the two newest PayPal rows sit above the sheet`, JSON.stringify(f.rows));
         out(f.noteLines <= 1 && !f.clipped && /^What PayPal receives: .+\.$/.test(f.noteText.trim()), `${tag}: fix 3 "What PayPal receives" is one complete line`, f.noteText.trim().slice(0, 100));
       }
@@ -375,6 +376,8 @@ async function realLoop(browser) {
   const { ctx, page } = await open(browser, 1440, `/finals/b/case/${MOCK}`, {}, before);
   await page.locator("[data-sheet] button[data-phase=pending]").click();
   const h1Before = await page.locator("h1").innerText();
+  const count = () => page.evaluate(() => Number(document.querySelector("header [data-count]")?.dataset.count));
+  const countBefore = await count();
   await page.getByRole("button", { name: "Send now" }).click();
   await page.waitForTimeout(6200);
   const mid = await page.evaluate(() => ({
@@ -383,7 +386,11 @@ async function realLoop(browser) {
     h1: document.querySelector("h1").innerText,
   }));
   out(/Sending to PayPal/.test(mid.sheet) && !/provide-evidence\s+200/.test(mid.tl) && /provide-evidence\s+sending/.test(mid.tl) && mid.h1 === h1Before, `real loop: r2 fix 8 while the sheet says "Sending to PayPal" the timeline shows only the in-flight row and the headline holds, even after a poll that carries the filing`, mid.tl.split("\n").slice(0, 4).join(" | "));
+  const countMid = await count();
+  out(countMid === countBefore && /^Waiting for you/.test(mid.sheet), `r4 fix 3 while "Sending to PayPal", the nav still counts this case (${countBefore}) and the sheet still says "Waiting for you"`, `${countBefore} -> ${countMid}`);
   await page.waitForSelector("[data-sheet] [data-wire-line]", { timeout: 10000 });
+  const landed = await page.evaluate(() => ({ sheet: document.querySelector("[data-sheet]").innerText, n: Number(document.querySelector("header [data-count]")?.dataset.count) }));
+  out(/^Filed with PayPal/.test(landed.sheet) && /Evidence filed with PayPal\./.test(landed.sheet) && !/Waiting for you|File this evidence with PayPal\?/.test(landed.sheet) && landed.n === countBefore - 1, `r4 fix 3 when PayPal's 200 lands: "Filed with PayPal" label and title in the same render, and the nav count drops then (${countBefore} -> ${landed.n})`, landed.sheet.replace(/\s+/g, " ").slice(0, 90));
   const t0 = Date.now();
   const same = await page.evaluate(() => document.querySelector("main ol[aria-label^='What happened'] li").innerText);
   out(/provide-evidence\s+200/.test(same), `real loop: r2 fix 8 the timeline's filing row turns 200 in the same frame the sheet shows PayPal's answer`, same.replace(/\s+/g, " ").slice(0, 90));
@@ -420,7 +427,7 @@ async function round2(browser) {
       const rows = [...document.querySelectorAll("[aria-label='Replay of a real case'] > ol > li")].map((li) => li.innerText.replace(/\s+/g, " "));
       return { h1: document.querySelector("h1").innerText, btn: btn ? btn.innerText : "", href: btn ? btn.getAttribute("href") : "", test: [...main.querySelectorAll("button")].map((b) => b.innerText + "|" + b.className), rows, drawer: (document.querySelector("details summary") || {}).innerText || "" };
     });
-    out(/filed the evidence, and PayPal closed the case \d+ minutes later\.$/.test(l.h1) && !/answered 200/.test(l.h1), `r2 fix 3 landing h1 ends on the close, not on "200"`, l.h1);
+    out(/filed the evidence, and PayPal closed the case \d+ minutes after the filing\.$/.test(l.h1) && !/answered 200/.test(l.h1), `r2 fix 3 landing h1 ends on the close, not on "200"`, l.h1);
     out(l.btn === "Review the $412.00 case waiting for you" && l.href.endsWith(PENDING) && l.test.some((t) => /^Open a test dispute\|.*ghostBtn/.test(t)), `r2 fix 3 primary: review the $412.00 case; secondary: open a test dispute`, `${l.btn} -> ${l.href}`);
     out(l.rows.length === 3 && /CUSTOMER\.DISPUTE\.CREATED/.test(l.rows[0]) && /provide-evidence 200 .*debug id f8469524f503f/.test(l.rows[1]) && /CUSTOMER\.DISPUTE\.RESOLVED .*event WH-01G68820AD177843M-8SL79965VW8605524/.test(l.rows[2]), `r2 fix 3 the replay is the 3-row receipt: CREATED, provide-evidence 200, RESOLVED`, l.rows.map((r) => r.slice(0, 50)).join(" | "));
     out(/^All PayPal traffic on this case \(\d+ calls and webhooks\)/.test(l.drawer), `r2 fix 3 routine traffic folds into the "All PayPal traffic" drawer`, l.drawer);
@@ -474,9 +481,9 @@ async function round2(browser) {
   }
   {
     const { ctx, page } = await open(browser, 1440, PAGES["case-resolved"]);
-    const t = await page.evaluate(() => ({ h1: document.querySelector("h1").innerText, meta: document.querySelector("[class*=figMeta]").innerText, fig: document.querySelector("[class*=figure]").innerText }));
-    out(/You keep \$378\.43: the \$389\.00 sale less PayPal's usual fee\. PayPal paid the buyer itself\.$/.test(t.h1) && /\$378\.43/.test(t.fig.replace(/\s+/g, "")), `r2 fix 6 the resolved headline states the seller's money from PayPal's fund movements`, t.h1);
-    out(/released all of it\. Its usual fee on the sale was \$10\.57; PayPal shows no chargeback fee and no debit\./.test(t.meta) && /^Sandbox only: we asked PayPal's sandbox to rule\. On a live account PayPal decides on its own\.$/m.test(t.meta) && !/RESOLVED_WITH_PAYOUT/.test(t.meta + t.h1), `r2 fix 6 the money line and the sandbox-ruling disclosure`, t.meta.replace(/\s+/g, " ").slice(-160));
+    const t = await page.evaluate(() => ({ h1: document.querySelector("h1").innerText, meta: document.querySelector("[class*=figMeta]").innerText, fig: ((p) => [...p.childNodes].map((e) => { const n = e.querySelector?.("number-flow-react"); const d = n && (n.data || n._data); return d ? [...d.pre, ...d.integer, ...d.fraction, ...d.post].map((x) => x.value).join("") : e.textContent; }).join(" "))(document.querySelector("p[class*=_figure_]")) }));
+    out(/PayPal closed the case\.$/.test(t.h1) && /Youkept\$378\.43/.test(t.fig.replace(/\s+/g, "")), `r2 fix 6 (r4) the resolved h1 is short; the figure carries the seller's money from PayPal's fund movements`, t.h1);
+    out(/The \$389\.00 sale less PayPal's \$10\.57 fee\. PayPal held your \$378\.43 while it decided, then released all of it; it shows no chargeback fee and no debit\./.test(t.meta) && /^Sandbox only: we asked PayPal's sandbox to rule\. On a live account PayPal decides on its own\.$/m.test(t.meta) && !/RESOLVED_WITH_PAYOUT/.test(t.meta + t.h1), `r2 fix 6 the money line and the sandbox-ruling disclosure`, t.meta.replace(/\s+/g, " ").slice(-160));
     await ctx.close();
   }
   for (const vp of [390]) {
@@ -512,7 +519,7 @@ async function round2(browser) {
 /** Round 3: scoped masthead, fund-movement fallback, inbox leaks, insider copy, phone CTA and sheet clearance. */
 const IMW = "PP-R-IMW-10194496"; // real, resolved (B3), fund movements verified by W1
 async function round3(browser) {
-  const NO_DEBIT = "PayPal closed the chargeback with no debit to your account.";
+  const NO_DEBIT = "PayPal closed the chargeback. Seller money outcome not yet verified."; // r4: the judge's fallback
   const RULING = "Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.";
   for (const [p, scoped] of [[PAGES.landing, false], [PAGES.inbox, false], [PAGES["case-pending"], true], [`/finals/b/case/${IMW}`, true]]) {
     const { ctx, page } = await open(browser, 1440, p);
@@ -520,12 +527,12 @@ async function round3(browser) {
     out(!/PP-R-|CUSTOMER\.|WH-/.test(m) && (scoped ? /last webhook on this case/ : /last real webhook/).test(m), `r3 fix 2 ${p.split("/").pop() || "b"}: masthead ${scoped ? "scoped to this case" : "global"}, no ids or enums`, m);
     await ctx.close();
   }
-  const read = () => ({ h1: document.querySelector("h1").innerText, meta: document.querySelector("[class*=figMeta]").innerText, fig: document.querySelector("[class*=figure]").innerText, prose: [...document.querySelectorAll("main ol[aria-label^='What happened'] li")].filter((li) => !li.querySelector("[data-wire-line]")).map((li) => li.innerText).join("\n") });
+  const read = () => ({ h1: document.querySelector("h1").innerText, meta: document.querySelector("[class*=figMeta]").innerText, fig: ((p) => [...p.childNodes].map((e) => { const n = e.querySelector?.("number-flow-react"); const d = n && (n.data || n._data); return d ? [...d.pre, ...d.integer, ...d.fraction, ...d.post].map((x) => x.value).join("") : e.textContent; }).join(" "))(document.querySelector("p[class*=_figure_]")), prose: [...document.querySelectorAll("main ol[aria-label^='What happened'] li")].filter((li) => !li.querySelector("[data-wire-line]")).map((li) => li.innerText).join("\n") });
   {
     const { ctx, page } = await open(browser, 1440, `/finals/b/case/${IMW}`);
     await page.waitForFunction(() => /You keep|PayPal closed/.test(document.querySelector("h1")?.innerText || ""), null, { timeout: 20000 }).catch(() => {});
     const t = await page.evaluate(read);
-    out(t.h1.endsWith("You keep $382.33: the $393.00 sale less PayPal's usual fee. PayPal paid the buyer itself.") && /\$382\.33/.test(t.fig.replace(/\s+/g, "")) && /Its usual fee on the sale was \$10\.67/.test(t.meta), `r3 fix 3 IMW: verified fund movements, "You keep $382.33"`, t.h1);
+    out(t.h1.endsWith("PayPal closed the case.") && /Youkept\$382\.33/.test(t.fig.replace(/\s+/g, "")) && /The \$393\.00 sale less PayPal's \$10\.67 fee/.test(t.meta), `r3 fix 3 IMW: verified fund movements, "You kept $382.33"`, t.h1);
     out(t.meta.includes(RULING) && !/RESOLVED_WITH_PAYOUT/.test(t.h1 + t.meta + t.prose), `r3 fix 3 IMW: sandbox disclosure; PayPal's enum only in the Wire`, t.meta.replace(/\s+/g, " ").slice(-120));
     out(!/\d\.\d{2} USD/.test(t.prose) && !/Nothing left to do/.test(t.prose), `r3 fix 5 IMW agent rows: "$393.00", "Case closed; nothing left to do."`, t.prose.split("\n").filter((l) => /\$|closed/i.test(l)).slice(0, 2).join(" | "));
     await ctx.close();
@@ -546,7 +553,7 @@ async function round3(browser) {
   }
   {
     const { ctx, page } = await open(browser, 1440, PAGES.inbox);
-    const t = await page.evaluate(() => ({ proofs: [...document.querySelectorAll("[class*=rowProof]")].map((e) => e.innerText), lasts: [...document.querySelectorAll("[class*=rowLast]")].map((e) => e.innerText), who: [...document.querySelectorAll("[class*=rowReal] [class*=rowWho]")].map((e) => e.innerText) }));
+    const t = await page.evaluate(() => ({ proofs: [...document.querySelectorAll("[class*=rowProof]")].map((e) => e.innerText), lasts: [...document.querySelectorAll("[class*=rowLast]")].map((e) => e.innerText), who: [...document.querySelectorAll("[class*=rowReal] [class*=rowWho]")].filter((e) => e.checkVisibility()).map((e) => e.innerText) }));
     out(t.proofs.length > 0 && !t.proofs.some((x) => /adjudicate|require-evidence/.test(x)), `r3 fix 4 inbox: "Last PayPal call" is CaseClerk's, never the operator's adjudicate`, t.proofs.slice(0, 3).join(" | "));
     out(!t.lasts.some((x) => /\b(once|twice|times)\b/.test(x)), `r3 fix 4 inbox: no "filed twice"`, t.lasts.filter((x) => /Filed/.test(x)).slice(0, 2).join(" | "));
     out(t.who.length > 0 && t.who.every((x) => /^[A-Z][a-z ]+ (chargeback|inquiry)$/.test(x)), `r3 fix 4 inbox: real rows name the dispute reason, not "A buyer in the US"`, [...new Set(t.who)].join(" | "));
@@ -585,6 +592,70 @@ async function round3(browser) {
       return { row: Math.round(li.getBoundingClientRect().bottom), sheet: Math.round(document.querySelector("[data-sheet]").getBoundingClientRect().top) };
     });
     out(o.row <= o.sheet, `r3 fix 5 case-pending @390: the top PayPal row, event id included, clears the sheet`, `row ends ${o.row}, sheet starts ${o.sheet}`);
+    await ctx.close();
+  }
+}
+
+// Judge round 4 and the fresh-reader test: the sheet's call and evidence link, counts that match the list, the
+// landing's rule, baseline and second case, the filed-again row.
+async function round4(browser) {
+  for (const vp of [1440, 1920, 390]) {
+    const { ctx, page } = await open(browser, vp, PAGES["case-pending"]);
+    const t = await page.locator("[data-sheet]").innerText();
+    out(/The agent recommends filing: 35% chance PayPal decides for you\. Tracking proves delivery, not condition\./.test(t) && /Review the evidence/.test(t), `r4 fix 1 case-pending @${vp}: the agent's call, its limit and "Review the evidence" are in the sheet`, t.split("\n").find((l) => /recommends/.test(l)));
+    const btns = await page.evaluate(() => [...document.querySelectorAll("[data-sheet] button")].every((b) => { const r = b.getBoundingClientRect(); return r.bottom <= innerHeight && r.top >= 0; }));
+    out(btns, `r4 fix 1 case-pending @${vp}: both answers and the link are on screen without scrolling`);
+    if (vp === 1440) {
+      out(/Filing has no fee; accepting gives up the \$412\.00\./.test(t), `reader: why filing at 35% still pays, in the sheet`);
+      await page.getByRole("button", { name: "Review the evidence" }).click();
+      await page.waitForSelector("[role=dialog][aria-label='Evidence pack reader']", { timeout: 5000 }).catch(() => {});
+      out(await page.locator("[role=dialog][aria-label='Evidence pack reader']").isVisible(), `r4 fix 1 "Review the evidence" opens the evidence reader`);
+    }
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 1440, PAGES.inbox);
+    const t = await page.evaluate(() => {
+      const h1 = document.querySelector("h1").innerText;
+      const nav = Number(document.querySelector("header [data-count]").dataset.count);
+      const top = [...document.querySelector("main > ol[class*=rows]").children].filter((li) => li.querySelector("a"));
+      const needs = top.filter((li) => /Needs your answer/.test(li.innerText)).length;
+      const strip = [...document.querySelectorAll("#deadlines a")].map((a) => a.getAttribute("href"));
+      const listed = [...document.querySelectorAll("main ol[class*=rows] a")].filter((a) => a.checkVisibility()).map((a) => a.getAttribute("href"));
+      return { h1, nav, open: top.length, needs, strip, stripListed: strip.every((h) => listed.includes(h)), text: document.querySelector("main").innerText };
+    });
+    const words = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+    const m = t.h1.toLowerCase().match(/^(\w+) open disputes?,.* (\w+) waiting/);
+    out(m && words.indexOf(m[1]) === t.open && words.indexOf(m[2]) === t.nav && t.needs === t.nav, `reader 3 inbox: h1 counts = rows listed (${t.open} open), nav badge = "${m && m[2]} waiting" = rows that need you (${t.needs})`, t.h1);
+    out(t.strip.length > 0 && t.stripListed, `reader 3 inbox: every deadline on the strip is a case listed above it`, t.strip.join(" "));
+    out(/Test disputes we opened on PayPal's sandbox for this demo/.test(t.text) && /closed test disputes?, .*on the same .* listing\. Each is a separate sandbox case\./.test(t.text) && /Staged samples/.test(t.text) && /none is counted above/.test(t.text), `reader 2 inbox: the test disputes are captioned, the closed ones fold into one row, the samples sit apart and uncounted`);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 1440, `/finals/b/case/${PENDING}`);
+    const t = await page.evaluate(() => ({ where: document.querySelector("[class*=where] p").innerText, nav: Number(document.querySelector("header [data-count]").dataset.count) }));
+    out(new RegExp(`, ${t.nav} need you$`).test(t.where), `reader 3 case page: "N need you" = the nav badge (${t.nav})`, t.where);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 1440, PAGES.landing);
+    const t = await page.evaluate(() => ({ text: document.querySelector("[class*=landL]").innerText, policy: !!document.querySelector("[class*=landL] a[href='/finals/b/inbox#policy']"), cta: (() => { const r = document.querySelector("a[class*=ctaBtn]").getBoundingClientRect(); return r.bottom <= innerHeight; })() }));
+    out(/Small cases it answers on its own, under your rules; over \$250 to file, or \$50 to refund or offer, it asks you first\./.test(t.text) && t.policy && !/before money moves/.test(t.text), `reader 1 landing: the real rule, linked to Policy`);
+    out(/Without an answer by the deadline, PayPal rules for the buyer: the seller would have lost the \$389\.00 and the fee\./.test(t.text), `reader 5 landing: one honest baseline under the result`);
+    out(/A separate test dispute on the same camera listing is waiting for your answer:/.test(t.text) && t.cta, `reader 2 landing: the CTA's case reads as a different case, and the CTA is in the first screen`);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 1440, PAGES["case-deciding"]);
+    const t = await page.evaluate(() => document.querySelector("main ol[aria-label^='What happened']").innerText);
+    out(/PayPal asked for more evidence, so CaseClerk filed again; PayPal answered 200/.test(t) && /CaseClerk filed the evidence on its own, under your \$250\.00 evidence line; PayPal answered 200/.test(t), `reader 4 + 1 JKB: the second filing says PayPal asked again; the first says it was under your line`);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 1440, `/finals/b/case/PP-R-IHX-10194506`);
+    await page.waitForFunction(() => /PayPal closed the case\.$/.test(document.querySelector("h1")?.innerText || ""), null, { timeout: 20000 }).catch(() => {});
+    const t = await page.evaluate(() => ({ h1: document.querySelector("h1").innerText, fig: ((p) => [...p.childNodes].map((e) => { const n = e.querySelector?.("number-flow-react"); const d = n && (n.data || n._data); return d ? [...d.pre, ...d.integer, ...d.fraction, ...d.post].map((x) => x.value).join("") : e.textContent; }).join(" "))(document.querySelector("p[class*=_figure_]")), meta: document.querySelector("[class*=figMeta]").innerText }));
+    out(t.h1.endsWith("PayPal closed the case.") && /Youkept\$380\.38/.test(t.fig.replace(/\s+/g, "")) && /The \$391\.00 sale less PayPal's \$10\.62 fee/.test(t.meta) && /the sum of its model calls in this case's log/.test(t.meta), `r4 fix 2/4 IHX resolved: short h1, "You kept $380.38", the sale less the fee, the cost sourced`, t.h1);
     await ctx.close();
   }
 }
@@ -737,7 +808,7 @@ function durationOf(f) {
     if (process.argv.includes("--video-only")) return await video(browser);
     const only = (process.argv.find((x) => x.startsWith("--only=")) || "").slice(7);
     if (only) {
-      const fns = { realLoop, round2, round3, honesty, failurePath, reader, links, pageChecks, approve: (b) => approvePath(b, 1440, false) };
+      const fns = { realLoop, round2, round3, round4, honesty, failurePath, reader, links, pageChecks, approve: (b) => approvePath(b, 1440, false) };
       for (const n of only.split(",")) await fns[n](browser);
       return;
     }
@@ -746,6 +817,7 @@ function durationOf(f) {
     await realLoop(browser);
     await round2(browser);
     await round3(browser);
+    await round4(browser);
     for (const vp of [1440, 1920, 1536, 390]) await approvePath(browser, vp, false);
     await approvePath(browser, 1440, true);
     await failurePath(browser);

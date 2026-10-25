@@ -255,7 +255,7 @@
   min-width: 0;
 }
 .mainSheet {
-  padding-bottom: 340px;
+  padding-bottom: 380px;
 }
 /* While the decision sheet is up it carries the amount; the column gives its first screen to PayPal's latest rows. */
 .mainSheet .h1 {
@@ -819,6 +819,13 @@
   color: var(--sheet-2);
   max-width: 44ch;
 }
+/* The agent's call and its limit, right above the buttons, with the way into the pack it built. */
+.sdRec {
+  flex-basis: 100%;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--sheet-ink);
+}
 .sdFail {
   flex-basis: 100%;
   order: -1;
@@ -1186,6 +1193,31 @@
   color: var(--ink3);
   padding: 22px 0 8px;
 }
+h2.rowGroup {
+  font-weight: 400;
+  padding-top: 40px;
+  border-top: 1px solid var(--hair);
+  margin-top: 28px;
+}
+.groupNote {
+  font-size: 14px;
+  color: var(--ink3);
+  padding: 22px 0 4px;
+}
+h2.rowGroup + .groupNote {
+  padding-top: 0;
+}
+/* The closed test disputes fold into one row; open it to see each. */
+.closedFold > summary {
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--ink2);
+  padding: 16px 0;
+  border-top: 1px solid var(--hair);
+}
+.closedFold > summary:hover {
+  color: var(--ink);
+}
 .row {
   display: grid;
   grid-template-columns: 116px 84px minmax(0, 1fr) 140px;
@@ -1264,24 +1296,36 @@
   min-height: calc(100vh - var(--mast));
 }
 .landL {
-  padding: clamp(40px, 7vh, 88px) 56px 48px clamp(28px, 5vw, 96px);
+  padding: clamp(32px, 5vh, 72px) 56px 48px clamp(28px, 5vw, 96px);
   display: grid;
   align-content: start;
-  gap: 28px;
+  gap: 22px;
 }
 .landH1 {
   font-family: var(--f-serif), Georgia, serif;
   font-weight: 400;
-  font-size: clamp(40px, 2.5vw + 20px, 68px);
+  font-size: clamp(38px, 2.1vw + 18px, 62px);
   line-height: 1.08;
   letter-spacing: -0.015em;
-  max-width: 17ch;
+  max-width: 19ch;
   text-wrap: pretty;
 }
 .landWhat {
-  font-size: 18px;
+  font-size: 17px;
   color: var(--ink2);
   max-width: 46ch;
+}
+/* The honest baseline right under the result: what doing nothing would have cost. */
+.landBase {
+  font-size: 18px;
+  color: var(--ink);
+  max-width: 46ch;
+  margin-top: -4px;
+}
+.ctaLead {
+  font-size: 15px;
+  color: var(--ink2);
+  margin-bottom: -8px;
 }
 .cta {
   display: flex;
@@ -1466,11 +1510,11 @@
     padding: 20px 16px 96px;
   }
   .mainSheet {
-    padding-bottom: 380px;
+    padding-bottom: 470px;
   }
   /* The first PayPal row has to clear the sheet on a phone, event id included. */
   .mainSheet .h1 {
-    font-size: 25px;
+    font-size: 22px;
   }
   .mainSheet .secHead {
     gap: 2px;
@@ -1515,8 +1559,8 @@
     overflow-wrap: anywhere;
   }
   .sdInner {
-    padding: 14px 16px 16px;
-    gap: 10px;
+    padding: 12px 16px 14px;
+    gap: 8px;
   }
   .sdTop {
     grid-template-columns: 1fr;
@@ -1526,8 +1570,8 @@
   }
   .sdAmt {
     justify-items: start;
-    font-size: 36px;
-    margin-top: 6px;
+    font-size: 30px;
+    margin-top: 0;
   }
   .sdLabel .sdAmtLabel {
     display: none;
@@ -1537,6 +1581,14 @@
   }
   .sdPolicy {
     font-size: 14px;
+  }
+  .sdRec {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  /* A phone keeps the call and its limit; the fee line would push the sheet over PayPal's top row. */
+  .sdRecCost {
+    display: none;
   }
   .sdAct {
     gap: 10px;
