@@ -38,7 +38,7 @@ export const isRealId = (id: string) => /^PP-R-[A-Z]{3}-\d{8}$/.test(id);
 
 /**
  * Facts PayPal reported outside this payload: GET /v1/customer/disputes/{id} fund_movements and GET
- * /v2/payments/captures/{id}, read by W1 on Oct 25 (s3/finals/REAL-CASES.md, "Fund movements"), keyed by dispute id.
+ * /v2/payments/captures/{id}, read by W1 on Oct 25 (s3/finals/REAL-CASES.md, "Fund movements" and "A4 / B4 / A5 results"), keyed by dispute id.
  * Only the money lines of a resolved case come from here. A case missing from the map gets NO_DEBIT, nothing more.
  */
 type Money = { gross: string; fee: string; net: string; heldAt: string; releasedAt: string };
@@ -50,6 +50,9 @@ const MONEY: Record<string, Money> = {
   "PP-R-AAJ-10194495": { gross: "396.00", fee: "10.75", net: "385.25", heldAt: "2026-10-25T10:59:34Z", releasedAt: "2026-10-25T11:29:46Z" },
   "PP-R-IMW-10194496": { gross: "393.00", fee: "10.67", net: "382.33", heldAt: "2026-10-25T10:59:34Z", releasedAt: "2026-10-25T11:34:04Z" },
   "PP-R-RCJ-10194476": { gross: "27.95", fee: "1.21", net: "26.74", heldAt: "2026-10-25T06:24:34Z", releasedAt: "2026-10-25T06:31:04Z" },
+  "PP-R-EGZ-10194505": { gross: "394.00", fee: "10.69", net: "383.31", heldAt: "2026-10-25T12:43:04Z", releasedAt: "2026-10-25T12:50:33Z" },
+  "PP-R-IHX-10194506": { gross: "391.00", fee: "10.62", net: "380.38", heldAt: "2026-10-25T12:43:00Z", releasedAt: "2026-10-25T12:51:33Z" },
+  "PP-R-SGV-10194507": { gross: "397.00", fee: "10.77", net: "386.23", heldAt: "2026-10-25T12:50:34Z", releasedAt: "2026-10-25T12:57:53Z" },
 };
 const KNOWN: Record<string, { kept: string; ending: string; money?: string }> = Object.fromEntries(
   Object.entries(MONEY).map(([id, m]) => [
