@@ -1,0 +1,135 @@
+.fig {
+  margin: 0;
+  min-width: 0;
+}
+
+.fig figcaption {
+  margin-top: 0.5em;
+  font-size: 0.85em;
+  color: var(--ink2, #666);
+}
+
+/* A printed page: the one thing on these screens that is a real object, so it gets an edge. */
+.page {
+  container-type: inline-size;
+  aspect-ratio: 8.5 / 11;
+  background: #fff;
+  color: #222;
+  outline: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  padding: 9cqw 8cqw;
+  box-sizing: border-box;
+  overflow: hidden;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 3.4cqw;
+  line-height: 1.45;
+}
+
+.page p {
+  margin: 0 0 1em;
+}
+
+.from {
+  font-size: 3.1cqw;
+  color: #555;
+}
+
+.re {
+  font-weight: 600;
+}
+
+.ex {
+  font-family: system-ui, sans-serif;
+  font-size: 3.2cqw;
+  font-weight: 600;
+  margin-top: 1.4em !important;
+}
+
+.ex:first-child {
+  margin-top: 0 !important;
+}
+
+.exlist {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.mono {
+  font-family: ui-monospace, monospace;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+  font-family: system-ui, sans-serif;
+  font-size: 2.9cqw;
+}
+
+.tbl td {
+  padding: 0.35em 0;
+  border-bottom: 1px solid #e5e5e5;
+  vertical-align: top;
+  padding-right: 1em;
+}
+
+.num {
+  text-align: right;
+  padding-right: 0 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.total td {
+  font-weight: 600;
+  border-bottom: 0;
+}
+
+.photos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2cqw;
+  margin-bottom: 1em;
+}
+
+.photos span {
+  aspect-ratio: 4 / 3;
+}
+
+.ph1 {
+  background: radial-gradient(circle at 50% 55%, #2b2b2b 0 22%, #9a9a96 23% 27%, #d9d7d1 28%);
+}
+
+.ph2 {
+  background: linear-gradient(180deg, #e3e1db 0 30%, #b9b6ae 30% 34%, #e3e1db 34%),
+    radial-gradient(circle at 70% 60%, #333 0 14%, transparent 15%);
+  background-blend-mode: multiply;
+}
+
+.ph3 {
+  background: radial-gradient(circle at 50% 50%, #1e1e1e 0 30%, #5a5a58 31% 34%, #cfcdc6 35%);
+}
+
+.sheet {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.2cqw;
+  background: #161513;
+  padding: 2cqw;
+  margin-bottom: 1em;
+}
+
+.frame {
+  aspect-ratio: 3 / 2;
+  background: linear-gradient(160deg, #c9b79c, #6f7d86 55%, #3c3a35);
+  position: relative;
+}
+
+.frame i {
+  position: absolute;
+  left: 0.6cqw;
+  bottom: 0.2cqw;
+  font-style: normal;
+  font-family: ui-monospace, monospace;
+  font-size: 1.9cqw;
+  color: #f0c27a;
+}
