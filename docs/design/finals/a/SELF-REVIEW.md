@@ -9,11 +9,17 @@
 | Gradient "lenses" and film frames in the evidence pack | Exhibits are typeset sheets with real text, opened in a 640 px in-place reader (Esc or a click outside closes it). There is no CSS art, 0 radial or repeating gradients (G11), and the reader says there is no PDF for sample cases. |
 | Approve is a pill or a 6 px button that becomes a sentence | A slip that names the action and the amount ("File the evidence on $412.00"), a 4 s undo rule with Undo and Send now, the slip's flight into the Wire, an in-flight rule while PayPal answers, then "Evidence filed with PayPal. hh:mm:ss" with the 200. The count drops by 1, no Approve remains (even after a reload), and no "until you decide" stays on the page. |
 | No camera, no landing, no resolved state | Five CC-BY/CC0 WebP photos (3–32 KB, credited in `public/finals/CREDITS.md`). A landing that replays the real JKB run in 9 s. A resolved state: "PayPal decided Daniel Okafor's chargeback in your favour.", "You kept $392.00", and CUSTOMER.DISPUTE.RESOLVED on the Wire. |
-| Dead ends: every row opens Daniel; Policy, PDF, test dispute and Deadlines go nowhere | All 11 rows open their own case (G15), and all 17 links resolve inside /finals/a. Deadlines is our own page with the 14-day strip (marks bound to dueAt, G19). Open a test dispute runs a staged wait, labelled as staged in the browser. Policy is not in the nav (see Decisions). |
+| Dead ends: every row opens Daniel; Policy, PDF, test dispute and Deadlines go nowhere | All 11 rows open their own case (G15), and all 17 links resolve inside /finals/a. Deadlines is our own page with the 14-day strip (marks bound to dueAt, G19). Open a test dispute runs a staged wait, labelled as staged in the browser. /finals/a/policy lists the app's DEFAULT_POLICY as seven rules, each linked to a case where it applied, with a preview-mode switch. |
 | Wordmark is 15 px body text | A Newsreader wordmark with an ink square, the same on every page. |
 
-## Exemptions and N/A, stated
+## Exemptions and N/A (approved by the PM)
 - G3: the undo rule (4 s) and the in-flight rule (1.4 s, infinite) run longer than 900 ms because the spec sets those durations. The check exempts exactly `[data-undo-rule]`, `[data-inflight]` and `[data-live-dot]`.
 - G5: the phone Approve button is a full-width ink control, about 5 % of the viewport. The check counts planes, not buttons.
 - G21: N/A. Sample cases have no PDF.
 - T9: Final A underlines inline links by design. The check asserts the nav has no underlined tabs.
+
+## Fixed during the finals checks
+- G6: browser-default blue on inline links (landing and policy). The probe now flags any blue hue outside `[data-origin=paypal]`.
+- G9: inbox, deadlines and policy headlines were 44 px at 1440; they are now ≥ 46 px.
+- G19: Marta's $1,240 was cut off on the phone strip. The phone strip now shows six days, and a check asserts that no amount is truncated at any of the 5 sizes.
+- The shared POLICY offered up to 45 %; it is now the app's DEFAULT_POLICY (40 %).
