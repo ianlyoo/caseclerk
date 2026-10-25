@@ -576,19 +576,19 @@ const idsProbe = (page) =>
       judgeAnims(await animProbe(page), "policy switch");
       out((await page.locator("header nav a[href='/finals/a/policy'][aria-current=page]").count()) === 1, "Policy is in the nav and marked current");
       const sent = await page.evaluate(() => ({ text: (document.querySelector("[data-policy-sentence]") || {}).innerText || "", n: (document.querySelector("[data-consequence]") || {}).getAttribute?.("data-consequence") }));
-      // Open cases: the 7 sample ones plus every unresolved test case production lists; real pending filings wait at their amount.
+      // Open cases: the 6 sample ones on the desk plus every unresolved test case production lists; real pending filings wait at their amount.
       const tests = await Promise.all((await (await fetch(API.replace(/\/$/, "") + "?test=true&limit=50")).json()).cases.map(async (c) => (await fetch(API + c.id)).json()));
       const openReal = tests.filter((j) => j.case.snapshot.status !== "RESOLVED" && j.case.status !== "resolved");
       const filings = openReal.filter((j) => j.actions.some((a) => a.kind === "provide_evidence" && ["awaiting_approval", "approved", "executing"].includes(a.status))).map((j) => Number(j.case.snapshot.amount.value));
-      const nOpen = 7 + openReal.length, at = (line) => filings.filter((v) => v >= line).length;
-      out(/^Act on my own when the money is under/.test(sent.text) && sent.n === String(3 + at(250)) && new RegExp(`With this policy, .{0,12}of your ${nOpen} open cases would wait for you`).test(sent.text.replace(/\s+/g, " ")), `policy reads as a sentence with editable values; ${3 + at(250)} of ${nOpen} open cases would wait`, sent.text.split("\n").slice(-2)[0]);
+      const nOpen = 6 + openReal.length, at = (line) => filings.filter((v) => v >= line).length;
+      out(/^Act on my own when the money is under/.test(sent.text) && sent.n === String(2 + at(250)) && new RegExp(`With this policy, .{0,12}of your ${nOpen} open cases would wait for you`).test(sent.text.replace(/\s+/g, " ")), `policy reads as a sentence with editable values; ${2 + at(250)} of ${nOpen} open cases would wait`, sent.text.split("\n").slice(-2)[0]);
       await page.locator("[data-policy-input=money]").fill("80");
       await page.waitForTimeout(1100);
       const n2 = await page.locator("[data-consequence]").getAttribute("data-consequence");
       await page.locator("[data-policy-input=evidence]").fill("500");
       await page.waitForTimeout(1100);
       const n3 = await page.locator("[data-consequence]").getAttribute("data-consequence");
-      out(n2 === String(2 + at(250)) && n3 === String(at(500)), `editing the lines rolls the consequence: $80.00 money line -> ${2 + at(250)}, $500.00 evidence line -> ${at(500)}`, `${n2}, ${n3}`);
+      out(n2 === String(1 + at(250)) && n3 === String(at(500)), `editing the lines rolls the consequence: $80.00 money line -> ${1 + at(250)}, $500.00 evidence line -> ${at(500)}`, `${n2}, ${n3}`);
     }
     await ctx.close();
   }
@@ -701,6 +701,7 @@ const idsProbe = (page) =>
     }
     const bad = [];
     for (const h of hrefs) {
+      if (h.startsWith("#")) continue;
       if (!h.startsWith("/finals/a")) { bad.push(h); continue; }
       const r = await page.request.get(BASE + h);
       if (r.status() !== 200) bad.push(`${h} ${r.status()}`);
@@ -813,6 +814,45 @@ const idsProbe = (page) =>
       out(rec && rec.shown && /35%/.test(rec.text) && /Filing adds no cost/.test(rec.text), "phone case: the recommendation is on screen above the slip, not covered", JSON.stringify(rec));
       await ctx.close();
     }
+  }
+
+  // Judge r6: Policy projects over the desk's own open cases, countdowns match the real clock, the inbox headline
+  // sums only real money, the Wire on Deadlines and Policy shows the latest real run, the landing shows the test link.
+  {
+    const W = ["none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+    const html = await (await fetch(BASE + P + "/policy")).text();
+    const ssr = (html.replace(/<!--.*?-->/g, "").match(/data-consequence="(\d+)"/) || [])[1];
+    const { ctx, page } = await open(browser, V1440, `${P}/inbox`);
+    const ib = await page.evaluate(() => {
+      const h1el = document.querySelector("[data-inbox-h1]"); const h1 = h1el.innerText; const stake = h1el.getAttribute("data-real-stake");
+      const realAmts = [...document.querySelectorAll("[data-group] [data-real-row]")].filter((a) => !/^Closed/.test(a.innerText)).map((a) => Number(((a.querySelector("[class*=rowAmt]") || {}).textContent || "0").replace(/[$,]/g, "")));
+      const dues = [...document.querySelectorAll("[data-row-due]")].map((x) => [x.getAttribute("data-row-due"), x.textContent]);
+      return { h1, stake, realAmts, dues, now: Date.now() };
+    });
+    const open9 = W.indexOf(((ib.h1.match(/^(\w+) open disputes/) || [])[1] || "").toLowerCase());
+    const realSum = ib.realAmts.reduce((t, x) => t + x, 0).toFixed(2);
+    out(ib.stake === realSum && new RegExp(`^\\w+ open disputes \\(${W[ib.realAmts.length]} real sandbox cases?, .{0,14}; \\w+ samples?\\), \\w+ waiting for your answer\\.$`).test(ib.h1.trim()), "inbox h1: the dollar figure is the real sandbox cases' money only, samples counted apart", `${ib.h1} [${ib.stake} vs ${realSum}]`);
+    const off = ib.dues.map(([due, txt]) => { const m = txt.match(/^(?:(\d+) days? )?(\d+) h$/); return m ? Math.abs(ib.now + ((+m[1] || 0) * 24 + +m[2]) * 3600e3 + 1800e3 - Date.parse(due)) / 3600e3 : 99; });
+    out(ib.dues.length >= 5 && off.every((h) => h <= 1), "countdowns: now + the rendered countdown is within 1 hour of each row's deadline", `${ib.dues.length} rows, worst ${Math.max(...off).toFixed(2)} h`);
+    await page.goto(BASE + P + "/policy", { waitUntil: "networkidle" });
+    await page.waitForTimeout(600);
+    const po = await page.evaluate(() => ({ text: document.querySelector("[data-consequence]").innerText, n: document.querySelector("[data-consequence]").getAttribute("data-consequence"), ev: document.querySelector("[data-rule='evidence']").innerText, wire: (document.querySelector("aside[data-wire]") || document.body).innerText.slice(0, 200) }));
+    const of = Number((po.text.match(/of your (\d+) open cases/) || [])[1]);
+    out(of === open9 && po.n === ssr && !/Daniel/.test(po.text), "policy: the projection counts the inbox's open cases, its server HTML matches the page, no off-desk sample in it", `${po.text} | ssr ${ssr} | inbox ${open9}`);
+    out(po.n === "3" && po.text.replace(/^With this policy,\s*\d*\s*of/, "With this policy, 3 of") === "With this policy, 3 of your 9 open cases would wait for you: Sam’s $318.50, Grace’s $74.95, the real $412.00.", "policy: default projection reads 3 of your 9: Sam's $318.50, Grace's $74.95, the real $412.00", po.text);
+    out(/^The real \$412\.00 Olympus OM-1n \(PP-R-VPY-10194485\): the evidence pack is ready/m.test(po.ev) && !/Daniel/.test(po.ev), "policy: the $250.00 rule's example is the real VPY case", po.ev.replace(/\n/g, " | "));
+    const latest = /PayPal, latest real run: PP-R-[A-Z]{3}-\d+, Oct 25/;
+    out(latest.test(po.wire) && !/JKB/.test(po.wire.split("\n").slice(0, 3).join(" ")), "policy Wire header names the latest real run, Oct 25", po.wire.split("\n").slice(0, 2).join(" "));
+    await page.goto(BASE + P + "/deadlines", { waitUntil: "networkidle" });
+    const dw = await page.evaluate(() => (document.querySelector("aside[data-wire]") || document.body).innerText.slice(0, 200));
+    out(latest.test(dw), "deadlines Wire header names the latest real run, Oct 25", dw.split("\n").slice(0, 2).join(" "));
+    await page.goto(BASE + P, { waitUntil: "networkidle" });
+    const tl = await page.evaluate(() => { const a = document.querySelector("[data-test-link]"); return a ? { href: a.getAttribute("href"), bottom: Math.round(a.getBoundingClientRect().bottom), target: !!document.querySelector("#open-test [data-open-test]") } : null; });
+    out(tl && tl.href === "#open-test" && tl.bottom <= 810 && tl.target, "landing: Open a test dispute sits in the CTA row above the 810 px fold and leads to the trigger", JSON.stringify(tl));
+    await page.goto(BASE + P + "/case/PP-R-SGV-10194507", { waitUntil: "networkidle" });
+    const fonts = await page.evaluate(() => [...document.querySelectorAll("[data-story-row='CaseClerk'] [data-story-title]")].map((x) => [x.textContent, getComputedStyle(x).fontFamily.split(",")[0]]));
+    out(fonts.length >= 1 && fonts.every(([, f]) => /Hanken/.test(f)), "case story: CaseClerk's own rows (You approved it, Evidence ready) are in Hanken, not mono", JSON.stringify(fonts.slice(0, 3)));
+    await ctx.close();
   }
 
   out(approveAttempts === 0, "end of run: no approve request was ever sent", `${approveAttempts}`);

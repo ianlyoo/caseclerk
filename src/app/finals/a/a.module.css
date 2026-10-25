@@ -21,9 +21,10 @@
   --shadow: 0 1px 1px rgba(22, 20, 14, 0.05), 0 8px 24px -10px rgba(22, 20, 14, 0.22), 0 28px 56px -28px rgba(22, 20, 14, 0.25);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
-  --serif: var(--font-newsreader), Georgia, serif;
-  --sans: var(--font-hanken), system-ui, sans-serif;
-  --mono: var(--font-plex-mono), ui-monospace, monospace;
+  /* The fallbacks name next/font's own faces, so a build whose variable class goes missing still renders them. */
+  --serif: var(--font-newsreader, "Newsreader"), Georgia, serif;
+  --sans: var(--font-hanken, "Hanken Grotesk"), system-ui, sans-serif;
+  --mono: var(--font-plex-mono, "IBM Plex Mono"), ui-monospace, monospace;
   --wire-w: clamp(380px, 30vw, 520px);
   --body: clamp(16px, 0.21vw + 14px, 18px);
 
@@ -1533,4 +1534,10 @@ a.btn {
   font-size: 15px;
   line-height: 22px;
   color: var(--ink2);
+}
+
+/* CaseClerk's own story rows are plain English; only PayPal's API names are mono. */
+.storyPlain {
+  font-family: var(--sans);
+  font-weight: 500;
 }

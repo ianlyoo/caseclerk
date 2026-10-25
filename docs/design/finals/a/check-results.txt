@@ -287,8 +287,8 @@ PASS  preview switch flips aria-checked and its consequence line (Preview mode i
 PASS  G2 every animation has a data-cause, policy switch (1 animations)
 PASS  G3 animations <= 900 ms, loops only on the live dot / in-flight rule, policy switch (undo rule (4 s) and in-flight rule (1.4 s) exempt by spec)
 PASS  Policy is in the nav and marked current
-PASS  policy reads as a sentence with editable values; 4 of 10 open cases would wait
-PASS  editing the lines rolls the consequence: $80.00 money line -> 3, $500.00 evidence line -> 0 (3, 0)
+PASS  policy reads as a sentence with editable values; 3 of 9 open cases would wait
+PASS  editing the lines rolls the consequence: $80.00 money line -> 2, $500.00 evidence line -> 0 (2, 0)
 PASS  policy page loads without errors at 1920x940
 PASS  G5 one dark plane, policy whole page 1920x940
 PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, policy whole page 1920x940
@@ -390,7 +390,7 @@ PASS  G9 text >= 13 px, Wire >= 14 px, deadlines whole page 1440
 PASS  G9 h1 >= 46 px, deadlines whole page 1440 (46 px)
 PASS  G9 contrast >= 4.5:1, deadlines whole page 1440
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, deadlines whole page 1440
-PASS  G15 all 28 links on Final A resolve 200 and stay inside /finals/a
+PASS  G15 all 29 links on Final A resolve 200 and stay inside /finals/a
 PASS  G5 one dark plane, /case/PP-R-RBN-10224961 whole page 1440
 PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, /case/PP-R-RBN-10224961 whole page 1440
 PASS  G6 blue only inside [data-origin=paypal], /case/PP-R-RBN-10224961 whole page 1440
@@ -418,14 +418,23 @@ PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, /inbox whole 
 PASS  G9 text >= 13 px, Wire >= 14 px, /inbox whole page 1440
 PASS  G9 contrast >= 4.5:1, /inbox whole page 1440
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, /inbox whole page 1440
-PASS  receipt clock: after a mocked 200 with no filing time and a later poll that has one, the receipt and the Wire pin never change (1 mocked, 0 aborted, 1 distinct: PayPal answered at 08:43:22 PT. | Filed with PayPalPOST provide-evidence 200 08:43:22 PTdebug mock00000000)
+PASS  receipt clock: after a mocked 200 with no filing time and a later poll that has one, the receipt and the Wire pin never change (1 mocked, 0 aborted, 1 distinct: PayPal answered at 09:33:21 PT. | Filed with PayPalPOST provide-evidence 200 09:33:21 PTdebug mock00000000)
 PASS  nav: the server HTML of every route has the same Waiting for you count as the rendered inbox ({"/":"2","/inbox":"2","/deadlines":"2","/policy":"2","/case/PP-R-VPY-10194485":"2","/case/PP-R-NJA-10194486":"2","/case/PP-R-NKT-10227591":"2"} vs 2)
 PASS  strip: every real waiting case with a PayPal deadline has a mark on the 14-day strip (PP-R-VPY-10194485 / [["PP-R-VPY-10194485","2026-11-05T04:59:59.000Z","$412 Real"]])
 PASS  strip: VPY sits on its PayPal deadline, marked Real (2026-11-05T04:59:59.000Z [["PP-R-VPY-10194485","2026-11-05T04:59:59.000Z","$412 Real"]])
-PASS  inbox: VPY's row shows its countdown and due time like the sample rows (10 days 11 h by Wed 8:59 pm)
+PASS  inbox: VPY's row shows its countdown and due time like the sample rows (10 days 12 h by Wed 8:59 pm)
 PASS  inbox: no sample row shares the real waiting case's item or amount
 PASS  deadlines: VPY is listed and on the strip, and the h1's two-week count equals the rows (Two answers are due in the next 72 hours; five in the next two weeks. | 5 rows)
 PASS  phone landing: the review button is on the first screen (690 px)
 PASS  phone case: the recommendation is on screen above the slip, not covered ({"top":501,"bottom":625,"shown":true,"text":"The agent recommends you fight with evidence, and puts the chance of winning at 35%. Filing adds no cost; accepting gives up the $412.00. USPS tracking proves the Olympus OM-1n body was delivered, not what condition it arrived in."})
+PASS  inbox h1: the dollar figure is the real sandbox cases' money only, samples counted apart (Nine open disputes (three real sandbox cases, ; six samples), two waiting for your answer. [479.90 vs 479.90])
+PASS  countdowns: now + the rendered countdown is within 1 hour of each row's deadline (5 rows, worst 0.08 h)
+PASS  policy: the projection counts the inbox's open cases, its server HTML matches the page, no off-desk sample in it (With this policy,  of your 9 open cases would wait for you: Sam’s $318.50, Grace’s $74.95, the real $412.00. | ssr 3 | inbox 9)
+PASS  policy: default projection reads 3 of your 9: Sam's $318.50, Grace's $74.95, the real $412.00 (With this policy,  of your 9 open cases would wait for you: Sam’s $318.50, Grace’s $74.95, the real $412.00.)
+PASS  policy: the $250.00 rule's example is the real VPY case (Filing evidence on a case of $250.00 or more waits for you. |  | The real $412.00 Olympus OM-1n (PP-R-VPY-10194485): the evidence pack is ready to file when you say so.)
+PASS  policy Wire header names the latest real run, Oct 25 (PayPal sandbox webhooks verified with PayPal, times PT)
+PASS  deadlines Wire header names the latest real run, Oct 25 (PayPal sandbox webhooks verified with PayPal, times PT)
+PASS  landing: Open a test dispute sits in the CTA row above the 810 px fold and leads to the trigger ({"href":"#open-test","bottom":613,"target":true})
+PASS  case story: CaseClerk's own rows (You approved it, Evidence ready) are in Hanken, not mono ([["You approved it","\"Hanken Grotesk\""],["Evidence ready","\"Hanken Grotesk\""],["Recommendation","\"Hanken Grotesk\""]])
 PASS  end of run: no approve request was ever sent (0)
-430 PASS, 0 FAIL
+439 PASS, 0 FAIL

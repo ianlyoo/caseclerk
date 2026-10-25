@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState, type ReactNode } from "react";
 import { CASES, EVIDENCE_GATE_USD, POLICY, usd } from "../../_shared/data";
 import { REAL, REAL_ID, REAL_WIRE } from "../../_shared/real";
-import { BASE, EASE_OUT, SAMPLE_HERO_HREF, Masthead, Num, Wire, countWord, realDay, useRealCases } from "../ui";
+import { BASE, DESK_CASES, EASE_OUT, HERO_HREF, SAMPLE_HERO_HREF, Masthead, Num, LatestRunWire, countWord, realDay, useRealNow } from "../ui";
 import { pendingAction, realState, type ApiCase } from "../_real/model";
 import s from "../a.module.css";
 
@@ -14,6 +14,7 @@ const grace = byId("PP-R-TVA-10227066");
 const daniel = byId("PP-R-NKT-10227591");
 const olivia = byId("PP-R-SOF-10225302");
 const second = REAL.decisions[1];
+const VPY_USD = "412.00";
 const pct = (n: number) => `${Math.round(n)}%`;
 const oliviaPct = (Number(olivia.settledUsd) / Number(olivia.amount)) * 100;
 const first = (name: string) => name.split(" ")[0];
@@ -49,10 +50,7 @@ function rules(money: number, evidence: number): Rule[] {
     rule: <>Filing evidence on a case of {usd(evidence)} or more waits for you.</>,
     where: (
       <>
-        <Link href={SAMPLE_HERO_HREF}>
-          {first(daniel.buyer)} {daniel.buyer.split(" ")[1]}&rsquo;s {usd(daniel.amount)} {thing(daniel.item)}
-        </Link>
-        : the evidence pack is ready to file when you say so.
+        <Link href={HERO_HREF}>The real {usd(VPY_USD)} Olympus OM-1n (PP-R-VPY-10194485)</Link>: the evidence pack is ready to file when you say so.
       </>
     ),
   },
@@ -61,7 +59,7 @@ function rules(money: number, evidence: number): Rule[] {
     rule: <>It fights only at {pct(POLICY.minWinProbabilityToFight * 100)} or better to win; below that it refunds or offers, if that costs you less.</>,
     where: (
       <>
-        <Link href={SAMPLE_HERO_HREF}>{thing(daniel.item)}</Link>: 55% to win, so it fights. In <Link href={BASE}>the real run</Link>, PayPal&rsquo;s second ask came at {second.winPct}%, but fighting still cost less ({usd(second.evFight.slice(1))} against {usd(second.evRefund.slice(1))} for a refund), so it filed again.
+In <Link href={BASE}>the real run</Link>, PayPal&rsquo;s second ask came at {second.winPct}%, but fighting still cost less ({usd(second.evFight.slice(1))} against {usd(second.evRefund.slice(1))} for a refund), so it filed again.
       </>
     ),
   },
@@ -92,15 +90,9 @@ function rules(money: number, evidence: number): Rule[] {
 /** Each open case's next step: what the agent will do next, and the money it moves. */
 type Next = { label: string; amount: string; kind: "evidence" | "refund" | "message" | "none" };
 const sample = (id: string, kind: Next["kind"]): Next => ({ label: `${first(byId(id).buyer)}\u2019s ${usd(byId(id).amount)}`, amount: byId(id).amount, kind });
-const NEXT: Next[] = [
-  sample("PP-R-PLZ-10225917", "evidence"),
-  sample("PP-R-HBW-10226180", "message"),
-  sample("PP-R-TVA-10227066", "refund"),
-  sample("PP-R-NKT-10227591", "evidence"),
-  sample("PP-R-JDM-10228390", "none"),
-  sample("PP-R-CQF-10228844", "none"),
-  sample("PP-R-WEX-10226653", "none"),
-];
+// The same open sample cases the desk lists (the off-desk $412.00 sample is not one of them).
+const KIND: Record<string, Next["kind"]> = { "PP-R-PLZ-10225917": "evidence", "PP-R-HBW-10226180": "message", "PP-R-TVA-10227066": "refund" };
+const NEXT: Next[] = DESK_CASES.filter((c) => !c.closedAt).map((c) => sample(c.id, KIND[c.id] ?? "none"));
 /** The open real sandbox cases, from the same production list as the inbox: a pending filing is an evidence case; PayPal deciding is none. */
 const realNext = (real: ApiCase[]): Next[] =>
   real
@@ -135,7 +127,7 @@ function Dollars({ value, set, label, name }: { value: number; set: (n: number) 
 }
 
 function Sentence({ money, evidence, setMoney, setEvidence }: { money: number; evidence: number; setMoney: (n: number) => void; setEvidence: (n: number) => void }) {
-  const next = [...NEXT, ...realNext(useRealCases() ?? [])];
+  const next = [...NEXT, ...realNext(useRealNow())];
   const open = next.length;
   const w = waits(next, money, evidence);
   return (
@@ -213,9 +205,8 @@ export default function FinalAPolicy() {
         </main>
         <p className={s.foot}>These are the app&rsquo;s default rules. The cases they link to are sample cases, apart from the real run.</p>
       </div>
-      <Wire
-        sections={[
-          {
+      <LatestRunWire
+        fallback={{
             key: "real",
             label: (
               <>
@@ -223,8 +214,7 @@ export default function FinalAPolicy() {
               </>
             ),
             lines: REAL_WIRE.map((l) => ({ ...l, key: `real-${l.at}` })),
-          },
-        ]}
+          }}
       />
     </div>
   );

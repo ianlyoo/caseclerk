@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import type { WireLine } from "../../_shared/cases";
 import { realState, wireRowLines, type ApiCase, type ApiWireRow, type RealRow } from "../_real/model";
 import { caseDetail } from "../../_shared/cases";
-import { countdown, day, dayOffset, hoursLeft, nextDays, time, usd, usd0, weekday, type InboxCase } from "../../_shared/data";
+import { day, dayOffset, nextDays, time, usd, usd0, weekday, type InboxCase } from "../../_shared/data";
 import { PHOTOS } from "../../_shared/photos";
 import { usePhase } from "../../_shared/store";
-import { BASE, DESK_CASES, Num, countWord, realDay, useDeskApprovals, useRealNow, wireClock } from "../ui";
+import { BASE, DESK_CASES, Num, countWord, countdownNow, hoursLeftNow, realDay, useDeskApprovals, useRealNow, wireClock } from "../ui";
 import s from "../a.module.css";
 
 const thing = (item: string) => item.split(",")[0];
@@ -35,14 +35,14 @@ function Settled({ c }: { c: InboxCase }) {
 
 export function Row({ c }: { c: InboxCase }) {
   const photo = !c.closedAt ? PHOTOS[c.id] : undefined;
-  const red = c.dueAt && hoursLeft(c.dueAt) < 72;
+  const red = c.dueAt && hoursLeftNow(c.dueAt) < 72;
   return (
     <li className={s.row}>
       <Link href={`${BASE}/case/${c.id}`} className={s.rowLink} data-case-row={c.id}>
         <span className={`${s.rowDue} ${red ? s.red : ""}`}>
           {c.dueAt ? (
             <>
-              {countdown(c.dueAt)}
+              <span suppressHydrationWarning data-row-due={c.dueAt}>{countdownNow(c.dueAt)}</span>
               <br />
               by {weekday(c.dueAt)} {time(c.dueAt)}
             </>
@@ -77,10 +77,11 @@ export function Headline({ real }: { real: RealRow[] }) {
   const waiting = useDeskApprovals() + real.filter((r) => r.state === "pending").length;
   const sampleOpen = DESK_CASES.filter((c) => !c.closedAt);
   const open = [...sampleOpen, ...realOpen];
-  const stake = open.reduce((t, c) => t + Number(c.amount), 0);
+  // Only the real sandbox cases' money goes in the headline; the samples are counted, not summed.
+  const realStake = realOpen.reduce((t, c) => t + Number(c.amount), 0);
   return (
-    <h1 className={s.headline}>
-      {countWord(open.length, true)} open disputes, <Num value={stake} cause="resolve" /> at stake,{" "}
+    <h1 className={s.headline} data-inbox-h1 data-real-stake={realStake.toFixed(2)}>
+      {countWord(open.length, true)} open disputes ({countWord(realOpen.length)} real sandbox {realOpen.length === 1 ? "case" : "cases"}, <Num value={realStake} cause="resolve" />; {countWord(sampleOpen.length)} {sampleOpen.length === 1 ? "sample" : "samples"}),{" "}
       {waiting === 0 ? "none" : countWord(waiting)} waiting for your answer.
     </h1>
   );
@@ -102,7 +103,7 @@ export function Strip({ real }: { real?: ApiCase[] }) {
               <Link
                 key={c.id}
                 href={`${BASE}/case/${c.id}`}
-                className={`${s.mark} ${hoursLeft(c.dueAt!) < 72 ? s.markRed : ""}`}
+                className={`${s.mark} ${hoursLeftNow(c.dueAt!) < 72 ? s.markRed : ""}`}
                 data-due={c.dueAt}
                 title={`${c.buyer}, ${thing(c.item)}, due ${weekday(c.dueAt!)} ${time(c.dueAt!)}`}
               >
@@ -135,12 +136,12 @@ export function RealRowView({ r }: { r: RealRow }) {
   return (
     <li className={s.row}>
       <Link href={`${BASE}/case/${r.id}`} className={s.rowLink} data-case-row={r.id} data-real-row>
-        <span className={`${s.rowDue} ${r.dueAt && hoursLeft(r.dueAt) < 72 ? s.red : ""}`}>
+        <span className={`${s.rowDue} ${r.dueAt && hoursLeftNow(r.dueAt) < 72 ? s.red : ""}`}>
           {r.state === "resolved" ? (
             "Closed"
           ) : r.dueAt ? (
             <span data-real-row-due>
-              {countdown(r.dueAt)}
+              <span suppressHydrationWarning data-row-due={r.dueAt}>{countdownNow(r.dueAt)}</span>
               <br />
               by {weekday(r.dueAt)} {time(r.dueAt)}
             </span>

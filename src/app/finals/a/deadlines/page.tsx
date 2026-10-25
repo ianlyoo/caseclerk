@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { day, hoursLeft, weekday, type InboxCase } from "../../_shared/data";
+import { day, weekday, type InboxCase } from "../../_shared/data";
 import { REAL_ID, REAL_WIRE } from "../../_shared/real";
 import { realRow, realState, type RealRow } from "../_real/model";
-import { BASE, DESK_CASES, Masthead, Wire, countWord, realDay, useRealNow, wireClock } from "../ui";
+import { BASE, DESK_CASES, hoursLeftNow, Masthead, LatestRunWire, countWord, realDay, useRealNow, wireClock } from "../ui";
 import { RealRowView, Row, Strip } from "../inbox/parts";
 import s from "../a.module.css";
 
@@ -26,7 +26,7 @@ export default function FinalADeadlines() {
     .filter((r) => realState(r) === "pending" && r.case.snapshot.sellerResponseDueDate)
     .map((r) => realRow(r, (iso) => `${wireClock(iso)} PT`));
   const due: Due[] = [...DESK_CASES.filter((c) => c.dueAt).map((c) => ({ at: c.dueAt!, sample: c })), ...real.map((r) => ({ at: r.dueAt!, real: r }))].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
-  const soon = due.filter((c) => hoursLeft(c.at) < 72).length;
+  const soon = due.filter((c) => hoursLeftNow(c.at) < 72).length;
   return (
     <div className={`${s.app} ${s.wInbox}`}>
       <div className={s.paper}>
@@ -47,9 +47,8 @@ export default function FinalADeadlines() {
         </main>
         <p className={s.foot}>{real.length > 0 ? "Rows marked Real sandbox case come from PayPal’s sandbox; the rest are sample cases." : "All cases on this page are sample cases."}</p>
       </div>
-      <Wire
-        sections={[
-          {
+      <LatestRunWire
+        fallback={{
             key: "real",
             label: (
               <>
@@ -57,8 +56,7 @@ export default function FinalADeadlines() {
               </>
             ),
             lines: REAL_WIRE.map((l) => ({ ...l, key: `real-${l.at}` })),
-          },
-        ]}
+          }}
       />
     </div>
   );

@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useAnimate, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { agentCost, caseDetail, thenSteps, wireOf, type CaseDetail, type Exhibit, type Step } from "../../../_shared/cases";
-import { countdown, day, hoursLeft, NOW, sortedCases, time, usd, weekday } from "../../../_shared/data";
+import { day, NOW, sortedCases, time, usd, weekday } from "../../../_shared/data";
 import { PHOTOS } from "../../../_shared/photos";
 import { REAL_ID, REAL_WIRE } from "../../../_shared/real";
 import { entryFor, useDecision, usePendingApprovals, UNDO_MS, type Entry } from "../../../_shared/store";
-import { BASE, EASE_OUT, Masthead, Num, SPRING, Wire, countWord, wireClock, type ShownLine, type WireSection } from "../../ui";
+import { BASE, EASE_OUT, countdownNow, hoursLeftNow, Masthead, Num, SPRING, Wire, countWord, wireClock, type ShownLine, type WireSection } from "../../ui";
 import { REAL_HREF } from "../../_real/model";
 import s from "../../a.module.css";
 
@@ -74,7 +74,7 @@ function Header({ d, phase, resolvedAt }: { d: CaseDetail; phase?: string; resol
   // A staged ruling claims no money: the real ruling is on the real case.
   const kept = resolved ? undefined : d.outcome?.kept;
   const h1 = resolved ? "A staged ending. On a real case, PayPal\u2019s ruling lands here." : d.headline;
-  const red = d.c.dueAt && hoursLeft(d.c.dueAt) < 72;
+  const red = d.c.dueAt && hoursLeftNow(d.c.dueAt) < 72;
   return (
     <>
       <div className={`${s.margin} ${s.marginStack}`}>
@@ -122,7 +122,7 @@ function Header({ d, phase, resolvedAt }: { d: CaseDetail; phase?: string; resol
             </span>
           ) : d.c.dueAt ? (
             <span className={red ? s.red : s.due}>
-              respond within {countdown(d.c.dueAt)}, by {weekday(d.c.dueAt)} {day(d.c.dueAt)}
+              respond within <span suppressHydrationWarning>{countdownNow(d.c.dueAt)}</span>, by {weekday(d.c.dueAt)} {day(d.c.dueAt)}
             </span>
           ) : (
             <span className={s.due}>with PayPal, no answer due from you</span>

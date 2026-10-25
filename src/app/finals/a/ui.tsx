@@ -10,7 +10,7 @@ import type { WireLine } from "../_shared/cases";
 import { CASES, SELLER, sortedCases, TZ } from "../_shared/data";
 import { REAL_LAST } from "../_shared/real";
 import { usePendingApprovals, usePhase } from "../_shared/store";
-import { realState, type ApiCase } from "./_real/model";
+import { realLines, realState, type ApiCase } from "./_real/model";
 import s from "./a.module.css";
 
 export const BASE = "/finals/a";
@@ -403,4 +403,36 @@ export function Wire({ sections, phoneLabel }: { sections: WireSection[]; phoneL
       </aside>
     </>
   );
+}
+
+/** The Wire for pages with no case of their own (Deadlines, Policy): PayPal's traffic on the newest closed real case. */
+export function LatestRunWire({ fallback }: { fallback: WireSection }) {
+  const r = useRealNow().find((x) => realState(x) === "resolved");
+  if (!r) return <Wire sections={[fallback]} />;
+  const lines = realLines(r);
+  return (
+    <Wire
+      sections={[
+        {
+          key: "real",
+          label: (
+            <>
+              PayPal, latest real run: <Link href={`${BASE}/case/${r.case.id}`}>{r.case.id}</Link>, {realDay(lines.at(-1)!.at)}
+            </>
+          ),
+          lines: foldRoutine(lines.map((l) => ({ ...l, key: l.eventId ?? l.debugId ?? l.at }))),
+        },
+      ]}
+    />
+  );
+}
+
+/** Deadlines are absolute PayPal times, so countdowns and the 72-hour flag run on the real clock. */
+export const hoursLeftNow = (iso: string) => (Date.parse(iso) - Date.now()) / 3_600_000;
+export function countdownNow(iso: string): string {
+  const ms = Date.parse(iso) - Date.now();
+  if (ms <= 0) return "overdue";
+  const h = Math.floor(ms / 3_600_000);
+  const d = Math.floor(h / 24);
+  return d === 0 ? `${h % 24} h` : `${d} ${d === 1 ? "day" : "days"} ${h % 24} h`;
 }

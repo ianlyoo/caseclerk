@@ -76,7 +76,7 @@ function OpenTest() {
     }
   };
   return (
-    <div className={s.cta}>
+    <div className={s.cta} id="open-test">
       <button className={s.btnQuiet} onClick={open} disabled={t.at === "posting" || t.at === "waiting"} data-open-test>
         Open a test dispute
       </button>
@@ -144,6 +144,9 @@ export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | nu
             <Link href={REAL_HREF} className={pending ? s.btnLink : s.btn} data-open-real>
               Open this {amt} {realState(r) === "resolved" ? "resolved " : ""}case
             </Link>
+            <a href="#open-test" className={s.btnLink} data-test-link>
+              Open a test dispute
+            </a>
           </div>
           <p className={s.lede}>
             CaseClerk answers PayPal disputes for small online sellers: it reads the case, gathers the order and the tracking, and files the evidence. Small cases it answers on its own, under <Link href={`${BASE}/policy`}>your rules</Link>; over {usd(EVIDENCE_GATE_USD)} to file, or {usd(POLICY.approvalAboveUsd)} to refund or offer, it asks you first.

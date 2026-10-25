@@ -458,7 +458,7 @@ function Story({ r, photo }: { r: ApiCase; photo: boolean }) {
               </span>
               <div className={x.who === "CaseClerk" ? s.storyBody : `${s.storyBody} ${s.storyPP}`}>
                 <p className={s.storyHead}>
-                  <span className={s.storyWho}>{x.who}</span> <span className={s.mono}>{x.title}</span>
+                  <span className={s.storyWho}>{x.who}</span> <span className={x.who === "CaseClerk" ? s.storyPlain : s.mono} data-story-title>{x.title}</span>
                   {x.status && <span className={s.storyStatus}> {x.status}</span>}
                 </p>
                 <p className={s.storyPlain}>{x.plain}</p>
