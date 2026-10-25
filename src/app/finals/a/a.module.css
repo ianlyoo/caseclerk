@@ -889,6 +889,15 @@ a.btn {
     display: block;
   }
 }
+/* The real waiting case on the strip: green, and labelled Real at every width. */
+.mark.markReal {
+  border-left-color: var(--kept);
+  color: var(--kept);
+}
+.mark > .markRealTag {
+  display: block;
+  font-size: 13px;
+}
 .mark.markRed {
   border-left-color: var(--red);
   color: var(--red);
@@ -1470,6 +1479,15 @@ a.btn {
     display: block;
   }
   .recommend {
+    margin: 0;
+    padding: 10px 16px 8px;
+    background: var(--sheet);
+    border-top: 1px solid var(--hair);
+    font-size: 15px;
+    line-height: 21px;
+  }
+  /* On a phone the recommendation takes this line's room; Review the evidence lists what PayPal receives. */
+  .slipNote.slipNoteFull {
     display: none;
   }
   .wirePin {

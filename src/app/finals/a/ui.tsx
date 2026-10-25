@@ -5,11 +5,11 @@
 import Link from "next/link";
 import NumberFlow from "@number-flow/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { WireLine } from "../_shared/cases";
-import { SELLER, TZ } from "../_shared/data";
+import { CASES, SELLER, sortedCases, TZ } from "../_shared/data";
 import { REAL_LAST } from "../_shared/real";
-import { usePendingApprovals } from "../_shared/store";
+import { usePendingApprovals, usePhase } from "../_shared/store";
 import { realState, type ApiCase } from "./_real/model";
 import s from "./a.module.css";
 
@@ -17,6 +17,11 @@ export const BASE = "/finals/a";
 /** The case waiting for you: the real $412.00 sandbox chargeback. The $412.00 sample is SAMPLE_HERO_HREF. */
 export const HERO_HREF = `${BASE}/case/PP-R-VPY-10194485`;
 export const SAMPLE_HERO_HREF = `${BASE}/case/PP-R-NKT-10227591`;
+/** The $412.00 Olympus sample shares its item and amount with the real waiting VPY case, so the desk, the strip,
+ * Deadlines and the counts leave it out; it still opens from the landing's "a sample case" link and from Policy. */
+export const DESK_HIDDEN = "PP-R-NKT-10227591";
+export const DESK_CASES = CASES.filter((c) => c.id !== DESK_HIDDEN);
+export const deskSorted = () => sortedCases().filter((c) => c.id !== DESK_HIDDEN);
 export const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 export const SPRING = { type: "spring", stiffness: 420, damping: 41, mass: 1 } as const;
 
@@ -80,10 +85,32 @@ export function useRealCases(): ApiCase[] | null {
 }
 
 /** Waiting for you: the sample approvals plus every real case with an action waiting for the seller. */
+// The real cases the server fetched for this request (layout.tsx), so every route's first paint counts them.
+const RealSeedCtx = createContext<ApiCase[] | undefined>(undefined);
+export function RealSeed({ cases, children }: { cases: ApiCase[]; children: ReactNode }) {
+  return <RealSeedCtx.Provider value={cases}>{children}</RealSeedCtx.Provider>;
+}
+export function useRealSeed(): ApiCase[] | undefined {
+  return useContext(RealSeedCtx);
+}
+
 function useWaiting(seed?: ApiCase[]): number {
   // A page that already has the real cases from the server passes them in, so the first paint counts them too.
-  const real = useRealCases() ?? seed;
-  return usePendingApprovals() + (real ?? []).filter((r) => realState(r) === "pending").length;
+  const ctx = useRealSeed();
+  const real = useRealCases() ?? seed ?? ctx;
+  return useDeskApprovals() + (real ?? []).filter((r) => realState(r) === "pending").length;
+}
+
+/** Sample cases waiting for approval, without the one the desk leaves out. */
+export function useDeskApprovals(): number {
+  const hidden = ["pending", "undo", "sending"].includes(usePhase(DESK_HIDDEN)) ? 1 : 0;
+  return usePendingApprovals() - hidden;
+}
+
+/** The real cases: live once loaded, else what the page or the layout got from the server. */
+export function useRealNow(seed?: ApiCase[]): ApiCase[] {
+  const ctx = useRealSeed();
+  return useRealCases() ?? seed ?? ctx ?? [];
 }
 
 export function WaitingCount({ seed }: { seed?: ApiCase[] }) {

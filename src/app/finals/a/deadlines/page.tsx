@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { CASES, day, hoursLeft, weekday, type InboxCase } from "../../_shared/data";
+import { day, hoursLeft, weekday, type InboxCase } from "../../_shared/data";
 import { REAL_ID, REAL_WIRE } from "../../_shared/real";
-import { BASE, Masthead, Wire, countWord, realDay } from "../ui";
-import { Row, Strip } from "../inbox/parts";
+import { realRow, realState, type RealRow } from "../_real/model";
+import { BASE, DESK_CASES, Masthead, Wire, countWord, realDay, useRealNow, wireClock } from "../ui";
+import { RealRowView, Row, Strip } from "../inbox/parts";
 import s from "../a.module.css";
 
-function byDay(cases: InboxCase[]) {
-  const out: { day: string; cases: InboxCase[] }[] = [];
-  for (const c of cases) {
-    const d = `${weekday(c.dueAt!)} ${day(c.dueAt!)}`;
+type Due = { at: string; sample?: InboxCase; real?: RealRow };
+
+function byDay(due: Due[]) {
+  const out: { day: string; cases: Due[] }[] = [];
+  for (const c of due) {
+    const d = `${weekday(c.at)} ${day(c.at)}`;
     if (out.at(-1)?.day !== d) out.push({ day: d, cases: [] });
     out.at(-1)!.cases.push(c);
   }
@@ -18,8 +21,12 @@ function byDay(cases: InboxCase[]) {
 }
 
 export default function FinalADeadlines() {
-  const due = CASES.filter((c) => c.dueAt).sort((a, b) => Date.parse(a.dueAt!) - Date.parse(b.dueAt!));
-  const soon = due.filter((c) => hoursLeft(c.dueAt!) < 72).length;
+  // The real cases waiting for you sit beside the sample desk, at PayPal's own response deadline.
+  const real = useRealNow()
+    .filter((r) => realState(r) === "pending" && r.case.snapshot.sellerResponseDueDate)
+    .map((r) => realRow(r, (iso) => `${wireClock(iso)} PT`));
+  const due: Due[] = [...DESK_CASES.filter((c) => c.dueAt).map((c) => ({ at: c.dueAt!, sample: c })), ...real.map((r) => ({ at: r.dueAt!, real: r }))].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const soon = due.filter((c) => hoursLeft(c.at) < 72).length;
   return (
     <div className={`${s.app} ${s.wInbox}`}>
       <div className={s.paper}>
@@ -33,14 +40,12 @@ export default function FinalADeadlines() {
             <section key={g.day}>
               <h2 className={s.groupHead}>Due {g.day}</h2>
               <ul className={s.rows} style={{ marginTop: 0 }}>
-                {g.cases.map((c) => (
-                  <Row key={c.id} c={c} />
-                ))}
+                {g.cases.map((c) => (c.real ? <RealRowView key={c.real.id} r={c.real} /> : <Row key={c.sample!.id} c={c.sample!} />))}
               </ul>
             </section>
           ))}
         </main>
-        <p className={s.foot}>All cases on this page are sample cases.</p>
+        <p className={s.foot}>{real.length > 0 ? "Rows marked Real sandbox case come from PayPal’s sandbox; the rest are sample cases." : "All cases on this page are sample cases."}</p>
       </div>
       <Wire
         sections={[

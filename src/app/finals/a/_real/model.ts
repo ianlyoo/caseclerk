@@ -293,7 +293,7 @@ export function slipSummary(r: ApiCase, a: AgentAction): string {
 }
 
 /** The inbox row for a real case: what it is, where it stands, and its last PayPal call. */
-export type RealRow = { id: string; item: string; amount: string; state: RealState; standing: string; lastCall?: { at: string; path: string; status: string; debugId?: string }; lastEvent?: { at: string; eventId: string } };
+export type RealRow = { id: string; item: string; amount: string; state: RealState; standing: string; dueAt?: string; lastCall?: { at: string; path: string; status: string; debugId?: string }; lastEvent?: { at: string; eventId: string } };
 
 export function realRow(r: ApiCase, ptTime: (iso: string) => string): RealRow {
   const lines = realLines(r);
@@ -318,6 +318,7 @@ export function realRow(r: ApiCase, ptTime: (iso: string) => string): RealRow {
     amount: r.case.snapshot.amount.value,
     state,
     standing,
+    dueAt: state === "pending" ? r.case.snapshot.sellerResponseDueDate : undefined,
     lastCall: call && { at: call.at, path: call.path, status: call.status, debugId: call.debugId },
     lastEvent: ev?.eventId ? { at: ev.at, eventId: ev.eventId } : undefined,
   };

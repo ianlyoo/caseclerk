@@ -321,7 +321,8 @@ const idsProbe = (page) =>
     await page.waitForTimeout(2600);
     const body = await page.evaluate(() => document.body.innerText);
     const after = await navCount(page);
-    out(after === before - 1, `after the 200 the nav count rolls down at ${v.name}`, `${before} to ${after}`);
+    // The $412.00 sample is off the desk (it twins the real VPY case), so its approval leaves the nav count as it was.
+    out(after === before, `after the 200 on the off-desk $412.00 sample the nav count stays at ${v.name}`, `${before} to ${after}`);
     out(/Evidence filed with PayPal\. \d\d:\d\d:\d\d/.test(body), `slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at ${v.name}`);
     out(!/until you decide|Nothing reaches PayPal/.test(body), `after the 200 no "until you decide" anywhere at ${v.name}`);
     out((await page.locator("[data-approve]").count()) === 0 && (await page.locator("[data-inflight]").count()) === 0, `after the 200 no Approve button and no in-flight rule at ${v.name}`);
@@ -400,13 +401,13 @@ const idsProbe = (page) =>
         cells: cells.length,
         over: s.scrollWidth - s.clientWidth,
         cellOver: cells.filter((c) => c.scrollWidth > c.clientWidth + 0.5).length,
-        due: [...s.querySelectorAll("[data-due]")].map((m) => ({ due: m.getAttribute("data-due"), cents: /\.\d\d/.test(m.textContent) })),
+        due: [...s.querySelectorAll("[data-due]")].map((m) => ({ due: m.getAttribute("data-due"), real: m.getAttribute("data-real-due"), cents: /\.\d\d/.test(m.textContent) })),
         cutAmounts: [...s.querySelectorAll("[data-due] > span:first-child")].filter((x) => x.offsetWidth > 0 && x.scrollWidth > x.clientWidth).map((x) => x.textContent),
       };
     });
     out(!strip.cutAmounts.length, `G19 no strip amount is truncated at ${v.name}`, strip.cutAmounts.join(", "));
     out(strip.cells === 14 && strip.over <= 0 && !strip.cellOver, `G19 14-day strip has no overflow at ${v.name}`, JSON.stringify({ cells: strip.cells, over: strip.over, cellOver: strip.cellOver }));
-    out(strip.due.length && strip.due.every((m) => DUE.includes(m.due) && !m.cents), `G19 every strip mark is bound to a case dueAt, amounts without cents at ${v.name}`, `${strip.due.length} marks`);
+    out(strip.due.length && strip.due.every((m) => (m.real || DUE.includes(m.due)) && !m.cents), `G19 every strip mark is bound to a case dueAt, amounts without cents at ${v.name}`, `${strip.due.length} marks`);
     judgePage(await pageProbe(page, true), `inbox first screen ${v.name}`, v === V1440 ? { h1Min: 46 } : {});
     if (v === V1440) {
       const live = await liveProbe(page);
@@ -464,7 +465,7 @@ const idsProbe = (page) =>
         if (/The agent, now/.test(t.body)) kinds.add("working");
         if (/You kept/.test(t.body)) kinds.add("closed");
       }
-      out(rows.length === 11 && !wrong.length, `G15 all ${rows.length} inbox rows open their own case (h1 names the buyer)`, wrong.slice(0, 2).join("; "));
+      out(rows.length === 10 && !wrong.length, `G15 all ${rows.length} inbox rows open their own case (h1 names the buyer)`, wrong.slice(0, 2).join("; "));
       out(kinds.size === 3, "own-case routing covers waiting for you, agent working and closed", [...kinds].join(", "));
     }
     await ctx.close();
@@ -513,7 +514,7 @@ const idsProbe = (page) =>
     out(land.created && new RegExp(`came in at ${to12(land.created)} PT`).test(land.h1) && new RegExp(`${minsLater} minutes after you approved`).test(land.h1), "landing h1 facts match the Wire: the CREATED clock, minutes from approval to RESOLVED", `${land.h1} [${land.created}, ${minsLater} min]`);
     out(land.cta.trim() === "Opens a real PayPal sandbox chargeback, and CaseClerk takes it from there.", "landing: the test-dispute note says it opens a real sandbox chargeback", land.cta);
     out(land.open === "/finals/a/case/PP-R-NJA-10194486 Open this $389.00 resolved case", "landing: Open this $389.00 resolved case goes to the real case it replays", land.open);
-    out(await page.evaluate(() => { const b = document.querySelector("[data-baseline]"); return !!b && /PayPal rules for the buyer: the seller would lose the \$389\.00 and the fee/.test(b.textContent) && b.getBoundingClientRect().bottom <= 810; }), "landing: the baseline (no answer, PayPal rules for the buyer) sits above the fold, next to the result");
+    out(await page.evaluate(() => { const b = document.querySelector("[data-baseline]"); return !!b && /PayPal rules for the buyer: you.d lose the \$389\.00 and the fee/.test(b.textContent) && b.getBoundingClientRect().bottom <= 810; }), "landing: the baseline (no answer, PayPal rules for the buyer) sits above the fold, next to the result");
     out(land.review === "/finals/a/case/PP-R-VPY-10194485 Another case is waiting: review the $412.00 one" && land.primaryAbove, "landing: the primary ink button Another case is waiting: review the $412.00 one goes to VPY, above the 810 px fold", `${land.review} ${land.primaryAbove}`);
     out(land.testQuiet, "landing: Open a test dispute is the secondary, outlined button");
     out(land.factLines <= 4, "landing: the case paragraph is about 3 lines", `${land.factLines} lines`);
@@ -758,6 +759,60 @@ const idsProbe = (page) =>
     const distinct = [...new Set(seen)];
     out(mocked === 1 && escaped === 0 && seen.length > 0 && distinct.length === 1, "receipt clock: after a mocked 200 with no filing time and a later poll that has one, the receipt and the Wire pin never change", `${mocked} mocked, ${escaped} aborted, ${distinct.length} distinct: ${distinct.join(" || ").slice(0, 200)}`);
     await ctx.close();
+  }
+
+  // Judge r5: the nav count is right in the server HTML of every route, the real waiting case is on the strip and on
+  // Deadlines, no sample row twins it, and on a phone the landing CTA and the case recommendation are on the first screen.
+  {
+    const vpy = await (await fetch(API + "PP-R-VPY-10194485")).json();
+    const vpyDue = vpy.case.snapshot.sellerResponseDueDate;
+    const navs = {};
+    for (const path of ["", "/inbox", "/deadlines", "/policy", "/case/PP-R-VPY-10194485", "/case/PP-R-NJA-10194486", `/case/${HERO}`]) {
+      const html = await (await fetch(BASE + P + path)).text();
+      navs[path || "/"] = (html.match(/data-count="(\d+)"/) || [])[1];
+    }
+    const { ctx, page } = await open(browser, V1440, `${P}/inbox`);
+    const inbox = await page.evaluate(() => {
+      const nav = document.querySelector("header nav a[data-count]").getAttribute("data-count");
+      const realDue = [...document.querySelectorAll("[data-real-row]")].filter((a) => a.querySelector("[data-real-row-due]")).map((a) => a.getAttribute("data-case-row"));
+      const marks = [...document.querySelectorAll("[data-strip] [data-real-due]")].map((m) => [m.getAttribute("data-real-due"), m.getAttribute("data-due"), m.innerText.replace(/\n/g, " ")]);
+      const rows = [...document.querySelectorAll("[data-group] [data-case-row]")].map((a) => ({ real: a.hasAttribute("data-real-row"), item: (a.querySelector("[class*=rowItem]") || {}).textContent || "", amt: (a.querySelector("[class*=rowAmt]") || {}).textContent || "", due: (a.querySelector("[data-real-row-due]") || {}).innerText || "" }));
+      return { nav, realDue, marks, rows };
+    });
+    const vals = Object.values(navs);
+    out(vals.every((x) => x && x === inbox.nav), "nav: the server HTML of every route has the same Waiting for you count as the rendered inbox", `${JSON.stringify(navs)} vs ${inbox.nav}`);
+    out(inbox.realDue.length >= 1 && inbox.realDue.every((id) => inbox.marks.some(([m]) => m === id)), "strip: every real waiting case with a PayPal deadline has a mark on the 14-day strip", `${inbox.realDue.join(", ")} / ${JSON.stringify(inbox.marks)}`);
+    out(inbox.marks.some(([id, due, txt]) => id === "PP-R-VPY-10194485" && due === vpyDue && /\$412\b/.test(txt) && /Real/.test(txt)), "strip: VPY sits on its PayPal deadline, marked Real", `${vpyDue} ${JSON.stringify(inbox.marks)}`);
+    const vpyRow = inbox.rows.find((r) => r.real && /Olympus OM-1n body/.test(r.item));
+    out(vpyRow && /^\d+ days? \d+ h\s*by \w+ \d+:\d\d\s?[ap]m$/.test(vpyRow.due.trim()), "inbox: VPY's row shows its countdown and due time like the sample rows", vpyRow && vpyRow.due.replace(/\n/g, " "));
+    const realAmts = inbox.rows.filter((r) => r.real && r.due).map((r) => r.amt.trim());
+    const twins = inbox.rows.filter((r) => !r.real && (/Olympus OM-1n/.test(r.item) || realAmts.includes(r.amt.trim())));
+    out(!twins.length, "inbox: no sample row shares the real waiting case's item or amount", twins.map((r) => `${r.item} ${r.amt}`).join(", "));
+    await page.goto(BASE + P + "/deadlines", { waitUntil: "networkidle" });
+    const dl = await page.evaluate(() => {
+      const W = ["none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+      const h1 = document.querySelector("h1").innerText;
+      const total = W.indexOf(((h1.match(/; (\w+) in the next two weeks/) || [])[1] || "").toLowerCase());
+      return { h1, total, rows: document.querySelectorAll("main [data-case-row]").length, vpy: !!document.querySelector("main [data-case-row='PP-R-VPY-10194485']"), mark: !!document.querySelector("[data-strip] [data-real-due='PP-R-VPY-10194485']") };
+    });
+    out(dl.vpy && dl.mark && dl.total === dl.rows, "deadlines: VPY is listed and on the strip, and the h1's two-week count equals the rows", `${dl.h1} | ${dl.rows} rows`);
+    await ctx.close();
+    {
+      const { ctx, page } = await open(browser, PHONE, P);
+      const cta = await page.evaluate(() => { const b = document.querySelector("[data-review-waiting]"); return b ? Math.round(b.getBoundingClientRect().bottom) : -1; });
+      out(cta > 0 && cta <= 820, "phone landing: the review button is on the first screen", `${cta} px`);
+      await page.goto(BASE + P + "/case/PP-R-VPY-10194485", { waitUntil: "networkidle" });
+      await page.waitForTimeout(800);
+      const rec = await page.evaluate(() => {
+        const r = document.querySelector("[data-recommend]");
+        if (!r) return null;
+        const b = r.getBoundingClientRect();
+        const hit = document.elementFromPoint(b.left + 20, b.top + b.height / 2);
+        return { top: Math.round(b.top), bottom: Math.round(b.bottom), shown: b.height > 0 && b.bottom <= innerHeight && r.contains(hit), text: r.innerText.replace(/\n/g, " ") };
+      });
+      out(rec && rec.shown && /35%/.test(rec.text) && /Filing adds no cost/.test(rec.text), "phone case: the recommendation is on screen above the slip, not covered", JSON.stringify(rec));
+      await ctx.close();
+    }
   }
 
   out(approveAttempts === 0, "end of run: no approve request was ever sent", `${approveAttempts}`);

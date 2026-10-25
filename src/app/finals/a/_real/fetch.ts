@@ -1,8 +1,9 @@
+import { cache } from "react";
 import { REAL_LIST_PATH, type ApiCase } from "./model";
 import { UPSTREAM } from "./upstream";
 
-/** Every sandbox test case from the production API, in its order (newest first); any that fail to load are left out. */
-export async function fetchRealCases(): Promise<ApiCase[]> {
+/** Once per request (the layout and the inbox share it). Every sandbox test case from the production API, in its order (newest first); any that fail to load are left out. */
+export const fetchRealCases = cache(async (): Promise<ApiCase[]> => {
   const get = async <T,>(path: string): Promise<T | null> => {
     try {
       const r = await fetch(`${UPSTREAM}${path}`, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
@@ -14,4 +15,4 @@ export async function fetchRealCases(): Promise<ApiCase[]> {
   const list = await get<{ cases: { id: string }[] }>(REAL_LIST_PATH);
   const got = await Promise.all((list?.cases ?? []).map((c) => get<ApiCase>(`/api/cases/${c.id}`)));
   return got.filter((x): x is ApiCase => x !== null);
-}
+});

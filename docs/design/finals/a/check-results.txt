@@ -79,7 +79,7 @@ PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the
 PASS  in-flight rule under the POST entry while PayPal answers (1)
 PASS  G2 every animation has a data-cause, slip in flight (5 animations)
 PASS  G3 animations <= 900 ms, loops only on the live dot / in-flight rule, slip in flight (undo rule (4 s) and in-flight rule (1.4 s) exempt by spec)
-PASS  after the 200 the nav count rolls down at 1440x810 (3 to 2)
+PASS  after the 200 on the off-desk $412.00 sample the nav count stays at 1440x810 (2 to 2)
 PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 1440x810
 PASS  after the 200 no "until you decide" anywhere at 1440x810
 PASS  after the 200 no Approve button and no in-flight rule at 1440x810
@@ -108,28 +108,28 @@ PASS  G9 contrast >= 4.5:1, case resolved at 1440
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, case resolved at 1440
 PASS  undo window with Undo and Send now at 1920x940
 PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 1920x940 (5 animations, 554 px closer)
-PASS  after the 200 the nav count rolls down at 1920x940 (3 to 2)
+PASS  after the 200 on the off-desk $412.00 sample the nav count stays at 1920x940 (2 to 2)
 PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 1920x940
 PASS  after the 200 no "until you decide" anywhere at 1920x940
 PASS  after the 200 no Approve button and no in-flight rule at 1920x940
 PASS  the sample filing lands on the Wire as staged, not 200, at 1920x940
 PASS  undo window with Undo and Send now at 1536x752@1.25
 PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 1536x752@1.25 (5 animations, 462 px closer)
-PASS  after the 200 the nav count rolls down at 1536x752@1.25 (3 to 2)
+PASS  after the 200 on the off-desk $412.00 sample the nav count stays at 1536x752@1.25 (2 to 2)
 PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 1536x752@1.25
 PASS  after the 200 no "until you decide" anywhere at 1536x752@1.25
 PASS  after the 200 no Approve button and no in-flight rule at 1536x752@1.25
 PASS  the sample filing lands on the Wire as staged, not 200, at 1536x752@1.25
 PASS  undo window with Undo and Send now at 2560x1440
 PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 2560x1440 (5 animations, 640 px closer)
-PASS  after the 200 the nav count rolls down at 2560x1440 (3 to 2)
+PASS  after the 200 on the off-desk $412.00 sample the nav count stays at 2560x1440 (2 to 2)
 PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 2560x1440
 PASS  after the 200 no "until you decide" anywhere at 2560x1440
 PASS  after the 200 no Approve button and no in-flight rule at 2560x1440
 PASS  the sample filing lands on the Wire as staged, not 200, at 2560x1440
 PASS  undo window with Undo and Send now at 390x844
 PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 390x844 (3 animations, 543 px closer)
-PASS  after the 200 the nav count rolls down at 390x844 (3 to 2)
+PASS  after the 200 on the off-desk $412.00 sample the nav count stays at 390x844 (2 to 2)
 PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 390x844
 PASS  after the 200 no "until you decide" anywhere at 390x844
 PASS  after the 200 no Approve button and no in-flight rule at 390x844
@@ -156,14 +156,14 @@ PASS  G9 contrast >= 4.5:1, inbox first screen 1440x810
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, inbox first screen 1440x810
 PASS  G13 inbox first screen: Wire with a PayPal event, a debug id >= 14 px, an amount with cents ({"event":true,"debug":2,"cents":true,"replay":false})
 PASS  G12 every debug id and event id on the inbox Wire exists in the production API for the real cases (29 debug ids, 62 event ids)
-PASS  inbox row 1 is a real sandbox case, labelled Real sandbox case (Olympus OM-1n body)
-PASS  inbox: Waiting for you comes first, and the h1, the nav badge and its rows agree (3 / 3 / 3)
-PASS  inbox: the h1's open count equals the open rows listed (10 vs [["Waiting for you",3],["Answer due, soonest first",3],["With PayPal",4],["Closed this month",4]])
+PASS  inbox row 1 is a real sandbox case, labelled Real sandbox case (by Wed 8:59 pm)
+PASS  inbox: Waiting for you comes first, and the h1, the nav badge and its rows agree (2 / 2 / 2)
+PASS  inbox: the h1's open count equals the open rows listed (9 vs [["Waiting for you",2],["Answer due, soonest first",3],["With PayPal",4],["Closed this month",4]])
 PASS  inbox: the closed sandbox test disputes fold into one collapsed row (Closed by PayPal: 10 sandbox test disputes Show them)
 PASS  the JKB row shows its last PayPal call, debug f2843364d3500 (With PayPal Ceramic ring dish Real sandbox case PP-R-JKB-10194463 PayPal is deciding; sandbox ruling requested 22:16:27 )
 PASS  G12 no debug id is attached to two lines
-PASS  G11 every image has data-credit, is listed in CREDITS.md and <= 40 KB (11 images)
-PASS  G15 all 11 inbox rows open their own case (h1 names the buyer)
+PASS  G11 every image has data-credit, is listed in CREDITS.md and <= 40 KB (10 images)
+PASS  G15 all 10 inbox rows open their own case (h1 names the buyer)
 PASS  own-case routing covers waiting for you, agent working and closed (approval, working, closed)
 PASS  G19 no strip amount is truncated at 1920x940
 PASS  G19 14-day strip has no overflow at 1920x940 ({"cells":14,"over":0,"cellOver":0})
@@ -418,6 +418,14 @@ PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, /inbox whole 
 PASS  G9 text >= 13 px, Wire >= 14 px, /inbox whole page 1440
 PASS  G9 contrast >= 4.5:1, /inbox whole page 1440
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, /inbox whole page 1440
-PASS  receipt clock: after a mocked 200 with no filing time and a later poll that has one, the receipt and the Wire pin never change (1 mocked, 0 aborted, 1 distinct: PayPal answered at 07:37:12 PT. | Filed with PayPalPOST provide-evidence 200 07:37:12 PTdebug mock00000000)
+PASS  receipt clock: after a mocked 200 with no filing time and a later poll that has one, the receipt and the Wire pin never change (1 mocked, 0 aborted, 1 distinct: PayPal answered at 08:43:22 PT. | Filed with PayPalPOST provide-evidence 200 08:43:22 PTdebug mock00000000)
+PASS  nav: the server HTML of every route has the same Waiting for you count as the rendered inbox ({"/":"2","/inbox":"2","/deadlines":"2","/policy":"2","/case/PP-R-VPY-10194485":"2","/case/PP-R-NJA-10194486":"2","/case/PP-R-NKT-10227591":"2"} vs 2)
+PASS  strip: every real waiting case with a PayPal deadline has a mark on the 14-day strip (PP-R-VPY-10194485 / [["PP-R-VPY-10194485","2026-11-05T04:59:59.000Z","$412 Real"]])
+PASS  strip: VPY sits on its PayPal deadline, marked Real (2026-11-05T04:59:59.000Z [["PP-R-VPY-10194485","2026-11-05T04:59:59.000Z","$412 Real"]])
+PASS  inbox: VPY's row shows its countdown and due time like the sample rows (10 days 11 h by Wed 8:59 pm)
+PASS  inbox: no sample row shares the real waiting case's item or amount
+PASS  deadlines: VPY is listed and on the strip, and the h1's two-week count equals the rows (Two answers are due in the next 72 hours; five in the next two weeks. | 5 rows)
+PASS  phone landing: the review button is on the first screen (690 px)
+PASS  phone case: the recommendation is on screen above the slip, not covered ({"top":501,"bottom":625,"shown":true,"text":"The agent recommends you fight with evidence, and puts the chance of winning at 35%. Filing adds no cost; accepting gives up the $412.00. USPS tracking proves the Olympus OM-1n body was delivered, not what condition it arrived in."})
 PASS  end of run: no approve request was ever sent (0)
-422 PASS, 0 FAIL
+430 PASS, 0 FAIL

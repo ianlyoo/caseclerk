@@ -133,13 +133,7 @@ export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | nu
             )}
           </h1>
           <p className={s.sandboxNote} style={{ margin: 0 }} data-baseline>
-            Without an answer by the deadline, PayPal rules for the buyer: the seller would lose the {amt} and the fee.
-          </p>
-          <p className={s.lede}>
-            CaseClerk answers PayPal disputes for small online sellers: it reads the case, gathers the order and the tracking, and files the evidence. Small cases it answers on its own, under <Link href={`${BASE}/policy`}>your rules</Link>; over {usd(EVIDENCE_GATE_USD)} to file, or {usd(POLICY.approvalAboveUsd)} to refund or offer, it asks you first.
-          </p>
-          <p className={s.sandboxNote} style={{ margin: 0 }} data-sandbox-ruling>
-            {SANDBOX_RULING}
+            Without an answer by the deadline, PayPal rules for the buyer: you&rsquo;d lose the {amt} and the fee.
           </p>
           <div className={s.landActions}>
             {pending && (
@@ -151,6 +145,12 @@ export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | nu
               Open this {amt} {realState(r) === "resolved" ? "resolved " : ""}case
             </Link>
           </div>
+          <p className={s.lede}>
+            CaseClerk answers PayPal disputes for small online sellers: it reads the case, gathers the order and the tracking, and files the evidence. Small cases it answers on its own, under <Link href={`${BASE}/policy`}>your rules</Link>; over {usd(EVIDENCE_GATE_USD)} to file, or {usd(POLICY.approvalAboveUsd)} to refund or offer, it asks you first.
+          </p>
+          <p className={s.sandboxNote} style={{ margin: 0 }} data-sandbox-ruling>
+            {SANDBOX_RULING}
+          </p>
           <div className={s.landCase} style={{ gridTemplateColumns: "1fr" }}>
             <p className={s.landFacts}>
               <strong>

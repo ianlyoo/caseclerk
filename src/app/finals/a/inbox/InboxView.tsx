@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo } from "react";
-import { sortedCases, type InboxCase } from "../../_shared/data";
+import type { InboxCase } from "../../_shared/data";
 import { realLines, realRow, type ApiCase, type RealRow } from "../_real/model";
-import { Masthead, Wire, foldRoutine, wireClock } from "../ui";
+import { Masthead, Wire, deskSorted, foldRoutine, wireClock } from "../ui";
 import { Headline, RealRowView, Row, Strip, useLiveWire } from "./parts";
 import s from "../a.module.css";
 
 export function InboxView({ real }: { real: ApiCase[] }) {
-  const rows = sortedCases();
+  const rows = deskSorted();
   const realRows = real.map((r) => realRow(r, (iso) => `${wireClock(iso)} PT`));
   const base = useMemo(() => real.flatMap((r) => realLines(r)), [real]);
   const ids = useMemo(() => real.map((r) => r.case.id), [real]);
@@ -29,7 +29,7 @@ export function InboxView({ real }: { real: ApiCase[] }) {
         <Masthead here="inbox" real={real} />
         <main className={s.inbox}>
           <Headline real={realRows} />
-          <Strip />
+          <Strip real={real} />
           {groups
             .filter(([, rs, cs]) => rs.length + cs.length > 0)
             .map(([label, rs, cs]) => (

@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { WireLine } from "../../_shared/cases";
-import { wireRowLines, type ApiWireRow, type RealRow } from "../_real/model";
+import { realState, wireRowLines, type ApiCase, type ApiWireRow, type RealRow } from "../_real/model";
 import { caseDetail } from "../../_shared/cases";
-import { CASES, countdown, day, dayOffset, hoursLeft, nextDays, sortedCases, time, usd, usd0, weekday, type InboxCase } from "../../_shared/data";
+import { countdown, day, dayOffset, hoursLeft, nextDays, time, usd, usd0, weekday, type InboxCase } from "../../_shared/data";
 import { PHOTOS } from "../../_shared/photos";
-import { usePendingApprovals, usePhase } from "../../_shared/store";
-import { BASE, Num, countWord, realDay, wireClock } from "../ui";
+import { usePhase } from "../../_shared/store";
+import { BASE, DESK_CASES, Num, countWord, realDay, useDeskApprovals, useRealNow, wireClock } from "../ui";
 import s from "../a.module.css";
 
 const thing = (item: string) => item.split(",")[0];
@@ -74,9 +74,8 @@ export function Row({ c }: { c: InboxCase }) {
 /** Counts the sample desk and the real sandbox cases together, as the nav does. */
 export function Headline({ real }: { real: RealRow[] }) {
   const realOpen = real.filter((r) => r.state !== "resolved");
-  const waiting = usePendingApprovals() + real.filter((r) => r.state === "pending").length;
-  const heroResolved = usePhase("PP-R-NKT-10227591") === "resolved";
-  const sampleOpen = CASES.filter((c) => !c.closedAt && !(heroResolved && c.id === "PP-R-NKT-10227591"));
+  const waiting = useDeskApprovals() + real.filter((r) => r.state === "pending").length;
+  const sampleOpen = DESK_CASES.filter((c) => !c.closedAt);
   const open = [...sampleOpen, ...realOpen];
   const stake = open.reduce((t, c) => t + Number(c.amount), 0);
   return (
@@ -87,9 +86,11 @@ export function Headline({ real }: { real: RealRow[] }) {
   );
 }
 
-export function Strip() {
+/** The next 14 days: every sample answer due on the desk and every real case waiting for you, by its PayPal deadline. */
+export function Strip({ real }: { real?: ApiCase[] }) {
   const days = nextDays(14);
-  const due = CASES.filter((c) => c.dueAt);
+  const due = DESK_CASES.filter((c) => c.dueAt);
+  const realDue = useRealNow(real).filter((r) => realState(r) === "pending" && r.case.snapshot.sellerResponseDueDate);
   return (
     <div className={s.strip} data-strip aria-label="Answers due in the next 14 days">
       {days.map((iso, i) => (
@@ -109,6 +110,17 @@ export function Strip() {
                 <span className={s.sample}>{c.buyer.split(" ")[1]}</span>
               </Link>
             ))}
+          {realDue
+            .filter((r) => dayOffset(r.case.snapshot.sellerResponseDueDate!) === i)
+            .map((r) => {
+              const at = r.case.snapshot.sellerResponseDueDate!;
+              return (
+                <Link key={r.case.id} href={`${BASE}/case/${r.case.id}`} className={`${s.mark} ${s.markReal}`} data-due={at} data-real-due={r.case.id} title={`Real sandbox case ${r.case.id}, due ${weekday(at)} ${time(at)}`}>
+                  <span>{usd0(r.case.snapshot.amount.value)}</span>
+                  <span className={s.markRealTag}>Real</span>
+                </Link>
+              );
+            })}
         </div>
       ))}
     </div>
@@ -123,7 +135,21 @@ export function RealRowView({ r }: { r: RealRow }) {
   return (
     <li className={s.row}>
       <Link href={`${BASE}/case/${r.id}`} className={s.rowLink} data-case-row={r.id} data-real-row>
-        <span className={s.rowDue}>{r.state === "resolved" ? "Closed" : r.state === "pending" ? <span className={s.green}>Waiting for you</span> : "With PayPal"}</span>
+        <span className={`${s.rowDue} ${r.dueAt && hoursLeft(r.dueAt) < 72 ? s.red : ""}`}>
+          {r.state === "resolved" ? (
+            "Closed"
+          ) : r.dueAt ? (
+            <span data-real-row-due>
+              {countdown(r.dueAt)}
+              <br />
+              by {weekday(r.dueAt)} {time(r.dueAt)}
+            </span>
+          ) : r.state === "pending" ? (
+            <span className={s.green}>Waiting for you</span>
+          ) : (
+            "With PayPal"
+          )}
+        </span>
         {photo ? <img className={s.thumb} src={photo.src} alt={photo.alt} data-credit={photo.credit} width={56} height={42} /> : <span className={s.thumbEmpty} />}
         <span>
           <span className={s.rowItem}>{r.item}</span>
