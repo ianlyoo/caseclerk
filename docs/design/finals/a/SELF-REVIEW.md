@@ -110,3 +110,15 @@ Every capture comes from one production build on the Mac (`next build --webpack 
    Evidence: `case-approved-1440.png`, `case-real-pending-390.png`, `landing-1440.png`.
 
 Known limit: the first 18.8 s of the video show the round-2 build, so its paper rows still show the POST path that item 5 removes from the current build. The only way to change that was a new click, which the PM ruled out.
+
+## Ceremony re-take (round 4 prep): one clean take on the current build
+
+`case-approve-real.mp4` and its stills now come from a single take on the hosted Final A build (s3-w3-ui @ 9d07cd8, built 21:38 KST). No frame comes from an older build. This replaces the AAJ cut described in round 3, item 1.
+
+- **Case:** ceremony A5, PP-R-SGV-10194507 ($397.00), action `93212e24-…`.
+- **The click:** one real click at 05:52:55 PT. PayPal answered 200 at 05:52:57 PT, debug `ca5015c79eef8`. The recorder allowed exactly one POST, to that action only.
+- **The video:** 21.5 s at 2880×1620 and 30 fps, at 1× speed until the card. It runs pending (about 2.6 s), click, the "Send now / Undo" countdown, sending, PayPal's 200 and debug id, then settled.
+- **One edit:** 4 frames (0.13 s) at the answer are cut. For those frames the receipt and the Wire briefly showed the action's update time, 05:52:57, before the filing time, 05:52:55, arrived. That flip is in the build, not just the take, and is still unfixed.
+- **The jump:** a card reads "10 min 12 s later: PayPal closed it. Same case … Approved 05:52:55 PT; PayPal's RESOLVED webhook arrived 06:03:07 PT." Then the same case's own resolved page follows, recorded read-only on the same hosted build, with the sandbox disclosure caption. SGV is not in the verified money map, so the page uses the ruled fallback: "PayPal closed the … chargeback with no debit to your account."
+- **Stills:** `case-approve-real-before.png`, `case-approve-real-after.png`, `case-approve-real-resolved.png`.
+- **Earlier attempt (A4, PP-R-EGZ-10194505):** approved once at 05:45:20 PT, 200, debug `ca501515c8c94`. Its video was lost when the recorder crashed after the answer. It is not used, and the recorder has since been fixed.
