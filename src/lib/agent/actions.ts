@@ -1,6 +1,8 @@
 // Write actions: dedupe → policy gate → record → execute (or queue for approval / propose in dry run).
 // executeApproved / deny serve the Approvals UI.
 import type { ActionKind, AgentAction, CaseRecord, CaseStatus, DisputeSnapshot, Money, OrderContext, SellerPolicy } from "../types";
+import { evidenceInput } from "../paypal/disputes";
+import { amountUsd as disputeUsd } from "./ev";
 import { policyGate, type GateOutcome } from "./policy";
 import type { AgentDeps, EvidenceItem, OfferType } from "./ports";
 
@@ -11,7 +13,30 @@ export type ProvideEvidenceParams = {
   exhibits: { title: string; body: string }[];
   /** snapshot.updateTime when proposed: one submission per PayPal evidence request. */
   round: string;
+  /** PDF date, fixed when the filing is prepared so an approved filing rebuilds the same pack. */
+  generatedAt?: string;
+  /** Set when the filing waits for approval: exactly what goes to PayPal (W4's params.filing shape). */
+  filing?: PreparedFiling;
 };
+
+export type PreparedFiling = {
+  input: ReturnType<typeof evidenceInput>;
+  files: { field: string; name: string; size: number; contentType: string }[];
+  prepared: true;
+};
+
+const evidenceFileName = (caseId: string) => `caseclerk-evidence-${caseId}.pdf`;
+
+async function evidencePdf(deps: AgentDeps, c: CaseRecord, ep: ProvideEvidenceParams): Promise<Uint8Array> {
+  const order: OrderContext = c.order ?? { items: [] };
+  return deps.evidence.buildEvidencePdf({
+    case: c,
+    order,
+    narrative: ep.narrative,
+    exhibits: ep.exhibits,
+    ...(ep.generatedAt ? { generatedAt: new Date(ep.generatedAt) } : {}),
+  });
+}
 
 export type ActionParams =
   | { kind: "provide_evidence"; p: ProvideEvidenceParams }
@@ -80,10 +105,25 @@ export async function submitAction(
     return { outcome: "duplicate", reason: dup };
   }
   const amountUsd = moneyOf(a);
-  const gate = policyGate({ kind: a.kind, amountUsd }, policy, snap.allowed);
+  const gate = policyGate({ kind: a.kind, amountUsd, disputeAmountUsd: disputeUsd(snap) }, policy, snap.allowed);
   if (gate.outcome === "blocked") {
     await audit(deps, c.id, "agent", "action.blocked", `Blocked ${LABEL[a.kind]}: ${gate.reason}`);
     return gate;
+  }
+  if (a.kind === "provide_evidence" && gate.outcome !== "execute") {
+    // The seller approves the filing itself: prepare the exact input and file now, send nothing.
+    const generatedAt = (deps.now?.() ?? new Date()).toISOString();
+    const ep: ProvideEvidenceParams = { ...a.p, generatedAt };
+    const pdf = await evidencePdf(deps, c, ep);
+    ep.filing = {
+      input: evidenceInput(ep.evidences),
+      files: [{ field: "file1", name: evidenceFileName(c.id), size: pdf.byteLength, contentType: "application/pdf" }],
+      prepared: true,
+    };
+    a = { kind: "provide_evidence", p: ep };
+  }
+  if (gate.outcome === "awaiting_approval" && snap.sellerResponseDueDate) {
+    gate.reason += `; PayPal's deadline is ${snap.sellerResponseDueDate.slice(0, 16).replace("T", " ")} UTC`;
   }
   const status = gate.outcome === "execute" ? "executing" : gate.outcome === "proposed" ? "proposed" : "awaiting_approval";
   const action = await deps.db.actions.insert({
@@ -119,11 +159,10 @@ export async function perform(deps: AgentDeps, c: CaseRecord, action: AgentActio
     switch (action.kind) {
       case "provide_evidence": {
         const ep = action.params as unknown as ProvideEvidenceParams;
-        const order: OrderContext = c.order ?? { items: [] };
-        const pdf = await deps.evidence.buildEvidencePdf({ case: c, order, narrative: ep.narrative, exhibits: ep.exhibits });
+        const pdf = await evidencePdf(deps, c, ep);
         r = await pp.provideEvidence(c.id, {
           evidences: ep.evidences,
-          files: [{ name: `caseclerk-evidence-${c.id}.pdf`, bytes: pdf, contentType: "application/pdf" }],
+          files: [{ name: evidenceFileName(c.id), bytes: pdf, contentType: "application/pdf" }],
         });
         break;
       }

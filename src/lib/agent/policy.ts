@@ -1,14 +1,17 @@
 // Policy gate: every write action passes here before PayPal is called.
 //   blocked            PayPal doesn't currently offer the action (no HATEOAS link) — never sent
 //   proposed           dry-run mode: recorded for the seller, never sent
-//   awaiting_approval  money leaves the seller above their auto limit — waits in Approvals
+//   awaiting_approval  money leaves the seller above their auto limit, or evidence on a large dispute —
+//                      waits in Approvals
 //   execute            run now
-import type { ActionKind, DisputeLinkRel, SellerPolicy } from "../types";
+import { DEFAULT_POLICY, type ActionKind, type DisputeLinkRel, type SellerPolicy } from "../types";
 
 export type GateInput = {
   kind: ActionKind;
   /** Money this action gives to the buyer, in USD (refunds, offers, accepted claims). */
   amountUsd?: number;
+  /** The disputed amount in USD (evidence on large disputes waits for the seller). */
+  disputeAmountUsd?: number;
 };
 
 export type GateOutcome =
@@ -52,6 +55,15 @@ export function policyGate(action: GateInput, policy: SellerPolicy, allowed: rea
       return { outcome: "awaiting_approval", reason: `$${amount.toFixed(2)} is above your $${policy.autoRefundMaxUsd} auto-refund limit` };
     }
     return { outcome: "execute", reason: `$${amount.toFixed(2)} is within your $${policy.autoRefundMaxUsd} auto-refund limit` };
+  }
+  if (action.kind === "provide_evidence") {
+    // Stored policies from before this field fall back to the default.
+    const at = policy.evidenceApprovalAtUsd ?? DEFAULT_POLICY.evidenceApprovalAtUsd ?? 250;
+    const amount = action.disputeAmountUsd ?? NaN;
+    if (!Number.isFinite(amount)) return { outcome: "awaiting_approval", reason: "Dispute amount unclear: needs your approval" };
+    if (amount >= at) {
+      return { outcome: "awaiting_approval", reason: `A $${amount.toFixed(2)} dispute is at or above your $${at} review level for evidence` };
+    }
   }
   return { outcome: "execute", reason: "No money leaves your account" };
 }

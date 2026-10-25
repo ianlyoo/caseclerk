@@ -256,14 +256,14 @@ export function makeDeps(opts: {
   const db = memoryDb(opts.policy);
   const paypal = fakePaypal(state);
   const llm = scriptedLlm(opts.turns);
-  const pdfs: { narrative: string; exhibits: { title: string; body: string }[] }[] = [];
+  const pdfs: { narrative: string; exhibits: { title: string; body: string }[]; generatedAt?: string }[] = [];
   const deps: AgentDeps = {
     db,
     paypal,
     llm,
     evidence: {
       async buildEvidencePdf(input) {
-        pdfs.push({ narrative: input.narrative, exhibits: input.exhibits });
+        pdfs.push({ narrative: input.narrative, exhibits: input.exhibits, generatedAt: input.generatedAt?.toISOString() });
         return new TextEncoder().encode("%PDF-1.7 test");
       },
     },
