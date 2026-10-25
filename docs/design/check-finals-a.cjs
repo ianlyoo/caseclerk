@@ -12,6 +12,11 @@ const REAL_API = "https://caseclerk.vercel.app/api/cases/PP-R-JKB-10194463";
 const REAL_IDS = { "PP-R-VPY-10194485": "pending", "PP-R-NJA-10194486": "deciding|resolved", "PP-R-JKB-10194463": "deciding", "PP-R-RCJ-10194476": "resolved" };
 const API = "https://caseclerk.vercel.app/api/cases/";
 let approveAttempts = 0;
+// "Open a test dispute" opens a real PayPal sandbox chargeback (3 per IP per day). No check ever reaches production with it:
+// every context answers the route locally with TEST_MOCK, and once it has, the case list gains a mock case.
+let TEST_MOCK = { status: 202, body: { captureId: "MOCKCAPTURE0", orderId: "MOCKORDER0" } };
+const MOCK_CASE = { id: "PP-R-MCK-10000001", snapshot: { amount: { value: "396.00", currency: "USD" } } };
+let testMocked = 0;
 const DUE = ["2026-10-26T23:59:00-07:00", "2026-10-27T23:59:00-07:00", "2026-10-28T23:59:00-07:00", "2026-10-29T23:59:00-07:00", "2026-11-04T23:59:00-08:00"];
 
 const V1440 = { name: "1440x810", viewport: { width: 1440, height: 810 }, deviceScaleFactor: 1 };
@@ -35,6 +40,18 @@ async function open(browser, v, path, extra = {}) {
   await ctx.route(/\/(live\/actions|api\/actions)\//, (r) => {
     approveAttempts++;
     return r.abort();
+  });
+  let opened = false;
+  await ctx.route(/\/live\/test-dispute/, (r) => {
+    testMocked++;
+    opened = TEST_MOCK.status === 202;
+    return r.fulfill({ status: TEST_MOCK.status, contentType: "application/json", body: JSON.stringify(TEST_MOCK.body) });
+  });
+  await ctx.route(/\/live\/cases(\?|$)/, async (r) => {
+    if (!opened) return r.fallback();
+    const res = await r.fetch();
+    const j = await res.json();
+    return r.fulfill({ response: res, body: JSON.stringify({ ...j, cases: [MOCK_CASE, ...(j.cases || [])] }) });
   });
   const page = await ctx.newPage();
   const errors = [];
@@ -116,7 +133,7 @@ const pageProbe = (page, firstOnly) =>
       const cs = getComputedStyle(el);
       const box = el.getBoundingClientRect();
       const bg = rgb(cs.backgroundColor);
-      if (bg.length >= 3 && (bg.length === 3 || bg[3] > 0.9) && lum(bg) < 0.1 && box.width * box.height > area * 0.04 && !el.closest("[data-wire]") && !el.closest("button") && vis(el)) r.dark.push(el.tagName + "." + el.className);
+      if (bg.length >= 3 && (bg.length === 3 || bg[3] > 0.9) && lum(bg) < 0.1 && box.width * box.height > area * 0.04 && !el.closest("[data-wire]") && !el.closest("button, a[class*='btn']") && vis(el)) r.dark.push(el.tagName + "." + el.className);
       if ((cs.backdropFilter && cs.backdropFilter !== "none") || /blur/.test(cs.filter) || /conic-gradient|radial-gradient|repeating-/.test(cs.backgroundImage)) r.fx.push(el.tagName);
       const isBlue = (c) => {
         const v = rgb(c);
@@ -462,6 +479,10 @@ const idsProbe = (page) =>
         cta: (document.querySelector("[class*='ctaNote']") || {}).textContent || "",
         open: open ? open.getAttribute("href") + " " + open.textContent : "",
         end: (document.querySelector("[data-replay-end]") || {}).textContent || "",
+        review: (() => { const a = document.querySelector("a[data-review-waiting]"); return a ? a.getAttribute("href") + " " + a.textContent : ""; })(),
+        primaryAbove: (() => { const a = document.querySelector("a[data-review-waiting]"); return !!a && a.getBoundingClientRect().bottom <= 810 && getComputedStyle(a).backgroundColor !== "rgba(0, 0, 0, 0)"; })(),
+        testQuiet: (() => { const b = document.querySelector("[data-open-test]"); return !!b && getComputedStyle(b).backgroundColor === "rgba(0, 0, 0, 0)" && getComputedStyle(b).borderTopStyle === "solid"; })(),
+        factLines: (() => { const p = document.querySelector("[class*='landFacts']"); return p ? Math.round(p.getBoundingClientRect().height / parseFloat(getComputedStyle(p).lineHeight)) : 99; })(),
         created: clock(/CUSTOMER\.DISPUTE\.CREATED/),
         resolved: clock(/CUSTOMER\.DISPUTE\.RESOLVED/),
         filed: [...document.querySelectorAll("[data-wire-line]")].some((l) => /POST provide-evidence\s*200/.test(l.textContent) && /debug f8469524f503f/.test(l.textContent)),
@@ -477,19 +498,34 @@ const idsProbe = (page) =>
     const minsLater = appr && res ? Math.round((Math.floor(Date.parse(res.at) / 1000) - Math.floor(Date.parse(appr.at) / 1000)) / 60) : -1;
     out(land.order, "landing: the h1 comes before the 3-line intro");
     out(land.created && new RegExp(`came in at ${to12(land.created)} PT`).test(land.h1) && new RegExp(`${minsLater} minutes later`).test(land.h1), "landing h1 facts match the Wire: the CREATED clock, minutes from approval to RESOLVED", `${land.h1} [${land.created}, ${minsLater} min]`);
-    out(land.cta.trim() === "A sandbox chargeback. PayPal\u2019s webhook reaches us in about 3 minutes.", "landing CTA note says it is a sandbox chargeback, webhook in about 3 minutes", land.cta);
-    out(land.open === "/finals/a/case/PP-R-NJA-10194486 Open this case", "landing: Open this case goes to the real case it replays", land.open);
-    out(land.resolved && land.end.includes(`PayPal closed the case at ${land.resolved} PT and paid the buyer itself`), "landing replay ends on the real RESOLVED, its clock matching the Wire", land.end);
+    out(land.cta.trim() === "Opens a real PayPal sandbox chargeback, and CaseClerk takes it from there.", "landing: the test-dispute note says it opens a real sandbox chargeback", land.cta);
+    out(land.open === "/finals/a/case/PP-R-NJA-10194486 Open this $389.00 resolved case", "landing: Open this $389.00 resolved case goes to the real case it replays", land.open);
+    out(land.review === "/finals/a/case/PP-R-VPY-10194485 Review the $412.00 case waiting for you" && land.primaryAbove, "landing: the primary ink button Review the $412.00 case waiting for you goes to VPY, above the 810 px fold", `${land.review} ${land.primaryAbove}`);
+    out(land.testQuiet, "landing: Open a test dispute is the secondary, outlined button");
+    out(land.factLines <= 4, "landing: the case paragraph is about 3 lines", `${land.factLines} lines`);
+    out(land.end === "The seller keeps $378.43: the $389.00 sale less PayPal's usual fee. PayPal paid the buyer itself.", "landing replay ends on the seller's money, from PayPal's fund_movements", land.end);
     out(!/You kept/.test(await page.evaluate(() => document.body.innerText)), "landing makes no sample You kept claim");
     judgePage(await pageProbe(page, true), "landing first screen 1440", { h1Min: 46 });
     judgeAnims(await animProbe(page), "landing after the replay");
+    // Mocked: the route answers 202 locally, then the case list gains a mock case (no real PayPal call).
+    const before = testMocked;
     await page.locator("[data-open-test]").click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2500);
     const well = await page.evaluate(() => (document.querySelector("[data-well]") || {}).innerText || "");
-    out(/Card payment created/.test(well), "Open a test dispute: stage 1 shows within 1 s", well.split("\n")[0]);
-    await page.waitForTimeout(3600);
-    const w2 = await page.evaluate(() => document.querySelector("[data-well]").innerText);
-    out(/Waiting for PayPal's webhook, \d:\d\d so far/.test(w2), "the staged wait reaches the webhook stage with a ticking clock");
+    out(testMocked === before + 1 && /^PayPal is opening the chargeback\. Its webhook usually arrives in 3\u20135 minutes\. 0:0\d so far\.$/.test(well.trim()), "Open a test dispute (mocked 202): honest progress with a ticking clock", well.trim());
+    await page.waitForTimeout(10500);
+    const here = await page.evaluate(() => { const a = document.querySelector("[data-test-case]"); return a ? a.getAttribute("href") + " " + a.textContent : ""; });
+    out(here === "/finals/a/case/PP-R-MCK-10000001 the $396.00 chargeback PP-R-MCK-10000001", "the new case appears in the polled list and is linked", here);
+    await ctx.close();
+  }
+  {
+    TEST_MOCK = { status: 429, body: { error: { code: "rate_limited", message: "Three test disputes a day from one address. Try again tomorrow." } } };
+    const { ctx, page } = await open(browser, V1440, P);
+    await page.locator("[data-open-test]").click();
+    await page.waitForTimeout(1500);
+    const msg = await page.evaluate(() => (document.querySelector("[data-test-refused]") || {}).textContent || "");
+    out(msg === "Three test disputes a day from one address. Try again tomorrow.", "Open a test dispute (mocked 429): shows the API's message", msg);
+    TEST_MOCK = { status: 202, body: { captureId: "MOCKCAPTURE0", orderId: "MOCKORDER0" } };
     await ctx.close();
   }
   for (const v of [V1920, V1536, PHONE]) {
@@ -605,11 +641,11 @@ const idsProbe = (page) =>
         continue;
       }
       out(new RegExp(`^(${want})$`).test(r.state || ""), `${id} renders the API's state (${want})`, r.state);
-      out(r.mark.trim() === "Real PayPal sandbox case. Every id here came from PayPal." && /What happened, newest first/.test(r.body), `${id}: real-case label and What happened, newest first`);
+      out(r.mark.trim() === "Real PayPal sandbox case" && /What happened, newest first/.test(r.body), `${id}: real-case label and What happened, newest first`);
       const api = await (await fetch(API + id)).json();
       const known = new Set([...api.actions.map((a) => a.result && a.result.debugId), ...api.audit.map((a) => a.data && a.data.eventId), ...(api.wire || []).map((w) => w.debugId || w.eventId)].filter(Boolean));
       const bad = [...r.storyIds, ...r.wireDebug, ...r.wireEvents].filter((x) => !known.has(x));
-      out(!bad.length && r.storyIds.length >= 2 && r.sample === 0, `${id}: every id on the page and the Wire is in its production API record; no sample lines`, bad.join(", ") || `${r.storyIds.length} story ids, ${r.wireDebug.length} debug, ${r.wireEvents.length} events`);
+      out(!bad.length && r.storyIds.length >= (want === "pending" ? 1 : 2) && r.sample === 0, `${id}: every id on the page and the Wire is in its production API record; no sample lines`, bad.join(", ") || `${r.storyIds.length} story ids, ${r.wireDebug.length} debug, ${r.wireEvents.length} events`);
       out(/ PT\b/.test(r.body) && !/UTC/.test(r.body), `${id}: times are Pacific, marked PT`);
       if (id === "PP-R-JKB-10194463") {
         out(/PayPal is deciding; sandbox ruling requested 22:16:27 PT/.test(r.body), "JKB ends honestly: PayPal is deciding; sandbox ruling requested 22:16:27 PT");
@@ -619,7 +655,7 @@ const idsProbe = (page) =>
         out(r.btn.trim() === "File the evidence on the $412.00 case" && /Over your \$250\.00 evidence line, so it waits for you\./.test(r.body), "VPY: the real slip waits for you, button and margin sentence (not clicked: camera only)", r.btn.trim());
       }
       if (id === "PP-R-NJA-10194486") {
-        out(/debug id f8469524f503f/.test(r.body) && (r.state === "deciding" ? /PayPal is deciding/.test(r.body) : /You approved the evidence, CaseClerk filed it, and PayPal closed/.test(r.body) && /PayPal closed it/.test(r.body) && !/You kept/.test(r.body)), "NJA: the real filing shows debug f8469524f503f and the real ending, no You kept", r.state);
+        out(/debug id f8469524f503f/.test(r.body) && (r.state === "deciding" ? /PayPal is deciding/.test(r.body) : /You approved the evidence and PayPal closed the Olympus OM-1n body chargeback\. You keep \$378\.43: the \$389\.00 sale less PayPal's usual fee\. PayPal paid the buyer itself\./.test(r.body) && !/You kept/.test(r.body)), "NJA: the real filing shows debug f8469524f503f and the money outcome from fund_movements", r.state);
       }
       if (id === "PP-R-RCJ-10194476") out(/paid the buyer itself/.test(r.body) && !/You kept/.test(r.body), "RCJ: resolved with payout, no You kept claim");
       if (id === "PP-R-JKB-10194463") judgePage(await pageProbe(page, true), `real case ${id} first screen 1440`, { h1Min: 46 });

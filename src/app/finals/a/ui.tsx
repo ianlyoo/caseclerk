@@ -39,10 +39,23 @@ export function Num({ value, money = true, cause, className }: { value: number; 
 }
 
 const WORDS = ["Nothing", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
-/** The real cases, read once per page load through the same-origin proxy. */
+/** The real cases, read once per page load through the same-origin proxy. A case page that has fresher data
+ *  (its own poll, or PayPal's answer to an approval) puts it here, so the nav count moves with it. */
 let realOnce: Promise<ApiCase[]> | null = null;
+const realFresh = new Map<string, ApiCase>();
+const realSubs = new Set<() => void>();
+export function putRealCase(r: ApiCase) {
+  realFresh.set(r.case.id, r);
+  realSubs.forEach((f) => f());
+}
 export function useRealCases(): ApiCase[] | null {
   const [got, setGot] = useState<ApiCase[] | null>(null);
+  const [, bump] = useState(0);
+  useEffect(() => {
+    const f = () => bump((n) => n + 1);
+    realSubs.add(f);
+    return () => void realSubs.delete(f);
+  }, []);
   useEffect(() => {
     realOnce ??= fetch(`${BASE}/live/cases`, { cache: "no-store" })
       .then((r) => (r.ok ? (r.json() as Promise<{ cases: { id: string }[] }>) : { cases: [] }))
@@ -63,7 +76,7 @@ export function useRealCases(): ApiCase[] | null {
       live = false;
     };
   }, []);
-  return got;
+  return got && got.map((x) => realFresh.get(x.case.id) ?? x);
 }
 
 /** Waiting for you: the sample approvals plus every real case with an action waiting for the seller. */
@@ -129,8 +142,47 @@ function WireHead() {
   );
 }
 
-export type ShownLine = WireLine & { key: string; inflight?: boolean; lit?: boolean; plain?: string };
-export type WireSection = { key: string; label: ReactNode; lines: ShownLine[] };
+export type ShownLine = WireLine & { key: string; inflight?: boolean; lit?: boolean; plain?: string; fold?: ShownLine[] };
+export type WireSection = { key: string; label: ReactNode; lines: ShownLine[]; pin?: ReactNode };
+
+/** Reads and signature checks are routine: consecutive ones fold into one row, so the webhooks and filings stand out. */
+const routine = (l: ShownLine) => l.dir === "out" && !l.inflight && (l.path.startsWith("GET ") || l.path.endsWith("/verify-webhook-signature"));
+const READ_WORD: [RegExp, string][] = [
+  [/^GET \/v1\/customer\/disputes/, "the case"],
+  [/^GET \/v2\/checkout\/orders/, "the order"],
+  [/^GET \/v1\/shipping\/trackers/, "the tracking"],
+  [/^GET \/v2\/payments/, "the payment"],
+];
+export function foldRoutine(lines: ShownLine[]): ShownLine[] {
+  const sorted = [...lines].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  const out: ShownLine[] = [];
+  for (let i = 0; i < sorted.length; ) {
+    let j = i;
+    while (j < sorted.length && routine(sorted[j]) && realDay(sorted[j].at) === realDay(sorted[i].at)) j++;
+    if (j - i < 2) {
+      out.push(sorted[i]);
+      i++;
+      continue;
+    }
+    const group = sorted.slice(i, j);
+    const read = [...new Set(group.flatMap((l) => READ_WORD.filter(([re]) => re.test(l.path)).map(([, w]) => w)))];
+    const checks = group.filter((l) => l.path.endsWith("/verify-webhook-signature")).length;
+    const parts = [read.length ? `read ${read.length > 1 ? `${read.slice(0, -1).join(", ")} and ${read.at(-1)}` : read[0]} from PayPal` : "", checks ? `checked ${checks === 1 ? "a webhook signature" : `${checks} webhook signatures`}` : ""].filter(Boolean);
+    out.push({
+      key: `fold-${group[0].key}`,
+      at: group[0].at,
+      dir: "out",
+      name: `${group.length} calls`,
+      status: group.every((l) => /^2\d\d$/.test(l.status)) ? "200" : "",
+      path: "",
+      origin: "paypal",
+      plain: `CaseClerk ${parts.join(" and ")}`,
+      fold: group,
+    });
+    i = j;
+  }
+  return out;
+}
 
 const SHORT: [RegExp, string][] = [
   [/^GET \/v1\/customer\/disputes\/[^/]+$/, "dispute"],
@@ -195,8 +247,34 @@ function dotted(name: string): ReactNode {
   ));
 }
 
+function FoldLine({ l }: { l: ShownLine }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className={`${s.line} ${s.lineFold}`} data-wire-line data-fold={l.fold!.length} data-key={l.key} data-origin="paypal">
+      <span className={s.lTime}>{wireClock(l.at)}</span>
+      <span className={s.lDir}>out</span>
+      <span className={s.lName}>{l.name}</span>
+      <span className={s.lStatus}>{l.status}</span>
+      <span className={s.lPlain}>
+        {l.plain}.{" "}
+        <button className={s.foldBtn} onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+          {open ? "Hide them" : "Show them"}
+        </button>
+      </span>
+      {open && (
+        <ol className={s.foldList}>
+          {l.fold!.map((x) => (
+            <Line key={x.key} l={x} fresh={false} />
+          ))}
+        </ol>
+      )}
+    </li>
+  );
+}
+
 function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
   const reduce = useReducedMotion();
+  if (l.fold) return <FoldLine l={l} />;
   const real = l.origin === "paypal";
   const path = l.dir === "in" ? (l.status.startsWith("RESOLVED") ? "outcome" : "status") : l.path.replace(/^[A-Z]+ /, "");
   const status = l.inflight ? "sending" : !real ? "staged" : l.dir === "in" ? "verified" : l.status;
@@ -204,7 +282,6 @@ function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
   const cut = Math.min(18, Math.floor(second.length / 2));
   return (
     <motion.li
-      layout={reduce ? false : "position"}
       initial={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={reduce ? { duration: 0.12 } : { duration: 0.32, ease: EASE_OUT }}
@@ -269,6 +346,11 @@ export function Wire({ sections, phoneLabel }: { sections: WireSection[]; phoneL
           {sections.map((sec, i) => (
             <section key={sec.key}>
               {i > 0 && <hr className={s.wireRule} />}
+              {sec.pin && (
+                <div className={s.wirePin} data-wire-pin data-origin="paypal">
+                  {sec.pin}
+                </div>
+              )}
               <p className={s.wireLabel}>{sec.label}</p>
               <ol className={s.lines}>
                 <AnimatePresence initial={false}>

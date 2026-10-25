@@ -1,12 +1,12 @@
-import { REPLAY_ID, type ApiCase } from "./_real/model";
+import { HERO_ID, REPLAY_ID, type ApiCase } from "./_real/model";
 import { UPSTREAM } from "./_real/upstream";
 import { LandingView } from "./LandingView";
 
 export const dynamic = "force-dynamic";
 
-async function replayCase(): Promise<ApiCase | null> {
+async function realCase(id: string): Promise<ApiCase | null> {
   try {
-    const r = await fetch(`${UPSTREAM}/api/cases/${REPLAY_ID}`, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
+    const r = await fetch(`${UPSTREAM}/api/cases/${id}`, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
     return r.ok ? ((await r.json()) as ApiCase) : null;
   } catch {
     return null;
@@ -14,5 +14,6 @@ async function replayCase(): Promise<ApiCase | null> {
 }
 
 export default async function FinalALanding() {
-  return <LandingView r={await replayCase()} />;
+  const [r, hero] = await Promise.all([realCase(REPLAY_ID), realCase(HERO_ID)]);
+  return <LandingView r={r} hero={hero} />;
 }

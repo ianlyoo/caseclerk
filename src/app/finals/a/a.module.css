@@ -337,6 +337,10 @@
   top: 24px;
   align-self: start;
 }
+/* Real cases keep photos in later margins, so the header margin scrolls away instead of riding over them. */
+.marginStack.marginStill {
+  position: static;
+}
 .mid {
   font-family: var(--mono);
   font-size: 14px;
@@ -500,6 +504,40 @@
 .btn:disabled {
   cursor: default;
 }
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+/* The secondary action: same size as .btn, outlined. */
+.btnQuiet {
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--ink3);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 120ms var(--ease-out);
+}
+.btnQuiet:active {
+  transform: scale(0.98);
+}
+.btnQuiet:disabled {
+  cursor: default;
+  color: var(--ink3);
+}
+.btnLink {
+  font-size: 17px;
+}
+.landActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+}
 /* Inline links on paper: ink, quiet underline. :where keeps this below every class rule. */
 :where(.paper) a {
   color: var(--ink);
@@ -548,6 +586,10 @@
 }
 .filed p {
   margin: 0;
+}
+/* 48 px from the amount row (its 20 px margin + 28) to the receipt. */
+.section.filedGap {
+  margin-top: 28px;
 }
 .filedHead {
   font-family: var(--serif);
@@ -981,6 +1023,9 @@
   padding: 0;
   list-style: none;
 }
+.wellBox p {
+  margin: 0;
+}
 .wellBox li {
   position: relative;
   display: flex;
@@ -1153,7 +1198,7 @@
     margin: 0 -16px;
   }
   .slip {
-    padding: 14px 16px 16px;
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
     max-height: 250px;
     border-radius: 0;
   }
@@ -1344,4 +1389,90 @@
   border-top: 1px solid var(--hair);
   border-bottom: 1px solid var(--hair);
   font-size: 17px;
+}
+
+/* ---- Wire: pinned receipt, folded routine calls ---- */
+.wirePin {
+  margin: 12px 16px 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--wire3);
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--wire2);
+}
+.wirePinHead {
+  display: block;
+  color: var(--wire1);
+  font-size: 15px;
+}
+.wirePin .mono {
+  color: var(--wire1);
+  font-size: 14px;
+}
+.wirePin .lDebug {
+  color: var(--pp-wire);
+}
+.line.lineFold .lName,
+.line.lineFold .lStatus {
+  color: var(--wire3);
+}
+.foldBtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--wire1);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.foldList {
+  grid-column: 1 / -1;
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0 0 0 10px;
+  border-left: 1px solid var(--wire3);
+}
+
+/* ---- Real case: recommendation, receipt times ---- */
+.recommend {
+  margin: 0 0 16px;
+  max-width: 40em;
+  font-size: 17px;
+  line-height: 26px;
+  color: var(--ink2);
+}
+.slipWhy {
+  display: none;
+  margin: 6px 0 0;
+  color: var(--kept);
+  font-size: 15px;
+}
+.filedTimes {
+  margin-top: 6px !important;
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 28px;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+@media (max-width: 760px) {
+  .slipWhy {
+    display: block;
+  }
+  .recommend {
+    display: none;
+  }
+  .wirePin {
+    margin: 10px 12px 4px;
+  }
+  .realMark {
+    padding: 0;
+    border: 0;
+  }
+  .matFig {
+    display: none;
+  }
 }

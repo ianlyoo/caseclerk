@@ -38,7 +38,7 @@ export type ApiCase = {
     snapshot: { id: string; stage: string; status: string; outcome?: string; reason: string; amount: Money; createTime: string; updateTime: string; sellerResponseDueDate?: string };
     order?: { orderId?: string; captureId?: string; items?: { name: string; description?: string; unitAmount?: Money }[]; shipping?: { carrier?: string; trackingNumber?: string; status?: string }[] };
     triage?: { summary?: string; category?: string };
-    decision?: { at: string; strategy: string; winProbability: number; expectedValueUsd?: { fight: number; refund: number }; rationale?: string };
+    decision?: { at: string; strategy: string; winProbability: number; evidenceStrength?: string; expectedValueUsd?: { fight: number; refund: number }; rationale?: string };
   };
   actions: AgentAction[];
   audit: ApiAudit[];
@@ -94,7 +94,7 @@ export function actionPath(r: ApiCase, a: AgentAction): string {
 function answeredAt(r: ApiCase, a: AgentAction): string {
   const call = a.result?.debugId && r.wire?.find((w) => w.debugId === a.result!.debugId);
   if (call) return call.at;
-  const hit = r.audit.find((x) => (a.result?.debugId && x.data?.debugId === a.result.debugId) || x.data?.actionId === a.id);
+  const hit = r.audit.find((x) => (a.result?.debugId && x.data?.debugId === a.result.debugId) || ((x.kind === "action.executed" || x.kind === "action.failed") && x.data?.actionId === a.id));
   return hit?.at ?? r.audit.find((x) => x.kind === `demo.${a.kind}`)?.at ?? a.updatedAt;
 }
 
@@ -140,6 +140,23 @@ export function wireRowLines(rows: ApiWireRow[], caseId: string | null, events: 
   return out;
 }
 
+// What the seller kept on the resolved real cases, from PayPal's capture and the dispute's fund_movements (REAL-CASES.md,
+// "fund movements", read 2026-10-25): PayPal held the seller's net, released all of it, left the capture COMPLETED and paid
+// the buyer itself. The net is the sale less PayPal's ordinary transaction fee; PayPal shows no chargeback fee and no debit.
+const KEPT: Record<string, string> = {
+  "PP-R-NJA-10194486": "378.43",
+  "PP-R-UDP-10194489": "394.02",
+  "PP-R-LTK-10194490": "387.20",
+  "PP-R-TZD-10194493": "391.10",
+};
+
+/** "You keep $378.43: the $389.00 sale less PayPal's usual fee. PayPal paid the buyer itself.", only where PayPal's data shows it. */
+export function keptLine(r: ApiCase, who = "You keep"): string | null {
+  const kept = KEPT[r.case.id];
+  if (!kept || r.case.snapshot.outcome !== "RESOLVED_WITH_PAYOUT") return null;
+  return `${who} ${usd(kept)}: the ${usd(r.case.snapshot.amount.value)} sale less PayPal's usual fee. PayPal paid the buyer itself.`;
+}
+
 const executed = (r: ApiCase, kind: string) => r.actions.filter((a) => a.kind === kind && a.status === "executed");
 const TIMES = ["", "once", "twice", "three times", "four times"];
 
@@ -152,16 +169,20 @@ export function headline(r: ApiCase): string {
   if (state === "resolved") {
     const o = r.case.snapshot.outcome ?? "";
     const approved = r.audit.some((x) => x.kind === "action.approved") && executed(r, "provide_evidence").length > 0;
+    const kept = keptLine(r);
+    if (kept) return `${approved ? "You approved the evidence and PayPal" : "PayPal"} closed the ${thing} chargeback. ${kept}`;
     if (o === "RESOLVED_WITH_PAYOUT" && approved) return `You approved the evidence, CaseClerk filed it, and PayPal closed the ${amt} ${thing} chargeback, paying the buyer itself.`;
     if (o === "RESOLVED_WITH_PAYOUT") return `PayPal closed the ${amt} ${thing} chargeback and paid the buyer itself.`;
     if (o === "RESOLVED_SELLER_FAVOUR") return `PayPal ruled for you on the ${amt} ${thing}.`;
     if (o === "RESOLVED_BUYER_FAVOUR") return `PayPal ruled for the buyer on the ${amt} ${thing}.`;
     return `PayPal closed the ${amt} ${thing} case.`;
   }
-  if (state === "pending") return `${who} a ${amt} ${thing}. The evidence is ready, and it waits for your yes.`;
+  // Open cases: the figure right under the h1 carries the amount, so the sentence doesn't repeat it.
+  const a = `${who} ${/^[aeiou]/i.test(thing) ? "an" : "a"} ${thing}.`;
+  if (state === "pending") return `${a} The evidence is ready, and it waits for your yes.`;
   const n = executed(r, "provide_evidence").length;
-  if (n && r.audit.some((x) => x.kind === "action.approved")) return `${who} a ${amt} ${thing}. You approved the evidence, CaseClerk filed it, and PayPal is deciding.`;
-  return n ? `${who} a ${amt} ${thing}. CaseClerk filed the evidence ${TIMES[n] ?? `${n} times`}; PayPal is deciding.` : `${who} a ${amt} ${thing}. PayPal is reviewing it.`;
+  if (n && r.audit.some((x) => x.kind === "action.approved")) return `${a} You approved the evidence, CaseClerk filed it, and PayPal is deciding.`;
+  return n ? `${a} CaseClerk filed the evidence ${TIMES[n] ?? `${n} times`}; PayPal is deciding.` : `${a} PayPal is reviewing it.`;
 }
 
 /** The sandbox ruling request, if one was made: the honest end of a case PayPal hasn't decided. */
@@ -178,22 +199,42 @@ export function ptify(text: string): string {
 
 export type StoryRow = { at: string; who: "From PayPal" | "To PayPal" | "CaseClerk"; title: string; plain: string; id?: string; idKind?: "event" | "debug id"; status?: string; line?: WireLine };
 
-/** "What happened, newest first": PayPal's traffic plus the agent's own decisions. */
+/** The agent's recommendation in two plain lines, from its decision and the order's tracking; no expected-value math. */
+export function recommendation(r: ApiCase): [string, string?] | null {
+  const d = r.case.decision;
+  if (!d) return null;
+  const ship = r.case.order?.shipping?.[0];
+  const pct = Math.round(d.winProbability * 100);
+  const verb = d.strategy === "fight" ? "fight with evidence" : d.strategy === "refund" ? "refund the buyer" : d.strategy;
+  const first = `The agent recommends you ${verb}, and puts the chance of winning at ${pct}%.`;
+  if (ship?.status === "DELIVERED" && r.case.triage?.category === "not_as_described")
+    return [first, `${ship.carrier ?? "The"} tracking proves the ${thingOf(r)} was delivered, not what condition it arrived in.`];
+  if (ship?.status === "DELIVERED") return [first, `${ship.carrier ?? "The"} tracking proves the ${thingOf(r)} was delivered.`];
+  return [first];
+}
+
+/** "What happened, newest first": the seller's story only. The chargeback, the agent's recommendation, the evidence,
+ *  the approval, the filing and PayPal's ruling. Status updates, reads and signature checks stay on the Wire. */
 export function story(r: ApiCase, plainOf: (l: WireLine) => string): StoryRow[] {
-  // The page tells the story at the boundary that matters: webhooks and the calls that change the case.
-  // Reads and signature checks stay on the Wire.
-  const rows: StoryRow[] = realLines(r).filter((l) => l.dir === "in" || l.path.startsWith("POST /v1/customer/disputes/")).map((l) =>
+  const keep = (l: WireLine) => (l.dir === "in" ? /\.(CREATED|RESOLVED)$/.test(l.name) : l.path.startsWith("POST /v1/customer/disputes/"));
+  const rows: StoryRow[] = realLines(r).filter(keep).map((l) =>
     l.dir === "in"
       ? { at: l.at, who: "From PayPal", title: l.name, plain: plainOf(l), id: l.eventId, idKind: "event", status: "verified", line: l }
       : { at: l.at, who: "To PayPal", title: l.path.split("/").at(-1)!, plain: plainOf(l), id: l.debugId, idKind: "debug id", status: l.status, line: l },
   );
   for (const x of r.audit) {
     if (x.kind === "action.approved") rows.push({ at: x.at, who: "CaseClerk", title: "You approved it", plain: "The seller approved the evidence filing in CaseClerk." });
-    if (x.kind === "action.awaiting_approval") rows.push({ at: x.at, who: "CaseClerk", title: "Waiting for you", plain: "The evidence is ready. Filing it waits for your approval." });
-    if (x.kind === "decision" || x.kind === "triage") rows.push({ at: x.at, who: "CaseClerk", title: x.kind === "decision" ? "Decision" : "Sorted the case", plain: ptify(x.summary).replace(/^(Decision|Triage): /, "").replace(/\.?$/, ".") });
+    if (x.kind === "action.awaiting_approval") rows.push({ at: x.at, who: "CaseClerk", title: "Evidence ready", plain: "The letter and exhibits are ready. Filing them waits for your approval." });
+    if (x.kind === "decision") rows.push({ at: x.at, who: "CaseClerk", title: "Recommendation", plain: (recommendation(r) ?? [ptify(x.summary)]).join(" ") });
   }
   return rows.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 }
+
+/** The filing PayPal accepted, if any: the receipt pinned on the page and on the Wire. */
+export function filedAction(r: ApiCase): AgentAction | undefined {
+  return executed(r, "provide_evidence").at(-1);
+}
+export const filedAt = (a: AgentAction) => ((a.params?.filing as { at?: string } | undefined)?.at ?? a.updatedAt);
 
 /** The policy line for a waiting action, in the seller's numbers. */
 export function whyWaits(r: ApiCase, a: AgentAction, evidenceLine: number, moneyLine: number): string {

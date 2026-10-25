@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { sortedCases, type InboxCase } from "../../_shared/data";
 import { realLines, realRow, type ApiCase } from "../_real/model";
-import { Masthead, Wire, wireClock } from "../ui";
+import { Masthead, Wire, foldRoutine, wireClock } from "../ui";
 import { Headline, RealRowView, Row, Strip, useLiveWire } from "./parts";
 import s from "../a.module.css";
 
@@ -52,8 +52,8 @@ export function InboxView({ real }: { real: ApiCase[] }) {
         sections={[
           {
             key: "real",
-            label: <>PayPal, the real sandbox cases above, read from the production API</>,
-            lines: live.map((l) => ({ ...l, key: l.eventId ?? l.debugId ?? l.at })),
+            label: <>PayPal traffic for the real sandbox cases above</>,
+            lines: foldRoutine(live.map((l) => ({ ...l, key: l.eventId ?? l.debugId ?? l.at }))),
           },
         ]}
       />
