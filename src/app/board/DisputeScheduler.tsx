@@ -26,9 +26,10 @@ const events = [
 export default function DisputeScheduler() {
   return (
     <BryntumScheduler
-      startDate={at(-10)}
-      endDate={at(20)}
+      startDate={at(-9)}
+      endDate={at(14)}
       viewPreset="weekAndDay"
+      tickSize={50}
       rowHeight={48}
       columns={[{ text: "Dispute", field: "name", width: 320 }]}
       resources={resources}
