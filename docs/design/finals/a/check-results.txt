@@ -1,0 +1,308 @@
+PASS  G5 no backdrop-filter, conic-gradient, blur (0)
+PASS  G8 box-shadow only on .slip .sheet .mat .tooltip (0)
+PASS  G8 the well colour only on the well rules (0)
+PASS  G10 banned fonts (Geist Inter Jakarta Manrope ...) (0)
+PASS  G10 bold weights (0)
+PASS  G11 radial / repeating gradients (0)
+PASS  G11 svg files in public/finals, inline svg (0)
+PASS  G11 photos <= 40 KB and listed in CREDITS.md (0)
+PASS  G11 every <img> carries data-credit (0)
+PASS  G16 motion cliches (typewriter shimmer steps( confetti) (0)
+PASS  G16 no overshoot easing (0)
+PASS  G16 spring damping >= 2*sqrt(stiffness*mass) (0)
+PASS  G17 tracked caps: text-transform uppercase (0)
+PASS  G17 tracking >= .1em (0)
+PASS  G17 middot meta strings (0)
+PASS  G17 arrows (0)
+PASS  G17 letter avatars (0)
+PASS  G17 four-decimal costs (0)
+PASS  T2 hero filler words (0)
+PASS  T3 dashed drop zones (0)
+PASS  T7 fake charts (canvas sparkline meter progress) (0)
+PASS  T9 nav links are not underlined tabs (0)
+PASS  T10 rounded panels (radius > 6px) (0)
+PASS  T13 teal/cyan hex colours (0)
+PASS  T13 Wire blue hue 205-225 (G20 source) (0)
+PASS  T14 placeholder data (0)
+PASS  T14 dispute ids PP-R-XXX-12345678 (0)
+PASS  G12 no debug id in the sample fixtures (0)
+PASS  G7 Wire never shows model, cost or policy (0)
+PASS  extra: emoji (0)
+PASS  extra: no edits outside owned paths on this branch (0)
+border-radius uses:
+      src/app/finals/a/a.module.css:332:  border-radius: 2px;
+      src/app/finals/a/a.module.css:411:  border-radius: 2px;
+      src/app/finals/a/a.module.css:468:  border-radius: 6px;
+      src/app/finals/a/a.module.css:605:  border-radius: 2px;
+      src/app/finals/a/a.module.css:697:  border-radius: 2px;
+      src/app/finals/a/a.module.css:1070:    border-radius: 0;
+box-shadow uses:
+      src/app/finals/a/a.module.css:331:  box-shadow: var(--shadow);
+      src/app/finals/a/a.module.css:412:  box-shadow: var(--shadow);
+      src/app/finals/a/a.module.css:606:  box-shadow: var(--shadow);
+-- browser checks against https://caseclerk-git-s3-w3-ui-ianlyoo0412-4658s-projects.vercel.app
+PASS  case page loads without errors at 1440x810
+PASS  G14 Approve bottom <= innerHeight - 24 at 1440x810 (611 of 786)
+PASS  G14 slip <= 260 px tall at 1440x810 (260 px)
+PASS  slip button names the action and amount at 1440x810 (File the evidence on $412.00)
+PASS  G5 one dark plane, case first screen 1440x810
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, case first screen 1440x810
+PASS  G6 blue only inside [data-origin=paypal], case first screen 1440x810
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, case first screen 1440x810
+PASS  Wire text never overlaps inside a line, case first screen 1440x810
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, case first screen 1440x810 (1 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, case first screen 1440x810
+PASS  G9 h1 >= 46 px, case first screen 1440x810 (48.048 px)
+PASS  G9 money figure >= 50 px, case first screen 1440x810 (52.048 px)
+PASS  G9 contrast >= 4.5:1, case first screen 1440x810
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, case first screen 1440x810
+PASS  G2 every animation has a data-cause, case page at rest (1 animations)
+PASS  G3 animations <= 900 ms, loops only on the live dot / in-flight rule, case page at rest (undo rule (4 s) and in-flight rule (1.4 s) exempt by spec)
+PASS  G13 case first screen: Wire with a PayPal event, a real debug id >= 14 px, an amount with cents ({"event":true,"debug":6,"cents":true,"replay":false})
+PASS  G12 the sample case says Sample case
+PASS  G12 sample Wire lines carry no debug id (0)
+PASS  case page loads without errors at 1920x940
+PASS  G14 Approve bottom <= innerHeight - 24 at 1920x940 (665 of 916)
+PASS  G14 slip <= 260 px tall at 1920x940 (260 px)
+PASS  slip button names the action and amount at 1920x940 (File the evidence on $412.00)
+PASS  G5 one dark plane, case first screen 1920x940
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, case first screen 1920x940
+PASS  G6 blue only inside [data-origin=paypal], case first screen 1920x940
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, case first screen 1920x940
+PASS  Wire text never overlaps inside a line, case first screen 1920x940
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, case first screen 1920x940 (1 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, case first screen 1920x940
+PASS  G9 contrast >= 4.5:1, case first screen 1920x940
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, case first screen 1920x940
+PASS  case page loads without errors at 1536x752@1.25
+PASS  G14 Approve bottom <= innerHeight - 24 at 1536x752@1.25 (622 of 728)
+PASS  G14 slip <= 260 px tall at 1536x752@1.25 (260 px)
+PASS  slip button names the action and amount at 1536x752@1.25 (File the evidence on $412.00)
+PASS  G5 one dark plane, case first screen 1536x752@1.25
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, case first screen 1536x752@1.25
+PASS  G6 blue only inside [data-origin=paypal], case first screen 1536x752@1.25
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, case first screen 1536x752@1.25
+PASS  Wire text never overlaps inside a line, case first screen 1536x752@1.25
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, case first screen 1536x752@1.25 (1 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, case first screen 1536x752@1.25
+PASS  G9 contrast >= 4.5:1, case first screen 1536x752@1.25
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, case first screen 1536x752@1.25
+PASS  case page loads without errors at 2560x1440
+PASS  G14 Approve bottom <= innerHeight - 24 at 2560x1440 (665 of 1416)
+PASS  G14 slip <= 260 px tall at 2560x1440 (260 px)
+PASS  slip button names the action and amount at 2560x1440 (File the evidence on $412.00)
+PASS  G5 one dark plane, case first screen 2560x1440
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, case first screen 2560x1440
+PASS  G6 blue only inside [data-origin=paypal], case first screen 2560x1440
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, case first screen 2560x1440
+PASS  Wire text never overlaps inside a line, case first screen 2560x1440
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, case first screen 2560x1440 (1 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, case first screen 2560x1440
+PASS  G9 contrast >= 4.5:1, case first screen 2560x1440
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, case first screen 2560x1440
+PASS  case page loads without errors at 390x844
+PASS  G14 phone: amount and Approve visible without scrolling (Approve bottom 737, amount bottom 567)
+PASS  G14 slip <= 260 px tall at 390x844 (250 px)
+PASS  slip button names the action and amount at 390x844 (File the evidence on $412.00)
+PASS  G5 one dark plane, case first screen 390x844
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, case first screen 390x844
+PASS  G6 blue only inside [data-origin=paypal], case first screen 390x844
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, case first screen 390x844
+PASS  Wire text never overlaps inside a line, case first screen 390x844
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, case first screen 390x844 (0 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, case first screen 390x844
+PASS  G9 contrast >= 4.5:1, case first screen 390x844
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, case first screen 390x844
+PASS  phone: nav not clipped, no sideways scroll ({"nav":0,"doc":390,"bar":true})
+PASS  phone: the Wire collapses to a one-line bar
+PASS  undo window with Undo and Send now at 1440x810
+PASS  G2 every animation has a data-cause, undo window (6 animations)
+PASS  G3 animations <= 900 ms, loops only on the live dot / in-flight rule, undo window (undo rule (4 s) and in-flight rule (1.4 s) exempt by spec)
+PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 1440x810 (5 animations, 393 px closer)
+PASS  in-flight rule under the POST entry while PayPal answers (1)
+PASS  G2 every animation has a data-cause, slip in flight (5 animations)
+PASS  G3 animations <= 900 ms, loops only on the live dot / in-flight rule, slip in flight (undo rule (4 s) and in-flight rule (1.4 s) exempt by spec)
+PASS  after the 200 the nav count rolls down at 1440x810 (2 to 1)
+PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 1440x810
+PASS  after the 200 no "until you decide" anywhere at 1440x810
+PASS  after the 200 no Approve button and no in-flight rule at 1440x810
+PASS  the Wire shows POST provide-evidence 200 at 1440x810
+PASS  G5 one dark plane, case after the 200 at 1440
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, case after the 200 at 1440
+PASS  G6 blue only inside [data-origin=paypal], case after the 200 at 1440
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, case after the 200 at 1440
+PASS  Wire text never overlaps inside a line, case after the 200 at 1440
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, case after the 200 at 1440 (1 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, case after the 200 at 1440
+PASS  G9 contrast >= 4.5:1, case after the 200 at 1440
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, case after the 200 at 1440
+PASS  the forced ?state= leaves the address bar once applied (PP-R-NKT-10227591)
+PASS  after a reload, still no Approve (no path back)
+PASS  resolve: the h1 swaps to the ending and the figure reads You kept $392.00 (PayPal decided Daniel Okafor's chargeback in your favour.)
+PASS  resolve: CUSTOMER.DISPUTE.RESOLVED lands on the Wire
+PASS  G5 one dark plane, case resolved at 1440
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, case resolved at 1440
+PASS  G6 blue only inside [data-origin=paypal], case resolved at 1440
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, case resolved at 1440
+PASS  Wire text never overlaps inside a line, case resolved at 1440
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, case resolved at 1440 (1 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, case resolved at 1440
+PASS  G9 contrast >= 4.5:1, case resolved at 1440
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, case resolved at 1440
+PASS  undo window with Undo and Send now at 1920x940
+PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 1920x940 (5 animations, 569 px closer)
+PASS  after the 200 the nav count rolls down at 1920x940 (2 to 1)
+PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 1920x940
+PASS  after the 200 no "until you decide" anywhere at 1920x940
+PASS  after the 200 no Approve button and no in-flight rule at 1920x940
+PASS  the Wire shows POST provide-evidence 200 at 1920x940
+PASS  undo window with Undo and Send now at 1536x752@1.25
+PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 1536x752@1.25 (5 animations, 476 px closer)
+PASS  after the 200 the nav count rolls down at 1536x752@1.25 (2 to 1)
+PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 1536x752@1.25
+PASS  after the 200 no "until you decide" anywhere at 1536x752@1.25
+PASS  after the 200 no Approve button and no in-flight rule at 1536x752@1.25
+PASS  the Wire shows POST provide-evidence 200 at 1536x752@1.25
+PASS  undo window with Undo and Send now at 2560x1440
+PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 2560x1440 (5 animations, 652 px closer)
+PASS  after the 200 the nav count rolls down at 2560x1440 (2 to 1)
+PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 2560x1440
+PASS  after the 200 no "until you decide" anywhere at 2560x1440
+PASS  after the 200 no Approve button and no in-flight rule at 2560x1440
+PASS  the Wire shows POST provide-evidence 200 at 2560x1440
+PASS  undo window with Undo and Send now at 390x844
+PASS  G1 after Send now: >= 2 animations and the slip moves >= 160 px toward the Wire at 390x844 (3 animations, 544 px closer)
+PASS  after the 200 the nav count rolls down at 390x844 (2 to 1)
+PASS  slip area re-sets to "Evidence filed with PayPal. hh:mm:ss" at 390x844
+PASS  after the 200 no "until you decide" anywhere at 390x844
+PASS  after the 200 no Approve button and no in-flight rule at 390x844
+PASS  G4 reduced motion: every animation <= 150 ms, at rest (0 animations)
+PASS  G4 reduced motion: every animation <= 150 ms, while sending (5 animations)
+PASS  G4 reduced motion: every animation <= 150 ms, on resolve (8 animations)
+PASS  ?state=approved opens the approved state
+PASS  ?state=resolved opens the resolved state
+PASS  a sheet opens the in-place reader (<= 640 px, body >= 16 px) ({"w":640,"px":16})
+PASS  Esc closes the reader
+PASS  J moves to the next case (PP-R-TVA-10227066)
+PASS  G19 14-day strip has no overflow at 1440x810 ({"cells":14,"over":0,"cellOver":0})
+PASS  G19 every strip mark is bound to a case dueAt, amounts without cents at 1440x810 (5 marks)
+PASS  G5 one dark plane, inbox first screen 1440x810
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, inbox first screen 1440x810
+PASS  G6 blue only inside [data-origin=paypal], inbox first screen 1440x810
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, inbox first screen 1440x810
+PASS  Wire text never overlaps inside a line, inbox first screen 1440x810
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, inbox first screen 1440x810 (0 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, inbox first screen 1440x810
+PASS  G9 contrast >= 4.5:1, inbox first screen 1440x810
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, inbox first screen 1440x810
+PASS  G13 inbox first screen: Wire with a PayPal event, a debug id >= 14 px, an amount with cents ({"event":true,"debug":8,"cents":true,"replay":false})
+PASS  G12 every debug id and event id on the inbox Wire exists in the real run (PP-R-JKB-10194463) (4 debug ids, 6 event ids)
+PASS  G12 no debug id is attached to two lines
+PASS  G11 every image has data-credit, is listed in CREDITS.md and <= 40 KB (5 images)
+PASS  G15 all 11 inbox rows open their own case (h1 names the buyer)
+PASS  own-case routing covers waiting for you, agent working and closed (working, approval, closed)
+PASS  G19 14-day strip has no overflow at 1920x940 ({"cells":14,"over":0,"cellOver":0})
+PASS  G19 every strip mark is bound to a case dueAt, amounts without cents at 1920x940 (5 marks)
+PASS  G5 one dark plane, inbox first screen 1920x940
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, inbox first screen 1920x940
+PASS  G6 blue only inside [data-origin=paypal], inbox first screen 1920x940
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, inbox first screen 1920x940
+PASS  Wire text never overlaps inside a line, inbox first screen 1920x940
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, inbox first screen 1920x940 (0 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, inbox first screen 1920x940
+PASS  G9 contrast >= 4.5:1, inbox first screen 1920x940
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, inbox first screen 1920x940
+PASS  G19 14-day strip has no overflow at 2560x1440 ({"cells":14,"over":0,"cellOver":0})
+PASS  G19 every strip mark is bound to a case dueAt, amounts without cents at 2560x1440 (5 marks)
+PASS  G5 one dark plane, inbox first screen 2560x1440
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, inbox first screen 2560x1440
+PASS  G6 blue only inside [data-origin=paypal], inbox first screen 2560x1440
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, inbox first screen 2560x1440
+PASS  Wire text never overlaps inside a line, inbox first screen 2560x1440
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, inbox first screen 2560x1440 (0 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, inbox first screen 2560x1440
+PASS  G9 contrast >= 4.5:1, inbox first screen 2560x1440
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, inbox first screen 2560x1440
+PASS  G13 landing first screen: Replay of <id>, recorded <date>, a PayPal event, a debug id, an amount with cents ({"event":true,"debug":8,"cents":true,"replay":true})
+PASS  landing replay has landed every real line within 10.5 s (10 lines)
+PASS  G12 every replayed id exists in the real run (4 debug ids, 6 event ids)
+PASS  landing doesn't claim PayPal decided (the real run has no RESOLVED webhook)
+PASS  G5 one dark plane, landing first screen 1440
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, landing first screen 1440
+PASS  G6 blue only inside [data-origin=paypal], landing first screen 1440
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, landing first screen 1440
+PASS  Wire text never overlaps inside a line, landing first screen 1440
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, landing first screen 1440 (0 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, landing first screen 1440
+PASS  G9 h1 >= 46 px, landing first screen 1440 (60 px)
+PASS  G9 contrast >= 4.5:1, landing first screen 1440
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, landing first screen 1440
+PASS  G2 every animation has a data-cause, landing after the replay (11 animations)
+PASS  G3 animations <= 900 ms, loops only on the live dot / in-flight rule, landing after the replay (undo rule (4 s) and in-flight rule (1.4 s) exempt by spec)
+PASS  Open a test dispute: stage 1 shows within 1 s (Card payment created, 201)
+PASS  the staged wait reaches the webhook stage with a ticking clock
+PASS  G5 one dark plane, landing first screen 1920x940
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, landing first screen 1920x940
+PASS  G6 blue only inside [data-origin=paypal], landing first screen 1920x940
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, landing first screen 1920x940
+PASS  Wire text never overlaps inside a line, landing first screen 1920x940
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, landing first screen 1920x940 (0 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, landing first screen 1920x940
+PASS  G9 contrast >= 4.5:1, landing first screen 1920x940
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, landing first screen 1920x940
+PASS  G5 one dark plane, landing first screen 1536x752@1.25
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, landing first screen 1536x752@1.25
+PASS  G6 blue only inside [data-origin=paypal], landing first screen 1536x752@1.25
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, landing first screen 1536x752@1.25
+PASS  Wire text never overlaps inside a line, landing first screen 1536x752@1.25
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, landing first screen 1536x752@1.25 (0 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, landing first screen 1536x752@1.25
+PASS  G9 contrast >= 4.5:1, landing first screen 1536x752@1.25
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, landing first screen 1536x752@1.25
+PASS  G5 one dark plane, landing first screen 390x844
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, landing first screen 390x844
+PASS  G6 blue only inside [data-origin=paypal], landing first screen 390x844
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, landing first screen 390x844
+PASS  Wire text never overlaps inside a line, landing first screen 390x844
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, landing first screen 390x844 (0 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, landing first screen 390x844
+PASS  G9 contrast >= 4.5:1, landing first screen 390x844
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, landing first screen 390x844
+PASS  G5 one dark plane, deadlines whole page 1440
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, deadlines whole page 1440
+PASS  G6 blue only inside [data-origin=paypal], deadlines whole page 1440
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, deadlines whole page 1440
+PASS  Wire text never overlaps inside a line, deadlines whole page 1440
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, deadlines whole page 1440 (0 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, deadlines whole page 1440
+PASS  G9 contrast >= 4.5:1, deadlines whole page 1440
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, deadlines whole page 1440
+PASS  G15 all 17 links on Final A resolve 200 and stay inside /finals/a
+PASS  G5 one dark plane, /case/PP-R-RBN-10224961 whole page 1440
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, /case/PP-R-RBN-10224961 whole page 1440
+PASS  G6 blue only inside [data-origin=paypal], /case/PP-R-RBN-10224961 whole page 1440
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, /case/PP-R-RBN-10224961 whole page 1440
+PASS  Wire text never overlaps inside a line, /case/PP-R-RBN-10224961 whole page 1440
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, /case/PP-R-RBN-10224961 whole page 1440 (1 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, /case/PP-R-RBN-10224961 whole page 1440
+PASS  G9 contrast >= 4.5:1, /case/PP-R-RBN-10224961 whole page 1440
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, /case/PP-R-RBN-10224961 whole page 1440
+PASS  G5 one dark plane, /case/PP-R-PLZ-10225917 whole page 1440
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, /case/PP-R-PLZ-10225917 whole page 1440
+PASS  G6 blue only inside [data-origin=paypal], /case/PP-R-PLZ-10225917 whole page 1440
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, /case/PP-R-PLZ-10225917 whole page 1440
+PASS  Wire text never overlaps inside a line, /case/PP-R-PLZ-10225917 whole page 1440
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, /case/PP-R-PLZ-10225917 whole page 1440 (1 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, /case/PP-R-PLZ-10225917 whole page 1440
+PASS  G9 contrast >= 4.5:1, /case/PP-R-PLZ-10225917 whole page 1440
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, /case/PP-R-PLZ-10225917 whole page 1440
+PASS  G5 one dark plane, /inbox whole page 1440
+PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, /inbox whole page 1440
+PASS  G6 blue only inside [data-origin=paypal], /inbox whole page 1440
+PASS  G7 Wire lines are PayPal or sample, no model / cost / policy words, /inbox whole page 1440
+PASS  Wire text never overlaps inside a line, /inbox whole page 1440
+PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, /inbox whole page 1440 (0 wells)
+PASS  G9 text >= 13 px, Wire >= 14 px, /inbox whole page 1440
+PASS  G9 contrast >= 4.5:1, /inbox whole page 1440
+PASS  G20 Wire blue hue 205-225, no teal on the Wire, /inbox whole page 1440
+264 PASS, 0 FAIL
