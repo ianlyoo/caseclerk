@@ -4,8 +4,8 @@ Spikes and checks, with date, setup and result.
 
 ## Spike 2026-10-25 — CaseClerk go/no-go
 
-**Recommendation: GO (conditional).** We can create sandbox disputes by API without a browser: the process-chargeback simulator (route b) worked 3 times out of 3. Each dispute appeared in `GET /v1/customer/disputes` within 42–70 s. Real `CUSTOMER.DISPUTE.CREATED`, `UPDATED` and `RESOLVED` webhooks reached the Vercel preview. On 2 disputes, provide-evidence (multipart with a generated PDF and tracking), require-evidence and adjudicate took each case from creation to `RESOLVED` in 21 and 51 minutes, with no human step. Three conditions remain, and each costs a setting or a demo choice rather than the concept:
-- **Signature verification on Vercel is still untested.** The route works, but `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET` aren't set on the Vercel project yet, so every event logged `verify=NOT_CONFIGURED` and got a 503.
+**Recommendation: GO (conditional).** _(PM decision 10/25: GO; merged to main 6a6eb4d.)_ We can create sandbox disputes by API without a browser: the process-chargeback simulator (route b) worked 3 times out of 3. Each dispute appeared in `GET /v1/customer/disputes` within 42–70 s. Real `CUSTOMER.DISPUTE.CREATED`, `UPDATED` and `RESOLVED` webhooks reached the Vercel preview. On 2 disputes, provide-evidence (multipart with a generated PDF and tracking), require-evidence and adjudicate took each case from creation to `RESOLVED` in 21 and 51 minutes, with no human step. Three conditions remain, and each costs a setting or a demo choice rather than the concept:
+- ~~Signature verification on Vercel is still untested.~~ **Done (follow-up, 10/25 ~13:00):** after the env was set on Vercel, real events logged `verify=SUCCESS` (criterion 2).
 - **The buyer-negotiation part (send-message, make-offer) is untested.** Those actions only work on *inquiry*-stage disputes. Chargebacks return 422 `ACTION_NOT_ALLOWED_IN_CURRENT_DISPUTE_STATE` for both. Inquiry disputes need route (a), which needs buyer consent through Log in with PayPal (not enabled on the app), or route (c), which needs the sandbox buyer's login.
 - **Adjudicating SELLER_FAVOR on a chargeback gave `RESOLVED_WITH_PAYOUT`, not `RESOLVED_SELLER_FAVOUR`.** PayPal's definition is "PayPal provided the merchant or customer with protection". The demo board/video must explain this code or use an inquiry dispute.
 
@@ -56,7 +56,7 @@ App token scopes (11:32) include `disputes/create`, `disputes/read-seller`, `dis
 - Created dispute: reason `MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED` (Visa C2 maps to SNAD), stage `CHARGEBACK`, channel `EXTERNAL`, status `OPEN` → `UNDER_REVIEW` within 30 s → `WAITING_FOR_SELLER_RESPONSE` after **2.5–4 min**. Requested evidence: PROOF_OF_FULFILLMENT / PROOF_OF_REFUND / OTHER. `seller_response_due_date` 2026-11-04 (+10 d). `seller_protection_eligible: false`, transaction_status `HELD`.
 - To repeat: `scripts/spike/run.sh flow.mjs chargeback 12.00` (one command; prints the dispute id and how long until it's listed).
 
-### Criterion 2 — webhook on the Vercel preview: **partial (received, not yet verified)**
+### Criterion 2 — webhook on the Vercel preview: **worked (received + signature verified)**
 - Webhook `8WA28778R9206880F` registered (`POST /v1/notifications/webhooks` → 201) on the branch alias `https://caseclerk-git-spike-ianlyoo0412-4658s-projects.vercel.app/api/webhooks/paypal` for CUSTOMER.DISPUTE.CREATED/UPDATED/RESOLVED + PAYMENT.CAPTURE.COMPLETED/REVERSED/REFUNDED. `PAYPAL_WEBHOOK_ID` set on Vercel (preview + production).
 - Real events received (Vercel logs, first delivery per event, UTC), dispute PP-R-ADC-10194432:
 
@@ -73,7 +73,10 @@ App token scopes (11:32) include `disputes/create`, `disputes/read-seller`, `dis
 
 - Example log line: `[paypal-webhook] event=CUSTOMER.DISPUTE.RESOLVED event_id=WH-5AD658886Y7491104-9JS505336B8736906 resource_type=dispute resource_id=PP-R-ADC-10194432 status=RESOLVED … verify=NOT_CONFIGURED(PayPal env vars missing)`.
 - Every delivery got 503 (by design while unconfigured), so PayPal retried each event several times (every ~30 s–2 min). No `PAYMENT.CAPTURE.REVERSED` arrived for the chargebacks.
-- **Missing:** `verify-webhook-signature` = SUCCESS. It needs `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET` on Vercel (open item 1), then one push to `spike` (to redeploy) and one new chargeback.
+- **Signature verification (follow-up):** Rhea set `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET` on Vercel (preview + production; seen by `vercel env ls` at 12:52). Empty commit 833f4a0 pushed to `spike` → deployment `caseclerk-i1e7jwt57` on the branch alias. One chargeback: `flow.mjs chargeback` → order 1UM602074N133331N, capture 4KG59333BD086923T, dispute PP-R-XWW-10194440. Vercel logs:
+  - `event=PAYMENT.CAPTURE.COMPLETED event_id=WH-82M39673VP065303S-4W805100TM414783V resource_id=4KG59333BD086923T … verify=SUCCESS ms=505`
+  - `event=CUSTOMER.DISPUTE.CREATED event_id=WH-646935073E179052W-7MC00044XA124611B resource_id=PP-R-XWW-10194440 status=UNDER_REVIEW stage=CHARGEBACK verify=SUCCESS ms=222`
+  - So the route answers 200 and PayPal stops retrying. PP-R-XWW-10194440 is left open (sandbox).
 
 ### Criterion 3 — act and settle: **worked for evidence + simulators; message/offer not possible on chargebacks**
 Dispute PP-R-ADC-10194432 (all calls 200; seconds from creation 11:33:14):
@@ -98,6 +101,6 @@ Dispute PP-R-ADC-10194432 (all calls 200; seconds from creation 11:33:14):
 1. ~~Vercel Deployment Protection~~: done by the PM (V6).
 2. ~~Vercel ↔ Git author~~: fixed by committing as the GitHub noreply address (V7).
 3. ~~PayPal keys in the env file~~ (in since 11:32); sandbox emails in the gitignored `scripts/spike/.env.spike`.
-4. **Vercel env (Rhea): `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`** (Sensitive, preview + production) on project `caseclerk`, the same sandbox values as the env file. Then push to `spike` and run one chargeback to show `verify=SUCCESS`.
-5. **Inquiry disputes (send-message / make-offer)**: tick **Log in with PayPal** on the sandbox app `CaseClerk` (developer.paypal.com → Apps & Credentials → CaseClerk → Features), set a return URL, and have the sandbox buyer `sb-7qeht53532609@personal.example.com` grant consent once (needs that buyer's sandbox login, an owner step). Then retry route (a). Alternative: the owner opens one INR case in the sandbox buyer UI (route c).
+4. ~~Vercel env `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET`~~: set by Rhea; `verify=SUCCESS` confirmed (criterion 2).
+5. **Inquiry disputes (send-message / make-offer)**: tick **Log in with PayPal** on the sandbox app `CaseClerk` (developer.paypal.com → Apps & Credentials → CaseClerk → Features), set a return URL, and have the sandbox buyer `sb-7qeht53532609@personal.example.com` grant consent once (needs that buyer's sandbox login, an owner step). Then retry route (a). Follow-up: the step list for the browser worker is in the worker dir `CONSENT.md`. The code is on `spike`: `/api/paypal/consent-start` (302 to the sandbox `/connect/` consent URL, with a state cookie) and `/api/paypal/consent-callback` (state check, code exchange, shows the granted dispute scopes; never shows or logs tokens). Both are deployed and smoke-tested (302, and a bogus state gives 400 `CONSENT_STATE_MISMATCH`). Alternative: the owner opens one INR case in the sandbox buyer UI (route c).
 6. Decide how the demo shows `RESOLVED_WITH_PAYOUT` (chargeback "won").
