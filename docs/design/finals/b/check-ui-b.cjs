@@ -250,7 +250,7 @@ async function approvePath(browser, vp, reduced) {
   }
   out(/Undo/.test(await page.locator("[data-sheet]").innerText()), `${tag}: a 4 s undo window with Undo and Send now`);
   await page.getByRole("button", { name: "Send now" }).click();
-  await page.waitForTimeout(250);
+  await page.waitForSelector("[data-inflight]", { timeout: 2000 }).catch(() => {});
   const inflight = await page.locator("[data-inflight]").count();
   const a2 = await page.evaluate(probeAnimations);
   out(inflight >= 1 && (reduced || a2.length >= 2), `${tag}: G1 sending shows the in-flight rule`, `${inflight} in-flight, ${a2.length} animations`);
