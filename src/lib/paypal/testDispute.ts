@@ -3,7 +3,7 @@
 import type { Money, OrderContext } from "../types";
 import { listDisputes } from "./disputes";
 import { createPaidCardOrder, type OrderItemInput } from "./orders";
-import { CHARGEBACK_REASON_CODES, processChargeback } from "./simulators";
+import { CHARGEBACK_REASON_CODES, processChargeback, type CardBrand } from "./simulators";
 import { addTracking, trackingUrl } from "./tracking";
 
 export type TestScenario = "not_received" | "not_as_described" | "unauthorized";
@@ -57,25 +57,44 @@ export type OpenTestDisputeResult = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+export type OpenTestDisputeOptions = {
+  scenario: TestScenario;
+  /** Fixed line items instead of 1–2 random catalog items (demo prep, e.g. one $412.00 camera). */
+  items?: OrderItemInput[];
+  /** Shipping charge; null = free shipping, so the dispute amount equals the item total. Default $5.95. */
+  shippingFee?: Money | null;
+  /** Override the scenario's reason code / card brand (must map to the same dispute reason, see README). */
+  reasonCode?: string;
+  cardBrand?: CardBrand;
+  /** Shop name in the order description and invoice prefix. Default SHOP_NAME. */
+  shopName?: string;
+  waitMs?: number;
+  pollMs?: number;
+};
+
 /**
  * Order (card, completes at once) → tracking on the capture → process-chargeback.
  * The simulator usually answers with the dispute id; otherwise we poll the list by capture
  * (listed after 42–70 s in the spike) for up to `waitMs`.
  */
-export async function openTestDispute(o: { scenario: TestScenario; waitMs?: number; pollMs?: number }): Promise<OpenTestDisputeResult> {
+export async function openTestDispute(o: OpenTestDisputeOptions): Promise<OpenTestDisputeResult> {
   const sc = TEST_SCENARIOS[o.scenario];
   if (!sc) throw new Error(`openTestDispute: unknown scenario ${String(o.scenario)}`);
-  const items = pick(CATALOG, Math.random() < 0.5 ? 1 : 2);
-  const invoiceId = `JC-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+  const items = o.items?.length ? o.items : pick(CATALOG, Math.random() < 0.5 ? 1 : 2);
+  const shippingFee = o.shippingFee === undefined ? SHIPPING_FEE : o.shippingFee;
+  const reasonCode = o.reasonCode ?? sc.reasonCode;
+  const shop = o.shopName ?? SHOP_NAME;
+  const prefix = shop === SHOP_NAME ? "JC" : shop.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() || "CC";
+  const invoiceId = `${prefix}-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 
   const order = await createPaidCardOrder({
     items,
     invoiceId,
-    description: `${SHOP_NAME} order ${invoiceId}`,
+    description: `${shop} order ${invoiceId}`,
     cardholderName: "Sandbox Buyer",
     shipping: {
       name: "Sandbox Buyer",
-      amount: SHIPPING_FEE,
+      amount: shippingFee ?? undefined,
       address: { line1: "2211 N First St", city: "San Jose", state: "CA", postalCode: "95131", countryCode: "US" },
     },
   });
@@ -91,8 +110,8 @@ export async function openTestDispute(o: { scenario: TestScenario; waitMs?: numb
   const cb = await processChargeback({
     captureId: order.captureId,
     amount: order.amount,
-    reasonCode: sc.reasonCode,
-    cardBrand: CHARGEBACK_REASON_CODES[o.scenario].cardBrand,
+    reasonCode,
+    cardBrand: o.cardBrand ?? CHARGEBACK_REASON_CODES[o.scenario].cardBrand,
     merchantId: order.merchantId,
   });
 
@@ -115,7 +134,7 @@ export async function openTestDispute(o: { scenario: TestScenario; waitMs?: numb
     orderId: order.orderId,
     captureId: order.captureId,
     amount: order.amount,
-    reasonCode: sc.reasonCode,
+    reasonCode,
     resolvedAfterMs,
     order: {
       orderId: order.orderId,

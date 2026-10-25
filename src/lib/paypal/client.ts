@@ -157,12 +157,62 @@ async function readJson(res: Response): Promise<any> {
   }
 }
 
+/** One finished paypalFetch (after retries), reported to the optional call observer. */
+export type PayPalCall = {
+  method: string;
+  path: string; // without the query string
+  status: number; // 0 = network error / timeout
+  debugId?: string;
+  durationMs: number;
+  at: string; // ISO start time
+  /** The request body, for observers that record what was filed. Never log it whole. */
+  body?: string | FormData;
+};
+
+let callObserver: ((c: PayPalCall) => void | Promise<void>) | null = null;
+
+/**
+ * Optional hook (W4's PayPal wire log): called once per paypalFetch, success or failure, and awaited
+ * so the record lands before the caller continues. Observer errors are swallowed.
+ */
+export function setPayPalCallObserver(fn: ((c: PayPalCall) => void | Promise<void>) | null) {
+  callObserver = fn;
+}
+
 /**
  * Calls the PayPal REST API with a bearer token. Retries 429/5xx and network errors with backoff,
  * refreshes the token once on 401, and (opt-in) retries the sandbox's spurious 400s.
  * JSON string bodies get Content-Type application/json; FormData bodies go out as multipart.
  */
 export async function paypalFetch<T = any>(path: string, init: PayPalFetchInit = {}): Promise<PayPalResult<T>> {
+  const started = Date.now();
+  const report = async (status: number, debugId?: string) => {
+    if (!callObserver) return;
+    try {
+      await callObserver({
+        method: (init.method ?? "GET").toUpperCase(),
+        path: path.split("?")[0],
+        status,
+        ...(debugId ? { debugId } : {}),
+        durationMs: Date.now() - started,
+        at: new Date(started).toISOString(),
+        ...(init.body !== undefined ? { body: init.body } : {}),
+      });
+    } catch {
+      // Logging must never break a PayPal call.
+    }
+  };
+  try {
+    const r = await paypalFetchOnce<T>(path, init);
+    await report(r.status, r.debugId);
+    return r;
+  } catch (e) {
+    await report(e instanceof PayPalError ? e.status : 0, e instanceof PayPalError ? e.debugId : undefined);
+    throw e;
+  }
+}
+
+async function paypalFetchOnce<T>(path: string, init: PayPalFetchInit): Promise<PayPalResult<T>> {
   const { retryOn400, requestId, ...rest } = init;
   const method = (rest.method ?? "GET").toUpperCase();
   const base = apiBase();

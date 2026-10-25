@@ -38,6 +38,12 @@ describe("runAgent: chargeback with tracking", () => {
 
     const out = await runAgentWith(deps, ID, { kind: "webhook", eventType: "CUSTOMER.DISPUTE.UPDATED" });
     expect(out.status).toBe("done");
+    // Summing the timeline counts each model call once; the run total is a field on run.done.
+    const summed = db._audit.reduce((n, e) => n + (e.costUsd ?? 0), 0);
+    expect(summed).toBeCloseTo(out.costUsd, 9);
+    const done = db._audit.find((e) => e.kind === "agent.run.done")!;
+    expect(done.costUsd).toBeUndefined();
+    expect(done.data?.runCostUsd).toBeCloseTo(out.costUsd, 9);
 
     // Models: Haiku for triage, Opus 5.5 at medium for the decision, auto tool choice, caching on.
     expect(llm.requests.map((r) => r.model)).toEqual(["claude-haiku-5-5", "claude-opus-5-5", "claude-opus-5-5"]);

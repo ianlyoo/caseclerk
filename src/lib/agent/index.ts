@@ -2,7 +2,7 @@
 //   runAgent(caseId, trigger)   webhook → after(), approvals, manual re-runs
 //   executeApproved(actionId)   Approvals → Approve
 //   deny(actionId, note?)       Approvals → Deny
-// They live in run.ts too, where src/app/api/_lib/modules.ts looks for them.
+// Defined in run.ts (routes import them from "@/lib/agent/run"); re-exported here.
 export type { AgentDeps } from "./ports";
 export type { ApprovalResult } from "./actions";
 export type { RunOutcome } from "./run";

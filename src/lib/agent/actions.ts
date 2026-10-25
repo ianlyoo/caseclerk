@@ -1,6 +1,8 @@
 // Write actions: dedupe → policy gate → record → execute (or queue for approval / propose in dry run).
 // executeApproved / deny serve the Approvals UI.
 import type { ActionKind, AgentAction, CaseRecord, CaseStatus, DisputeSnapshot, Money, OrderContext, SellerPolicy } from "../types";
+import { evidenceInput } from "../paypal/disputes";
+import { amountUsd as disputeUsd } from "./ev";
 import { policyGate, type GateOutcome } from "./policy";
 import type { AgentDeps, EvidenceItem, OfferType } from "./ports";
 
@@ -11,7 +13,30 @@ export type ProvideEvidenceParams = {
   exhibits: { title: string; body: string }[];
   /** snapshot.updateTime when proposed: one submission per PayPal evidence request. */
   round: string;
+  /** PDF date, fixed when the filing is prepared so an approved filing rebuilds the same pack. */
+  generatedAt?: string;
+  /** Set when the filing waits for approval: exactly what goes to PayPal (W4's params.filing shape). */
+  filing?: PreparedFiling;
 };
+
+export type PreparedFiling = {
+  input: ReturnType<typeof evidenceInput>;
+  files: { field: string; name: string; size: number; contentType: string }[];
+  prepared: true;
+};
+
+const evidenceFileName = (caseId: string) => `caseclerk-evidence-${caseId}.pdf`;
+
+async function evidencePdf(deps: AgentDeps, c: CaseRecord, ep: ProvideEvidenceParams): Promise<Uint8Array> {
+  const order: OrderContext = c.order ?? { items: [] };
+  return deps.evidence.buildEvidencePdf({
+    case: c,
+    order,
+    narrative: ep.narrative,
+    exhibits: ep.exhibits,
+    ...(ep.generatedAt ? { generatedAt: new Date(ep.generatedAt) } : {}),
+  });
+}
 
 export type ActionParams =
   | { kind: "provide_evidence"; p: ProvideEvidenceParams }
@@ -80,10 +105,25 @@ export async function submitAction(
     return { outcome: "duplicate", reason: dup };
   }
   const amountUsd = moneyOf(a);
-  const gate = policyGate({ kind: a.kind, amountUsd }, policy, snap.allowed);
+  const gate = policyGate({ kind: a.kind, amountUsd, disputeAmountUsd: disputeUsd(snap) }, policy, snap.allowed);
   if (gate.outcome === "blocked") {
     await audit(deps, c.id, "agent", "action.blocked", `Blocked ${LABEL[a.kind]}: ${gate.reason}`);
     return gate;
+  }
+  if (a.kind === "provide_evidence" && gate.outcome !== "execute") {
+    // The seller approves the filing itself: prepare the exact input and file now, send nothing.
+    const generatedAt = (deps.now?.() ?? new Date()).toISOString();
+    const ep: ProvideEvidenceParams = { ...a.p, generatedAt };
+    const pdf = await evidencePdf(deps, c, ep);
+    ep.filing = {
+      input: evidenceInput(ep.evidences),
+      files: [{ field: "file1", name: evidenceFileName(c.id), size: pdf.byteLength, contentType: "application/pdf" }],
+      prepared: true,
+    };
+    a = { kind: "provide_evidence", p: ep };
+  }
+  if (gate.outcome === "awaiting_approval" && snap.sellerResponseDueDate) {
+    gate.reason += `; PayPal's deadline is ${snap.sellerResponseDueDate.slice(0, 16).replace("T", " ")} UTC`;
   }
   const status = gate.outcome === "execute" ? "executing" : gate.outcome === "proposed" ? "proposed" : "awaiting_approval";
   const action = await deps.db.actions.insert({
@@ -110,20 +150,29 @@ export async function submitAction(
   return { ...gate, action: done, reason: done.status === "executed" ? gate.reason : (done.result?.error ?? "failed") };
 }
 
-/** Calls PayPal for a recorded action and stores the result. Never throws. */
-export async function perform(deps: AgentDeps, c: CaseRecord, action: AgentAction): Promise<AgentAction> {
+/** Schedules follow-up work to run after the HTTP response (next/server after()); see executeApprovedWith. */
+export type Defer = (task: () => Promise<void>) => void;
+
+/**
+ * Calls PayPal for a recorded action and stores the result. Never throws.
+ * With `defer`, only the action's result is written before returning; the audit entry and the
+ * tracker restore run later.
+ */
+export async function perform(deps: AgentDeps, c: CaseRecord, action: AgentAction, opts: { defer?: Defer } = {}): Promise<AgentAction> {
   const pp = deps.paypal;
+  const later = (task: () => Promise<void>) => (opts.defer ? opts.defer(task) : task());
   const p = action.params as Record<string, never>;
   try {
     let r: { status: number; debugId?: string };
     switch (action.kind) {
       case "provide_evidence": {
         const ep = action.params as unknown as ProvideEvidenceParams;
-        const order: OrderContext = c.order ?? { items: [] };
-        const pdf = await deps.evidence.buildEvidencePdf({ case: c, order, narrative: ep.narrative, exhibits: ep.exhibits });
+        const pdf = await evidencePdf(deps, c, ep);
         r = await pp.provideEvidence(c.id, {
           evidences: ep.evidences,
-          files: [{ name: `caseclerk-evidence-${c.id}.pdf`, bytes: pdf, contentType: "application/pdf" }],
+          files: [{ name: evidenceFileName(c.id), bytes: pdf, contentType: "application/pdf" }],
+          ...(c.snapshot.sellerTransactionId ? { captureId: c.snapshot.sellerTransactionId } : {}),
+          ...(opts.defer ? { deferRestore: opts.defer } : {}),
         });
         break;
       }
@@ -147,13 +196,15 @@ export async function perform(deps: AgentDeps, c: CaseRecord, action: AgentActio
       status: ok ? "executed" : "failed",
       result: { httpStatus: r.status, debugId: r.debugId, ...(ok ? {} : { error: `PayPal answered ${r.status}` }) },
     });
-    await audit(
-      deps,
-      c.id,
-      "paypal",
-      ok ? "action.executed" : "action.failed",
-      ok ? `PayPal accepted the ${LABEL[action.kind]} (HTTP ${r.status})` : `PayPal rejected the ${LABEL[action.kind]} (HTTP ${r.status})`,
-      { actionId: action.id, httpStatus: r.status, debugId: r.debugId, tool: action.kind },
+    await later(() =>
+      audit(
+        deps,
+        c.id,
+        "paypal",
+        ok ? "action.executed" : "action.failed",
+        ok ? `PayPal accepted the ${LABEL[action.kind]} (HTTP ${r.status})` : `PayPal rejected the ${LABEL[action.kind]} (HTTP ${r.status})`,
+        { actionId: action.id, httpStatus: r.status, debugId: r.debugId, tool: action.kind },
+      ),
     );
     return updated ?? action;
   } catch (e) {
@@ -163,12 +214,14 @@ export async function perform(deps: AgentDeps, c: CaseRecord, action: AgentActio
       status: "failed",
       result: { httpStatus: err.status, debugId: err.debugId, error: msg },
     });
-    await audit(deps, c.id, "paypal", "action.failed", `The ${LABEL[action.kind]} failed: ${msg}`, {
-      actionId: action.id,
-      httpStatus: err.status,
-      debugId: err.debugId,
-      tool: action.kind,
-    });
+    await later(() =>
+      audit(deps, c.id, "paypal", "action.failed", `The ${LABEL[action.kind]} failed: ${msg}`, {
+        actionId: action.id,
+        httpStatus: err.status,
+        debugId: err.debugId,
+        tool: action.kind,
+      }),
+    );
     return updated ?? action;
   }
 }
@@ -182,36 +235,50 @@ export function statusAfter(kind: ActionKind, executed: boolean): CaseStatus | n
 
 export type ApprovalResult = { ok: boolean; message: string; action?: AgentAction };
 
-/** Seller approved a queued action: re-check PayPal's links, then execute it once. */
-export async function executeApprovedWith(deps: AgentDeps, actionId: string): Promise<ApprovalResult> {
-  const a = await deps.db.actions.get(actionId);
-  if (!a) return { ok: false, message: "Action not found" };
+/**
+ * Seller approved a queued action: re-check PayPal's links, then execute it once.
+ * With `defer` (the approve route passes next/server after()), it returns as soon as PayPal has
+ * answered and the action's result is stored; the audit entry, the case status, the snapshot
+ * write and the tracker restore run after the response. Independent reads run in parallel.
+ */
+export async function executeApprovedWith(deps: AgentDeps, actionId: string, opts: { defer?: Defer } = {}): Promise<ApprovalResult> {
+  const later = (task: () => Promise<void>) => (opts.defer ? opts.defer(task) : task());
   const claimed = await deps.db.actions.update(actionId, { status: "approved" }, { ifStatus: ["awaiting_approval"] });
-  if (!claimed) return { ok: false, message: `Action is ${a.status.replace(/_/g, " ")}, not awaiting approval`, action: a };
-  await audit(deps, a.caseId, "seller", "action.approved", `You approved the ${LABEL[a.kind]}`, { actionId });
-
-  let c = await deps.db.cases.get(a.caseId);
-  if (!c) return { ok: false, message: "Case not found" };
-  let snap = c.snapshot;
-  try {
-    snap = await deps.paypal.getDispute(a.caseId);
-    c = (await deps.db.cases.upsertFromSnapshot(snap)).record;
-  } catch {
-    // Use the stored snapshot; PayPal's answer to the action is the final word.
+  if (!claimed) {
+    const cur = await deps.db.actions.get(actionId);
+    if (!cur) return { ok: false, message: "Action not found" };
+    return { ok: false, message: `Action is ${cur.status.replace(/_/g, " ")}, not awaiting approval`, action: cur };
   }
-  const policy = await deps.db.policy.get();
+  const a = claimed;
+  const [, stored, fresh, policy] = await Promise.all([
+    audit(deps, a.caseId, "seller", "action.approved", `You approved the ${LABEL[a.kind]}`, { actionId }),
+    deps.db.cases.get(a.caseId),
+    // Use the stored snapshot if this fails; PayPal's answer to the action is the final word.
+    deps.paypal.getDispute(a.caseId).catch(() => null),
+    deps.db.policy.get(),
+  ]);
+  if (!stored) return { ok: false, message: "Case not found" };
+  let c = stored;
+  const snap = fresh ?? c.snapshot;
   const gate = policyGate({ kind: a.kind, amountUsd: a.amountUsd }, { ...policy, dryRun: false }, snap.allowed);
   if (gate.outcome === "blocked") {
+    if (fresh) await deps.db.cases.upsertFromSnapshot(fresh).catch(() => null);
     const failed = await deps.db.actions.update(actionId, { status: "failed", result: { error: gate.reason } });
     await audit(deps, a.caseId, "system", "action.failed", `Couldn't run the approved ${LABEL[a.kind]}: ${gate.reason}`, { actionId });
     return { ok: false, message: gate.reason, action: failed ?? a };
   }
-  const executing = await deps.db.actions.update(actionId, { status: "executing" }, { ifStatus: ["approved"] });
+  const [executing, up] = await Promise.all([
+    deps.db.actions.update(actionId, { status: "executing" }, { ifStatus: ["approved"] }),
+    fresh ? deps.db.cases.upsertFromSnapshot(fresh).catch(() => null) : Promise.resolve(null),
+  ]);
   if (!executing) return { ok: false, message: "Action is already running", action: a };
-  const done = await perform(deps, c, executing);
+  if (up) c = up.record;
+  const done = await perform(deps, c, executing, opts);
   const ok = done.status === "executed";
   const next = statusAfter(a.kind, ok) ?? "triaged";
-  await deps.db.cases.setStatus(a.caseId, ok ? next : "error");
+  await later(async () => {
+    await deps.db.cases.setStatus(a.caseId, ok ? next : "error");
+  });
   return { ok, message: ok ? `Sent to PayPal` : (done.result?.error ?? "PayPal rejected it"), action: done };
 }
 

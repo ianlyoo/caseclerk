@@ -4,7 +4,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { AgentTrigger, CaseRecord, CaseStatus, Decision, DisputeSnapshot, Money, SellerPolicy } from "../types";
 import { SpendCapError } from "../spend";
-import { audit, denyWith, executeApprovedWith, statusAfter, submitAction, ACTION_LABEL, type ActionParams, type ApprovalResult, type SubmitResult } from "./actions";
+import { audit, denyWith, executeApprovedWith, statusAfter, submitAction, ACTION_LABEL, type ActionParams, type ApprovalResult, type Defer, type SubmitResult } from "./actions";
 import { resolveConfig, type AgentConfig } from "./config";
 import { amountUsd, applyPolicyToStrategy, expectedValues } from "./ev";
 import { unknownIdentifiers } from "./facts";
@@ -30,8 +30,8 @@ export async function runAgent(caseId: string, trigger: AgentTrigger): Promise<R
   return runAgentWith(await agentDeps(), caseId, trigger);
 }
 
-export async function executeApproved(actionId: string): Promise<ApprovalResult> {
-  return executeApprovedWith(await agentDeps(), actionId);
+export async function executeApproved(actionId: string, opts: { defer?: Defer } = {}): Promise<ApprovalResult> {
+  return executeApprovedWith(await agentDeps(), actionId, opts);
 }
 
 export async function deny(actionId: string, note?: string): Promise<ApprovalResult> {
@@ -82,9 +82,11 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
   if (doneFor && trigger.kind === "webhook") {
     return { status: "skipped", summary: "Already handled this version of the dispute", costUsd: 0 };
   }
+  // Costs live on the step entries (triage, agent.step); the run total is data.runCostUsd, never the
+  // entry's costUsd, so a timeline that sums costUsd counts each call once.
   const finish = async (status: CaseStatus | null, summary: string, costUsd: number, data: Record<string, unknown> = {}) => {
     if (status) await deps.db.cases.setStatus(caseId, status);
-    await audit(deps, caseId, "agent", "agent.run.done", summary, { updateTime: snap.updateTime, trigger: trigger.kind, ...data }, costUsd || undefined);
+    await audit(deps, caseId, "agent", "agent.run.done", summary, { updateTime: snap.updateTime, trigger: trigger.kind, runCostUsd: costUsd, ...data });
   };
 
   if (snap.status === "RESOLVED") {
@@ -94,8 +96,15 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
   }
 
   const actions = await deps.db.actions.listByCase(caseId);
-  if (actions.some((a) => a.status === "awaiting_approval")) {
-    await finish("awaiting_approval", "Waiting for your approval before doing anything else.", 0);
+  const pending = actions.filter((a) => a.status === "awaiting_approval").map((a) => a.id).sort().join(",");
+  if (pending) {
+    // Nothing else happens until the seller decides: no model call, no new action, one note per pending set.
+    const last = [...history].reverse().find((e) => e.kind === "agent.run.done");
+    if (last?.data?.awaiting === pending && c.status === "awaiting_approval") {
+      return { status: "skipped", summary: "Still awaiting your approval", costUsd: 0 };
+    }
+    const due = snap.sellerResponseDueDate ? ` PayPal's deadline: ${snap.sellerResponseDueDate.slice(0, 16).replace("T", " ")} UTC.` : "";
+    await finish("awaiting_approval", `Waiting for your approval before doing anything else.${due}`, 0, { awaiting: pending });
     return { status: "waiting", summary: "Awaiting approval", costUsd: 0 };
   }
   const actionable = snap.allowed.some((r) => ACTIONABLE_RELS.includes(r));
@@ -160,7 +169,7 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
     return { status: "done", summary: runSummary(ctx), costUsd: ctx.costUsd };
   } catch (e) {
     if (e instanceof SpendCapError) {
-      await audit(deps, caseId, "system", "spend.blocked", `Demo budget reached (${e.cap} cap): no new AI calls.`, { cap: e.cap }, ctx.costUsd || undefined);
+      await audit(deps, caseId, "system", "spend.blocked", `Demo budget reached (${e.cap} cap): no new AI calls.`, { cap: e.cap, runCostUsd: ctx.costUsd });
       if (!ctx.decision) {
         const replayed = await replayStoredRun(deps, ctx.c);
         await finish(null, replayed ? "Showing the agent's last recorded run for this kind of dispute." : "No recorded run to show.", 0, {
@@ -172,7 +181,7 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
       return { status: "replayed", summary: "Demo budget reached mid-run", costUsd: ctx.costUsd };
     }
     await deps.db.cases.setStatus(caseId, "error");
-    await audit(deps, caseId, "system", "agent.error", `The agent stopped on an error: ${errMsg(e)}`, undefined, ctx.costUsd || undefined);
+    await audit(deps, caseId, "system", "agent.error", `The agent stopped on an error: ${errMsg(e)}`, { runCostUsd: ctx.costUsd });
     return { status: "error", summary: errMsg(e), costUsd: ctx.costUsd };
   }
 }
@@ -225,10 +234,11 @@ async function decideAndAct(ctx: Ctx, priorActions: Awaited<ReturnType<AgentDeps
     if (message.stop_reason === "refusal") throw new Error("The model declined this request");
     if (!uses.length) break;
 
-    // Run in a safe order (offer before message, see WRITE_ORDER); answer in the model's order.
+    // Run in the model's order, except buyer messages go last (offer before message, see below);
+    // answer in the model's order.
     const byId = new Map<string, Anthropic.ToolResultBlockParam>();
     let hadError = false;
-    for (const u of [...uses].sort((a, b) => writeRank(a.name) - writeRank(b.name))) {
+    for (const u of [...uses.filter((u) => u.name !== "send_message"), ...uses.filter((u) => u.name === "send_message")]) {
       const r = await runTool(ctx, u.name, (u.input ?? {}) as Record<string, unknown>);
       hadError ||= !!r.isError;
       byId.set(u.id, { type: "tool_result", tool_use_id: u.id, content: JSON.stringify(r.content), ...(r.isError ? { is_error: true } : {}) });
@@ -265,6 +275,9 @@ async function runTool(ctx: Ctx, name: string, input: Record<string, unknown>): 
       case "search_transactions":
         return { content: await toolSearchTransactions(ctx) };
       case "record_decision":
+        if (pendingApproval(ctx)) {
+          return { content: { outcome: "skipped", detail: "An action waits for the seller's approval; the decision stands until they decide." } };
+        }
         return await toolRecordDecision(ctx, input);
       case "provide_evidence":
       case "accept_claim":
@@ -410,14 +423,11 @@ function writeToolsFor(strategy: Decision["strategy"], snap: DisputeSnapshot): s
 
 /**
  * Inquiry turn-taking (seen live, PP-R-CTQ-10194465): a buyer message hands the turn to the buyer and
- * PayPal then refuses make-offer with 422. So reads run first, then the offer, and a separate message
- * goes only when no offer is made; the offer's note already reaches the buyer.
+ * PayPal then refuses make-offer with 422. So the offer goes first, and a separate message goes only
+ * when no offer is made; the offer's note already reaches the buyer.
  */
-const WRITE_ORDER = ["provide_evidence", "accept_claim", "make_offer", "acknowledge_return_item", "send_message"];
-
-function writeRank(name: string): number {
-  const i = WRITE_ORDER.indexOf(name);
-  return i < 0 ? -1 : i;
+function pendingApproval(ctx: Ctx): boolean {
+  return ctx.acted.some((a) => a.result.outcome === "awaiting_approval");
 }
 
 function offerInFlight(ctx: Ctx): boolean {
@@ -427,6 +437,11 @@ function offerInFlight(ctx: Ctx): boolean {
 }
 
 async function toolWrite(ctx: Ctx, name: string, input: Record<string, unknown>): Promise<ToolOut> {
+  if (pendingApproval(ctx)) {
+    // The seller decides next; never follow a queued filing with an accept or refund on our own.
+    ctx.halted = true;
+    return { content: { outcome: "skipped", detail: "An action already waits for the seller's approval; take no other action now." } };
+  }
   const d = ctx.decision;
   if (!d) return { content: { error: "Call record_decision before any write action." }, isError: true };
   if (!TOOL_STRATEGIES[name].includes(d.strategy)) {

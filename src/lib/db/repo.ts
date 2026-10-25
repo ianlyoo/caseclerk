@@ -148,6 +148,57 @@ export type TestCapturesRepo = {
   get(captureId: string): Promise<TestCapture | null>;
 };
 
+export type WireOrigin = "agent" | "webhook" | "seller" | "cron" | "system";
+
+/**
+ * One PayPal call (kind "call") or webhook delivery (kind "event") on the wire log.
+ * Never holds request bodies, headers or secrets: ids, paths, statuses and timings only.
+ */
+export type WireEntry = {
+  id: string;
+  at: string;
+  kind: "call" | "event";
+  origin: WireOrigin;
+  caseId?: string;
+  /** Correlation key before a case exists (the test capture id); linked to the case later. */
+  ref?: string;
+  method?: string;
+  /** API path without query string. */
+  path?: string;
+  /** Call: PayPal's HTTP status (0 = network error). Event: the status we answered PayPal with. */
+  status?: number;
+  debugId?: string;
+  durationMs?: number;
+  eventId?: string;
+  eventType?: string;
+  /**
+   * Webhook signature result on a delivery, and on the calls made while checking it: PENDING until
+   * known, then SUCCESS, FAILURE, NOT_CONFIGURED, ... Unset on ordinary calls.
+   */
+  verify?: string;
+  detail?: Record<string, unknown>;
+};
+
+export type NewWireEntry = Omit<WireEntry, "id" | "at"> & { at?: string; /** default: a new UUID */ id?: string };
+
+export type WireRepo = {
+  append(e: NewWireEntry): Promise<WireEntry>;
+  /** Fills in a row written before its outcome was known (a webhook delivery, at receipt). */
+  update(id: string, patch: Pick<NewWireEntry, "caseId" | "status" | "verify" | "durationMs" | "detail">): Promise<void>;
+  /**
+   * Oldest first: by `at`, ties broken by insertion order. The latest `limit` rows (default 500).
+   * Leaves out rows whose `verify` is set and not SUCCESS (forged, unverified or still pending
+   * deliveries) unless `includeUnverified`.
+   */
+  listByCase(caseId: string, opts?: { limit?: number; includeUnverified?: boolean }): Promise<WireEntry[]>;
+  /** The latest `limit` rows (default 50, max 200) across cases, after `since` if given; same order and filter as listByCase. */
+  listRecent(opts?: { since?: string; limit?: number; includeUnverified?: boolean }): Promise<WireEntry[]>;
+  /** Sets `ref` (and the case, if known) on rows written before the case existed. */
+  tag(ids: string[], patch: { ref?: string; caseId?: string }): Promise<void>;
+  /** Attaches rows tagged with `ref` and no case yet to `caseId`. */
+  linkRef(ref: string, caseId: string): Promise<void>;
+};
+
 export type Repo = {
   kind: "memory" | "postgres";
   cases: CasesRepo;
@@ -159,4 +210,5 @@ export type Repo = {
   rateLimit: RateLimitRepo;
   locks: LocksRepo;
   testCaptures: TestCapturesRepo;
+  wire: WireRepo;
 };

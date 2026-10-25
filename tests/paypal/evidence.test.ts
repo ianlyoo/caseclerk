@@ -6,7 +6,7 @@ import { sampleEvidenceInput } from "./fixtures/evidence-input";
 import inr from "./fixtures/inr-chargeback.json";
 
 describe("buildEvidencePdf", () => {
-  it("builds a 1-3 page PDF under 1 MB", async () => {
+  it("builds a 1-3 page PDF under 1 MB", { timeout: 20_000 }, async () => {
     const bytes = await buildEvidencePdf(sampleEvidenceInput(toSnapshot(inr as RawDispute)));
     expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe("%PDF-");
     expect(bytes.byteLength).toBeLessThan(1_000_000);

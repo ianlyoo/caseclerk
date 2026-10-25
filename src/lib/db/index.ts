@@ -45,5 +45,6 @@ export const webhookEvents = delegate("webhookEvents");
 export const rateLimit = delegate("rateLimit");
 export const locks = delegate("locks");
 export const testCaptures = delegate("testCaptures");
+export const wire = delegate("wire");
 
 export { createMemoryRepo };

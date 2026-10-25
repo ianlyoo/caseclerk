@@ -3,8 +3,8 @@
 import { randomUUID } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { DEFAULT_POLICY, type AgentAction, type AuditEntry, type CaseRecord, type SellerPolicy } from "@/lib/types";
-import type { ActionPatch, Repo, TestCapture } from "./repo";
-import { clampLimit, LOCK_TTL_DEFAULT_S, round6, statusAfterSnapshot, utcDayStart } from "./shared";
+import type { ActionPatch, Repo, TestCapture, WireEntry } from "./repo";
+import { clampLimit, VERIFIED_WIRE_SQL, wireRecentLimit, LOCK_TTL_DEFAULT_S, round6, statusAfterSnapshot, utcDayStart } from "./shared";
 
 type Row = Record<string, unknown>;
 type Query = (text: string, params?: unknown[]) => Promise<Row[]>;
@@ -66,6 +66,30 @@ function toCapture(r: Row): TestCapture {
     ...(r.scenario ? { scenario: r.scenario as string } : {}),
     ...(r.order_ctx ? { order: r.order_ctx as TestCapture["order"] } : {}),
     createdAt: iso(r.created_at),
+  };
+}
+
+function toWire(r: Row): WireEntry {
+  const str = (k: string) => (r[k] === null || r[k] === undefined ? undefined : (r[k] as string));
+  const fields: Partial<WireEntry> = {
+    caseId: str("case_id"),
+    ref: str("ref"),
+    method: str("method"),
+    path: str("path"),
+    status: num(r.status),
+    debugId: str("debug_id"),
+    durationMs: num(r.duration_ms),
+    eventId: str("event_id"),
+    eventType: str("event_type"),
+    verify: str("verify"),
+    detail: (r.detail ?? undefined) as WireEntry["detail"],
+  };
+  return {
+    id: r.id as string,
+    at: iso(r.at),
+    kind: r.kind as WireEntry["kind"],
+    origin: r.origin as WireEntry["origin"],
+    ...Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)),
   };
 }
 
@@ -341,6 +365,80 @@ export function createPostgresRepo(url: string, query?: Query): Repo {
       async get(captureId) {
         const rows = await q(`SELECT * FROM test_captures WHERE capture_id = $1`, [captureId]);
         return rows[0] ? toCapture(rows[0]) : null;
+      },
+    },
+
+    wire: {
+      async append(e) {
+        const rows = await q(
+          `INSERT INTO wire (id, at, kind, origin, case_id, ref, method, path, status, debug_id, duration_ms,
+                             event_id, event_type, verify, detail)
+           VALUES ($1, COALESCE($2::timestamptz, clock_timestamp()), $3, $4, $5, $6, $7, $8, $9, $10, $11,
+                   $12, $13, $14, $15::jsonb)
+           RETURNING *`,
+          [
+            e.id && isUuid(e.id) ? e.id : randomUUID(),
+            validTime(e.at),
+            e.kind,
+            e.origin,
+            e.caseId ?? null,
+            e.ref ?? null,
+            e.method ?? null,
+            e.path ?? null,
+            e.status ?? null,
+            e.debugId ?? null,
+            e.durationMs === undefined ? null : Math.round(e.durationMs),
+            e.eventId ?? null,
+            e.eventType ?? null,
+            e.verify ?? null,
+            json(e.detail),
+          ],
+        );
+        return toWire(rows[0]);
+      },
+      async update(id, patch) {
+        if (!isUuid(id)) return;
+        await q(
+          `UPDATE wire SET case_id = COALESCE(case_id, $2), status = COALESCE($3, status), verify = COALESCE($4, verify),
+                           duration_ms = COALESCE($5, duration_ms), detail = COALESCE($6::jsonb, detail)
+           WHERE id = $1`,
+          [
+            id,
+            patch.caseId ?? null,
+            patch.status ?? null,
+            patch.verify ?? null,
+            patch.durationMs === undefined ? null : Math.round(patch.durationMs),
+            json(patch.detail),
+          ],
+        );
+      },
+      async listByCase(caseId, opts) {
+        const rows = await q(
+          `SELECT * FROM (SELECT * FROM wire WHERE case_id = $1 ${opts?.includeUnverified ? "" : `AND ${VERIFIED_WIRE_SQL}`}
+                          ORDER BY at DESC, seq DESC LIMIT $2) t ORDER BY at, seq`,
+          [caseId, clampLimit(opts?.limit, 500)],
+        );
+        return rows.map(toWire);
+      },
+      async listRecent(opts = {}) {
+        const rows = await q(
+          `SELECT * FROM (SELECT * FROM wire WHERE ($1::timestamptz IS NULL OR at > $1::timestamptz)
+                          ${opts.includeUnverified ? "" : `AND ${VERIFIED_WIRE_SQL}`}
+                          ORDER BY at DESC, seq DESC LIMIT $2) t ORDER BY at, seq`,
+          [validTime(opts.since), wireRecentLimit(opts.limit)],
+        );
+        return rows.map(toWire);
+      },
+      async tag(ids, patch) {
+        const valid = ids.filter(isUuid);
+        if (!valid.length) return;
+        await q(
+          `UPDATE wire SET ref = COALESCE($2, ref), case_id = COALESCE(case_id, $3) WHERE id = ANY($1::uuid[])`,
+          [valid, patch.ref ?? null, patch.caseId ?? null],
+        );
+      },
+      async linkRef(ref, caseId) {
+        await q(`UPDATE wire SET case_id = $2 WHERE ref = $1 AND case_id IS NULL`, [ref, caseId]);
       },
     },
   };
