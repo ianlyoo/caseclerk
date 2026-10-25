@@ -22,8 +22,25 @@ describe("policyGate", () => {
   });
 
   it("executes non-money actions", () => {
-    expect(policyGate({ kind: "provide_evidence" }, policy, ALL).outcome).toBe("execute");
+    expect(policyGate({ kind: "provide_evidence", disputeAmountUsd: 12 }, policy, ALL).outcome).toBe("execute");
     expect(policyGate({ kind: "send_message" }, policy, ALL).outcome).toBe("execute");
+  });
+
+  it("evidence on a dispute of $250 or more waits for the seller; below runs", () => {
+    const ev = (disputeAmountUsd: number | undefined, p = policy) => policyGate({ kind: "provide_evidence", disputeAmountUsd }, p, ALL);
+    expect(ev(249.99).outcome).toBe("execute");
+    expect(ev(250).outcome).toBe("awaiting_approval");
+    expect(ev(412).outcome).toBe("awaiting_approval");
+    expect(ev(412).reason).toContain("$250");
+    expect(ev(undefined).outcome).toBe("awaiting_approval");
+    expect(ev(NaN).outcome).toBe("awaiting_approval");
+    // Stored policies from before the field use the default; a custom level applies.
+    const { evidenceApprovalAtUsd: _, ...old } = policy;
+    expect(ev(300, old).outcome).toBe("awaiting_approval");
+    expect(ev(300, { ...policy, evidenceApprovalAtUsd: 500 }).outcome).toBe("execute");
+    // Dry run still only proposes; a missing link still blocks.
+    expect(ev(412, { ...policy, dryRun: true }).outcome).toBe("proposed");
+    expect(policyGate({ kind: "provide_evidence", disputeAmountUsd: 412 }, policy, ["accept_claim"]).outcome).toBe("blocked");
   });
 
   it("auto-executes refunds at exactly the auto limit, queues a cent above", () => {

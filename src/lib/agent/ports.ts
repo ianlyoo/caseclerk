@@ -65,6 +65,7 @@ export type EvidencePort = {
     order: OrderContext;
     narrative: string;
     exhibits: { title: string; body: string }[];
+    generatedAt?: Date;
   }): Promise<Uint8Array>;
 };
 
