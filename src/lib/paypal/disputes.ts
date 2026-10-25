@@ -2,6 +2,7 @@
 // callers check `snapshot.allowed` first; PayPal answers 422 ACTION_NOT_ALLOWED_IN_CURRENT_DISPUTE_STATE otherwise.
 import type { DisputeLinkRel, DisputeMessage, DisputeSnapshot, DisputeStatus, Money } from "../types";
 import { paypalFetch, type PayPalResult } from "./client";
+import { getTracking, restoreTrackers, type Tracker } from "./tracking";
 
 const D = "/v1/customer/disputes";
 
@@ -219,18 +220,52 @@ export function evidenceInput(evidences: EvidenceItem[]) {
   };
 }
 
-/** Multipart: `input` JSON part + file1..n. Retries the sandbox's spurious 400 right after the link appears. */
-export async function provideEvidence(id: string, req: { evidences: EvidenceItem[]; files: EvidenceFile[] }): Promise<ActionResult> {
+/**
+ * Multipart: `input` JSON part + file1..n. Retries the sandbox's spurious 400 right after the link appears.
+ * When an evidence item carries tracking, PayPal rewrites the capture's tracker as SHIPPED; we read the
+ * trackers first and put back any status that went down (DELIVERED stays DELIVERED). `trackingRestored`
+ * lists the tracking numbers that needed it. Restoring is best effort and never fails the submission.
+ */
+export async function provideEvidence(
+  id: string,
+  req: { evidences: EvidenceItem[]; files: EvidenceFile[]; captureId?: string },
+): Promise<ActionResult & { trackingRestored?: string[]; trackingRestoreError?: string }> {
   if (!req.evidences.length) throw new Error("provideEvidence: at least one evidence item is required");
   const total = req.files.reduce((n, f) => n + f.bytes.byteLength, 0);
   if (total > EVIDENCE_MAX_TOTAL_BYTES) throw new Error(`provideEvidence: files total ${total} bytes, over the ${EVIDENCE_MAX_TOTAL_BYTES} byte limit`);
   for (const f of req.files) {
     if (!EVIDENCE_TYPES.has(f.contentType)) throw new Error(`provideEvidence: ${f.contentType} not accepted (PDF, PNG, JPG, GIF only)`);
   }
+
+  const withTracking = req.evidences.some((e) => e.trackingInfo?.length);
+  let captureId = req.captureId;
+  let before: Tracker[] = [];
+  let restoreError: string | undefined;
+  if (withTracking) {
+    try {
+      captureId ??= (await getDisputeRaw(id)).json.disputed_transactions?.[0]?.seller_transaction_id;
+      if (captureId) before = await getTracking(captureId);
+    } catch (e) {
+      restoreError = `could not read trackers before submitting: ${(e as Error).message}`;
+    }
+  }
+
   const form = new FormData();
   form.append("input", new Blob([JSON.stringify(evidenceInput(req.evidences))], { type: "application/json" }));
   req.files.forEach((f, i) => form.append(`file${i + 1}`, new Blob([f.bytes as Uint8Array<ArrayBuffer>], { type: f.contentType }), f.name));
-  return done(await paypalFetch(`${D}/${enc(id)}/provide-evidence`, { method: "POST", body: form, retryOn400: true }));
+  const result: ActionResult & { trackingRestored?: string[]; trackingRestoreError?: string } = done(
+    await paypalFetch(`${D}/${enc(id)}/provide-evidence`, { method: "POST", body: form, retryOn400: true }),
+  );
+
+  if (captureId && before.length) {
+    try {
+      result.trackingRestored = await restoreTrackers(captureId, before);
+    } catch (e) {
+      restoreError = `could not restore tracker status: ${(e as Error).message}`;
+    }
+  }
+  if (restoreError) result.trackingRestoreError = restoreError;
+  return result;
 }
 
 /** Accepts liability: PayPal refunds the buyer (full, or refundAmount when allowed). */

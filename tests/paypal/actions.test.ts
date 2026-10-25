@@ -63,19 +63,53 @@ describe("refundCapture", () => {
 describe("dispute actions", () => {
   it("provideEvidence sends multipart input + files and retries the spurious 400", async () => {
     let n = 0;
-    const { calls } = mockPayPal(() => (++n === 1 ? { status: 400, json: { name: "INVALID_REQUEST" } } : { json: {} }));
+    const { calls } = mockPayPal((c) => {
+      if (c.path.endsWith("/provide-evidence")) return ++n === 1 ? { status: 400, json: { name: "INVALID_REQUEST" } } : { json: {} };
+    });
     const r = await provideEvidence("PP-R-AAA-1", {
-      evidences: [{ evidenceType: "PROOF_OF_FULFILLMENT", notes: "Delivered", trackingInfo: [{ carrierName: "USPS", trackingNumber: "9400111899" }] }],
+      evidences: [{ evidenceType: "PROOF_OF_FULFILLMENT", notes: "Delivered" }],
       files: [{ name: "evidence.pdf", bytes: new Uint8Array([37, 80, 68, 70]), contentType: "application/pdf" }],
     });
     expect(r.status).toBe(200);
     expect(calls).toHaveLength(2);
     const form = calls[1].body as FormData;
     expect(calls[1].path).toBe("/v1/customer/disputes/PP-R-AAA-1/provide-evidence");
-    expect(JSON.parse(await (form.get("input") as Blob).text())).toEqual({
-      evidences: [{ evidence_type: "PROOF_OF_FULFILLMENT", notes: "Delivered", evidence_info: { tracking_info: [{ carrier_name: "USPS", tracking_number: "9400111899" }] } }],
-    });
+    expect(JSON.parse(await (form.get("input") as Blob).text())).toEqual({ evidences: [{ evidence_type: "PROOF_OF_FULFILLMENT", notes: "Delivered" }] });
     expect((form.get("file1") as File).name).toBe("evidence.pdf");
+  });
+
+  it("provideEvidence with tracking puts a DELIVERED tracker back after PayPal rewrites it as SHIPPED", async () => {
+    let submitted = false;
+    const tracker = (status: string, shipment_date: string) => ({ trackers: [{ transaction_id: "CAP1", tracking_number: "9400111899", carrier: "USPS", status, shipment_date }] });
+    const { calls } = mockPayPal((c) => {
+      if (c.path === "/v1/customer/disputes/PP-R-AAA-1" && c.method === "GET") return { json: { ...dispute("WAITING_FOR_SELLER_RESPONSE"), disputed_transactions: [{ seller_transaction_id: "CAP1" }] } };
+      if (c.path.startsWith("/v1/shipping/trackers?")) return { json: submitted ? tracker("SHIPPED", "2026-10-24") : tracker("DELIVERED", "2026-10-25") };
+      if (c.path.endsWith("/provide-evidence")) { submitted = true; return { json: {} }; }
+      if (c.method === "PUT" && c.path === "/v1/shipping/trackers/CAP1-9400111899") return { status: 204 };
+    });
+    const r = await provideEvidence("PP-R-AAA-1", {
+      evidences: [{ evidenceType: "PROOF_OF_FULFILLMENT", trackingInfo: [{ carrierName: "USPS", trackingNumber: "9400111899" }] }],
+      files: [],
+    });
+    expect(r.trackingRestored).toEqual(["9400111899"]);
+    expect(r.trackingRestoreError).toBeUndefined();
+    const put = calls.find((c) => c.method === "PUT")!;
+    expect(JSON.parse(String(put.body))).toEqual({ transaction_id: "CAP1", tracking_number: "9400111899", status: "DELIVERED", carrier: "USPS", shipment_date: "2026-10-25" });
+    const form = calls.find((c) => c.path.endsWith("/provide-evidence"))!.body as FormData;
+    expect(JSON.parse(await (form.get("input") as Blob).text()).evidences[0].evidence_info).toEqual({ tracking_info: [{ carrier_name: "USPS", tracking_number: "9400111899" }] });
+  });
+
+  it("provideEvidence still succeeds when the tracker restore fails", async () => {
+    mockPayPal((c) => {
+      if (c.path.endsWith("/provide-evidence")) return { json: {} };
+      // dispute GET and tracker reads fall through to 404
+    });
+    const r = await provideEvidence("PP-R-AAA-1", {
+      evidences: [{ evidenceType: "PROOF_OF_FULFILLMENT", trackingInfo: [{ carrierName: "USPS", trackingNumber: "1" }] }],
+      files: [],
+    });
+    expect(r.status).toBe(200);
+    expect(r.trackingRestoreError).toMatch(/could not read trackers/);
   });
 
   it("provideEvidence rejects oversize uploads and unsupported types before calling PayPal", async () => {
