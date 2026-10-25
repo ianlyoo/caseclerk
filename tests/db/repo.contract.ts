@@ -171,9 +171,14 @@ export function repoContract(name: string, make: () => Promise<Repo>, uniq: () =
     });
 
     it("stores the policy", async () => {
+      const before = await db.policy.get();
       const p = { ...DEFAULT_POLICY, approvalAboveUsd: 75 + Math.floor(Math.random() * 10) };
-      await db.policy.set(p);
-      expect(await db.policy.get()).toEqual(p);
+      try {
+        await db.policy.set(p);
+        expect(await db.policy.get()).toEqual(p);
+      } finally {
+        await db.policy.set(before); // shared DBs keep the seller's real policy
+      }
     });
   });
 }
