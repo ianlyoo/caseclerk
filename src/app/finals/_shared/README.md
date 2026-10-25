@@ -6,3 +6,4 @@
 - `store.tsx`: `DecisionProvider`, `useDecision(id)` (pending → undo 4 s → sending → filed → resolved; or declined), `entryFor("pending" | "approved" | "resolved")` for URL-driven states, `usePendingApprovals()`.
 
 Every fixture case is a **sample case**: label it so. Its Wire lines have `origin: "sample"` and no debug ids, because nothing went to PayPal. Model names and costs (`Step.model`, `costUsd`) never go on the Wire.
+- `photos.ts`: `PHOTOS[caseId]` → `{ src, alt, credit }` for the 5 open cases with a CC0 / CC BY photo (files in `public/finals/`, credits in `public/finals/CREDITS.md`). Put `data-credit={credit}` on every `<img>`.
