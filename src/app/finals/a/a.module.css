@@ -690,7 +690,7 @@
   width: min(640px, 100%);
   padding: 40px 48px 44px;
   background: var(--sheet);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--hair);
   border-radius: 2px;
   font-size: 16px;
   line-height: 25px;

@@ -368,7 +368,7 @@ export function wireOf(d: CaseDetail): WireLine[] {
 export function agentCost(d: CaseDetail): { total: string; split: string } {
   const paid = d.steps.filter((s) => s.costUsd);
   const sum = paid.reduce((t, s) => t + (s.costUsd ?? 0), 0);
-  return { total: `$${sum.toFixed(2)}`, split: paid.map((s) => `${s.title}: $${s.costUsd!.toFixed(4)}`).join("\n") };
+  return { total: `$${sum.toFixed(2)}`, split: paid.map((s) => `${s.title}: ${s.costUsd! < 0.01 ? "under 1¢" : `$${s.costUsd!.toFixed(2)}`}`).join("\n") };
 }
 
 /** Resolve "+30" style offsets in Approval.then against the time of PayPal's 200. */

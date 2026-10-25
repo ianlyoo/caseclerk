@@ -313,9 +313,6 @@ export function usd(value: string | number): string {
   return (n < 0 ? "−$" : "$") + s;
 }
 
-export function cost(n: number): string {
-  return "$" + n.toFixed(4);
-}
 
 const fmt = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("en-US", { timeZone: TZ, ...o });
 const dDay = fmt({ month: "short", day: "numeric" });
