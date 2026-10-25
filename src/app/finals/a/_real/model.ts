@@ -7,7 +7,8 @@ import type { WireLine } from "../../_shared/cases";
 /** The real disputes Final A shows, newest first. Ids come from REAL-CASES.md.
  *  VPY waits for the seller's approval on camera: nothing in this repo approves it. */
 export const HERO_ID = "PP-R-VPY-10194485";
-export const REAL_CASE_IDS = [HERO_ID, "PP-R-NJA-10194486", "PP-R-JKB-10194463", "PP-R-RCJ-10194476"];
+/** Every sandbox test case production returns; the inbox lists whatever comes back, newest first. */
+export const REAL_LIST_PATH = "/api/cases?test=true&limit=50";
 /** The landing's replay: the real run from chargeback to RESOLVED, with the seller's approval in the middle. */
 export const REPLAY_ID = "PP-R-NJA-10194486";
 export const REAL_HREF = `/finals/a/case/${REPLAY_ID}`;
@@ -230,7 +231,7 @@ export function realRow(r: ApiCase, ptTime: (iso: string) => string): RealRow {
   const asked = rulingAsked(r);
   const standing =
     state === "resolved"
-      ? `Closed by PayPal: ${r.case.snapshot.outcome === "RESOLVED_WITH_PAYOUT" ? "it paid the buyer itself" : (r.case.snapshot.outcome ?? "resolved").toLowerCase().replaceAll("_", " ")}`
+      ? `Closed by PayPal: ${({ RESOLVED_WITH_PAYOUT: "it paid the buyer itself", RESOLVED_SELLER_FAVOUR: "it decided for the seller", RESOLVED_BUYER_FAVOUR: "it decided for the buyer" } as Record<string, string>)[r.case.snapshot.outcome ?? ""] ?? "resolved"}`
       : state === "pending"
         ? "Waiting for you: the evidence is ready to file"
         : asked

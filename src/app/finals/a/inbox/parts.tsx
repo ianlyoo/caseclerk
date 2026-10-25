@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { WireLine } from "../../_shared/cases";
-import { REAL_CASE_IDS, wireRowLines, type ApiWireRow, type RealRow } from "../_real/model";
+import { wireRowLines, type ApiWireRow, type RealRow } from "../_real/model";
 import { caseDetail } from "../../_shared/cases";
 import { CASES, countdown, day, dayOffset, hoursLeft, nextDays, sortedCases, time, usd, usd0, weekday, type InboxCase } from "../../_shared/data";
 import { PHOTOS } from "../../_shared/photos";
@@ -152,7 +152,7 @@ export function RealRowView({ r }: { r: RealRow }) {
 }
 
 /** The real lines plus any new production wire rows for the real cases, polled every 5 s with a 60 s look-back. */
-export function useLiveWire(base: WireLine[]): WireLine[] {
+export function useLiveWire(base: WireLine[], ids: string[]): WireLine[] {
   const [extra, setExtra] = useState<WireLine[]>([]);
   useEffect(() => {
     const events = new Set(base.flatMap((l) => (l.eventId ? [l.eventId] : [])));
@@ -164,7 +164,7 @@ export function useLiveWire(base: WireLine[]): WireLine[] {
         const res = await fetch(`${BASE}/live/wire?since=${encodeURIComponent(since)}`, { cache: "no-store" });
         if (!res.ok || stop) return;
         const rows = ((await res.json()).wire ?? []) as ApiWireRow[];
-        const fresh = wireRowLines(rows.filter((w) => w.caseId && REAL_CASE_IDS.includes(w.caseId)), null, events, debugs);
+        const fresh = wireRowLines(rows.filter((w) => w.caseId && ids.includes(w.caseId)), null, events, debugs);
         if (fresh.length) setExtra((x) => [...x, ...fresh]);
       } catch {}
     };
@@ -173,6 +173,6 @@ export function useLiveWire(base: WireLine[]): WireLine[] {
       stop = true;
       clearInterval(t);
     };
-  }, [base]);
+  }, [base, ids]);
   return [...base, ...extra];
 }

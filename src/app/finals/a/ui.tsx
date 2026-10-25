@@ -10,7 +10,7 @@ import type { WireLine } from "../_shared/cases";
 import { SELLER, TZ } from "../_shared/data";
 import { REAL_LAST } from "../_shared/real";
 import { usePendingApprovals } from "../_shared/store";
-import { REAL_CASE_IDS, realState, type ApiCase } from "./_real/model";
+import { realState, type ApiCase } from "./_real/model";
 import s from "./a.module.css";
 
 export const BASE = "/finals/a";
@@ -44,13 +44,19 @@ let realOnce: Promise<ApiCase[]> | null = null;
 export function useRealCases(): ApiCase[] | null {
   const [got, setGot] = useState<ApiCase[] | null>(null);
   useEffect(() => {
-    realOnce ??= Promise.all(
-      REAL_CASE_IDS.map((id) =>
-        fetch(`${BASE}/live/case/${id}`, { cache: "no-store" })
-          .then((r) => (r.ok ? (r.json() as Promise<ApiCase>) : null))
-          .catch(() => null),
-      ),
-    ).then((xs) => xs.filter((x): x is ApiCase => x !== null));
+    realOnce ??= fetch(`${BASE}/live/cases`, { cache: "no-store" })
+      .then((r) => (r.ok ? (r.json() as Promise<{ cases: { id: string }[] }>) : { cases: [] }))
+      .catch(() => ({ cases: [] as { id: string }[] }))
+      .then(({ cases }) =>
+        Promise.all(
+          cases.map((c) =>
+            fetch(`${BASE}/live/case/${c.id}`, { cache: "no-store" })
+              .then((r) => (r.ok ? (r.json() as Promise<ApiCase>) : null))
+              .catch(() => null),
+          ),
+        ),
+      )
+      .then((xs) => xs.filter((x): x is ApiCase => x !== null));
     let live = true;
     realOnce.then((xs) => live && setGot(xs));
     return () => {
@@ -123,18 +129,18 @@ function WireHead() {
   );
 }
 
-export type ShownLine = WireLine & { key: string; inflight?: boolean; lit?: boolean };
+export type ShownLine = WireLine & { key: string; inflight?: boolean; lit?: boolean; plain?: string };
 export type WireSection = { key: string; label: ReactNode; lines: ShownLine[] };
 
 const SHORT: [RegExp, string][] = [
   [/^GET \/v1\/customer\/disputes\/[^/]+$/, "dispute"],
   [/^GET \/v2\/checkout\/orders/, "order"],
-  [/^GET \/v1\/shipping\/trackers/, "tracker"],
+  [/^(GET|PUT|POST) \/v1\/shipping\/trackers/, "tracker"],
   [/^GET \/v2\/payments\/captures/, "payment"],
 ];
 function shortName(l: WireLine): string {
   if (l.dir === "in") return l.name;
-  const m = l.path.match(/^(GET|POST) /);
+  const m = l.path.match(/^([A-Z]+) /);
   for (const [re, n] of SHORT) if (re.test(l.path)) return `${m?.[1]} ${n}`;
   return `${m?.[1] ?? ""} ${l.path.split("/").at(-1)}`.trim();
 }
@@ -155,10 +161,10 @@ export function plainOf(l: WireLine): string {
     return "PayPal updated the case";
   }
   const ok = /^2\d\d$/.test(l.status);
-  const path = l.path.replace(/^(GET|POST|PUT|PATCH) /, "");
-  if (!l.status) return "Sent to PayPal; waiting for its answer";
+  const path = l.path.replace(/^[A-Z]+ /, "");
+  if (!l.status) return "Sent to PayPal, waiting for its answer";
   if (l.path.startsWith("PUT /v1/shipping/trackers/")) return "CaseClerk updated the tracking on the PayPal payment";
-  if (!ok) return `PayPal refused the call (${l.status})`;
+  if (!ok) return /^\d{3}$/.test(l.status) ? `PayPal refused the call with ${l.status}` : "The call failed before PayPal answered";
   if (path.endsWith("/provide-evidence")) return "CaseClerk filed the evidence and PayPal accepted it";
   if (path.endsWith("/accept-claim")) return "CaseClerk accepted the claim and PayPal refunded the buyer";
   if (path.endsWith("/make-offer")) return "CaseClerk sent the offer and PayPal accepted it";
@@ -192,7 +198,7 @@ function dotted(name: string): ReactNode {
 function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
   const reduce = useReducedMotion();
   const real = l.origin === "paypal";
-  const path = l.dir === "in" ? (l.status.startsWith("RESOLVED") ? "outcome" : "status") : l.path.replace(/^(GET|POST) /, "");
+  const path = l.dir === "in" ? (l.status.startsWith("RESOLVED") ? "outcome" : "status") : l.path.replace(/^[A-Z]+ /, "");
   const status = l.inflight ? "sending" : !real ? "staged" : l.dir === "in" ? "verified" : l.status;
   const second = l.dir === "in" ? l.status : path;
   const cut = Math.min(18, Math.floor(second.length / 2));
@@ -225,7 +231,7 @@ function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
       </motion.span>
       {real ? (
         <>
-          <span className={s.lPlain}>{plainOf(l)}</span>
+          <span className={s.lPlain}>{l.plain ?? plainOf(l)}</span>
           {l.debugId && <span className={`${s.lPath} ${s.lDebug}`}>debug {l.debugId}</span>}
         </>
       ) : (

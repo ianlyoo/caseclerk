@@ -43,9 +43,22 @@ function usePolledCase(initial: ApiCase): [ApiCase, () => void] {
   return [r, pull];
 }
 
+/** Whole seconds since an ISO time, ticking while `on`. */
+function useElapsed(since: string | null): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!since) return;
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(t);
+  }, [since]);
+  return since ? Math.max(0, Math.floor((now - Date.parse(since)) / 1000)) : 0;
+}
+
 export function RealCaseView({ initial }: { initial: ApiCase }) {
   const [r, pull] = usePolledCase(initial);
   const [send, setSend] = useState<Send>({ at: "idle" });
+  const elapsed = useElapsed(send.at === "sending" ? send.since : null);
   const state = realState(r);
   const lines = useMemo(() => realLines(r), [r]);
   const action = pendingAction(r);
@@ -53,9 +66,9 @@ export function RealCaseView({ initial }: { initial: ApiCase }) {
   const sections = useMemo(() => {
     const shown: ShownLine[] = lines.map((l) => ({ ...l, key: `${l.eventId ?? l.debugId ?? l.at}` }));
     if (send.at === "sending" && action)
-      shown.push({ key: "inflight", at: send.since, dir: "out", name: "Provide evidence", status: "", path: `POST /v1/customer/disputes/${c.id}/${action.kind.replaceAll("_", "-")}`, origin: "paypal", inflight: true });
+      shown.push({ key: "inflight", at: send.since, dir: "out", name: action.kind.replaceAll("_", "-"), status: "", path: `POST /v1/customer/disputes/${c.id}/${action.kind.replaceAll("_", "-")}`, origin: "paypal", inflight: true, plain: `Sending to PayPal\u2026 ${elapsed} s` });
     return [{ key: "case", label: <>PayPal traffic for {c.id}, from the production API</>, lines: shown }];
-  }, [lines, send, action, c.id]);
+  }, [lines, send, action, c.id, elapsed]);
 
   return (
     <div className={s.app}>
@@ -63,7 +76,7 @@ export function RealCaseView({ initial }: { initial: ApiCase }) {
         <Masthead here="case" />
         <article className={s.file} data-real-case={c.id} data-real-state={state}>
           <Header r={r} />
-          {action && <Slip r={r} send={send} setSend={setSend} pull={pull} />}
+          {action && <Slip r={r} send={send} setSend={setSend} pull={pull} elapsed={elapsed} />}
           {!action && send.at === "done" && <Answer send={send} />}
           <Story r={r} />
           <Decision r={r} />
@@ -133,7 +146,7 @@ function Header({ r }: { r: ApiCase }) {
   );
 }
 
-function Slip({ r, send, setSend, pull }: { r: ApiCase; send: Send; setSend: (s: Send) => void; pull: () => void }) {
+function Slip({ r, send, setSend, pull, elapsed }: { r: ApiCase; send: Send; setSend: (s: Send) => void; pull: () => void; elapsed: number }) {
   const reduce = useReducedMotion();
   const a = pendingAction(r)!;
   const [left, setLeft] = useState(0);
@@ -147,10 +160,18 @@ function Slip({ r, send, setSend, pull }: { r: ApiCase; send: Send; setSend: (s:
       if (res.ok) setSend({ at: "done", status: j.action?.result?.httpStatus ?? null, debugId: j.action?.result?.debugId ?? null, when: j.action?.updatedAt ?? new Date().toISOString(), message: "CaseClerk filed the evidence with PayPal at" });
       else {
         const e = j.error ?? {};
-        setSend({ at: "refused", status: res.status, debugId: e.debugId ?? e.action?.result?.debugId ?? null, message: res.status === 409 ? `Already decided: ${e.message ?? "someone answered first."}` : (e.message ?? "CaseClerk couldn't reach PayPal.") });
+        const debugId = e.debugId ?? e.action?.result?.debugId ?? null;
+        const said = typeof e.message === "string" && e.message.trim() ? ` ${e.message.trim().replace(/([^.])$/, "$1.")}` : "";
+        const message =
+          res.status === 409
+            ? `Already answered, so nothing new went to PayPal.${said}`
+            : e.action?.status === "failed" || debugId
+              ? `PayPal didn't accept the filing.${said}`
+              : `CaseClerk couldn't reach PayPal, so nothing was filed.${said}`;
+        setSend({ at: "refused", status: res.status, debugId, message });
       }
     } catch {
-      setSend({ at: "refused", status: 0, debugId: null, message: "The request didn't reach CaseClerk." });
+      setSend({ at: "refused", status: 0, debugId: null, message: "The connection to CaseClerk dropped before an answer came back. The case below refreshes every 5 seconds and will show whether it was filed." });
     }
     pull();
   }, [a.id, setSend, pull]);
@@ -182,7 +203,7 @@ function Slip({ r, send, setSend, pull }: { r: ApiCase; send: Send; setSend: (s:
           <p className={s.slipNote}>{slipSummary(r, a)}</p>
           <div className={s.slipRow3}>
             {send.at === "idle" || send.at === "refused" ? (
-              <button className={s.btn} onClick={() => setSend({ at: "undo", until: Date.now() + UNDO_MS })} data-real-approve={a.id}>
+              <button className={s.btn} onClick={() => (setLeft(0), setSend({ at: "undo", until: Date.now() + UNDO_MS }))} data-real-approve={a.id}>
                 {buttonFor(r, a)}
               </button>
             ) : send.at === "undo" ? (
@@ -193,10 +214,12 @@ function Slip({ r, send, setSend, pull }: { r: ApiCase; send: Send; setSend: (s:
                 <button className={s.link} onClick={() => setSend({ at: "idle" })}>
                   Undo
                 </button>
-                <span className={s.undoText}>Going to PayPal in {left} s.</span>
+                <span className={s.undoText}>Going to PayPal in {left || Math.ceil(UNDO_MS / 1000)} s.</span>
               </>
             ) : (
-              <span className={s.undoText}>Sending to PayPal.</span>
+              <span className={s.undoText} data-sending>
+                Sending to PayPal&hellip; {elapsed} s
+              </span>
             )}
           </div>
           {send.at === "undo" && (
@@ -204,7 +227,7 @@ function Slip({ r, send, setSend, pull }: { r: ApiCase; send: Send; setSend: (s:
           )}
           {send.at === "refused" && (
             <p className={`${s.filedSub} ${s.red}`} data-refused>
-              Nothing was sent. {send.message}
+              {send.message}
               {send.debugId && (
                 <>
                   {" "}
@@ -239,7 +262,7 @@ function Answer({ send }: { send: Extract<Send, { at: "done" }> }) {
           {send.message} <span className={s.mono}>{pt(send.when)}</span>.
         </p>
         <p className={s.filedSub}>
-          PayPal answered {send.status ?? "without a status"}
+          {send.status ? <>PayPal answered {send.status}</> : <>PayPal took the filing</>}
           {send.debugId && (
             <>
               , debug id <span className={`${s.mono} ${s.ppId}`}>{send.debugId}</span>

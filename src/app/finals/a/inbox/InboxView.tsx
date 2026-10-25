@@ -11,7 +11,8 @@ export function InboxView({ real }: { real: ApiCase[] }) {
   const rows = sortedCases();
   const realRows = real.map((r) => realRow(r, (iso) => `${wireClock(iso)} PT`));
   const base = useMemo(() => real.flatMap((r) => realLines(r)), [real]);
-  const live = useLiveWire(base);
+  const ids = useMemo(() => real.map((r) => r.case.id), [real]);
+  const live = useLiveWire(base, ids);
   const groups: [string, InboxCase[]][] = [
     ["Waiting on an answer, soonest first", rows.filter((c) => c.dueAt)],
     ["With PayPal", rows.filter((c) => !c.dueAt && !c.closedAt)],
