@@ -228,6 +228,9 @@
 .lDebug {
   flex: none;
 }
+.lPathText + .lDebug {
+  margin-left: auto;
+}
 .line[data-origin="paypal"] .lName,
 .line[data-origin="paypal"] .lStatus {
   color: var(--wire1);
