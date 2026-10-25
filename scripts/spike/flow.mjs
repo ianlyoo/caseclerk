@@ -61,6 +61,10 @@ switch (cmd) {
       merchantId ??= c.data?.purchase_units?.[0]?.payee?.merchant_id;
     }
     if (!cap) { show(o.data); process.exit(1); }
+    if (!merchantId) {
+      const g = await api("GET", `/v2/checkout/orders/${o.data.id}`, { step: "flow.order.get" });
+      merchantId = g.data?.purchase_units?.[0]?.payee?.merchant_id;
+    }
     console.log(`order=${o.data.id} capture=${cap.id} (${cap.status}) merchant_id=${merchantId}`);
     node("disputes.mjs", "chargeback", cap.id, merchantId, amount);
     const t0 = Date.now();
@@ -83,21 +87,31 @@ switch (cmd) {
     break;
   }
   case "settle": {
+    // State loop: act on whichever action link PayPal exposes, until RESOLVED.
+    // Order: message/offer (INQUIRY only) → evidence → (sandbox) require-evidence once → adjudicate SELLER_FAVOR.
     const id = args[0];
-    let d = await getDispute(id);
-    console.log(`start: ${d.reason} ${d.status}/${d.dispute_life_cycle_stage} links=${links(d)}`);
-    if (links(d).includes("send_message")) node("disputes.mjs", "send-message", id);
-    if (links(d).includes("make_offer")) node("disputes.mjs", "make-offer", id, "3.00", d.allowed_response_options?.make_offer?.offer_types?.[0] ?? "REFUND");
-    if (!links(d).includes("provide_evidence")) {
-      d = await waitFor(id, (x) => x?.status === "UNDER_REVIEW" || links(x).includes("provide_evidence") || links(x).includes("require_evidence"), "under-review-or-evidence");
-      if (links(d).includes("require_evidence")) node("disputes.mjs", "require-evidence", id, "SELLER_EVIDENCE");
-      d = await waitFor(id, (x) => links(x).includes("provide_evidence"), "provide_evidence link");
+    const t0 = Date.now();
+    const done = new Set();
+    let last = "";
+    while (Date.now() - t0 < 45 * 60_000) {
+      const d = await getDispute(id);
+      const l = links(d);
+      const key = `${d?.status}/${d?.dispute_life_cycle_stage} links=${l.join(",")}`;
+      if (key !== last) { console.log(`+${Math.round((Date.now() - t0) / 1000)}s ${key}`); last = key; }
+      if (d?.status === "RESOLVED") { console.log(`outcome=${d.dispute_outcome?.outcome_code}`); break; }
+      if (l.includes("send_message") && !done.has("msg")) { node("disputes.mjs", "send-message", id); done.add("msg"); }
+      else if (l.includes("make_offer") && !done.has("offer")) { node("disputes.mjs", "make-offer", id, "3.00", d.allowed_response_options?.make_offer?.offer_types?.[0] ?? "REFUND"); done.add("offer"); }
+      else if (l.includes("provide_evidence") && !done.has(`ev${done.has("req") ? 2 : 1}`)) {
+        const requested = d.evidences?.filter((e) => e.source === "REQUESTED_FROM_SELLER").map((e) => e.evidence_type) ?? [];
+        const type = done.has("req") ? "OTHER" : (requested.includes("PROOF_OF_FULFILLMENT") || !requested.length ? "PROOF_OF_FULFILLMENT" : requested[0]);
+        node("disputes.mjs", "provide-evidence", id, type);
+        done.add(`ev${done.has("req") ? 2 : 1}`);
+      }
+      else if (l.includes("require_evidence") && !done.has("req")) { node("disputes.mjs", "require-evidence", id, "SELLER_EVIDENCE"); done.add("req"); }
+      else if (l.includes("adjudicate") && !done.has("adj")) { node("disputes.mjs", "adjudicate", id, args[1] ?? "SELLER_FAVOR"); done.add("adj"); }
+      await sleep(20_000);
     }
-    const requested = d.evidences?.find((e) => e.source === "REQUESTED_FROM_SELLER")?.evidence_type;
-    node("disputes.mjs", "provide-evidence", id, requested === "PROOF_OF_FULFILLMENT" ? "PROOF_OF_FULFILLMENT" : (requested ?? "PROOF_OF_FULFILLMENT"));
-    d = await waitFor(id, (x) => links(x).includes("adjudicate"), "adjudicate link");
-    node("disputes.mjs", "adjudicate", id, "SELLER_FAVOR");
-    await waitFor(id, (x) => x?.status === "RESOLVED", "RESOLVED");
+    log({ step: "flow.settle.done", dispute_id: id, total_s: (Date.now() - t0) / 1000, actions: [...done] });
     node("disputes.mjs", "get", id);
     break;
   }
