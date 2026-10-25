@@ -153,7 +153,7 @@ export default function DraftBCase() {
           </section>
         ))}
 
-        <section className={s.row}>
+        <section className={`${s.row} ${s.evidenceHead}`}>
           <p className={s.margin}>
             Built {day(HERO.evidence.builtAt)}, {time(HERO.evidence.builtAt)}
             <br />
@@ -164,7 +164,7 @@ export default function DraftBCase() {
           <div className={s.text}>
             <h2 className={s.h3}>The evidence pack, if he says no</h2>
             <p className={s.body}>
-              Four pages and five exhibits, matched to what PayPal asks for on a not-as-described claim.
+              Four pages, five exhibits, filed as PROOF_OF_FULFILLMENT and OTHER if Daniel declines the offer.
             </p>
           </div>
         </section>

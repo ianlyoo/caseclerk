@@ -137,11 +137,8 @@ export default function DraftAInbox() {
                 <th>Respond within</th>
                 <th className={s.laneHead}>
                   <span className={s.ticks}>
-                    {days.map((d, i) => (
-                      <span key={d} className={i === 0 ? s.today : undefined}>
-                        {i === 0 ? "Today" : day(d).split(" ")[1]}
-                      </span>
-                    ))}
+                    <span className={s.today}>Today</span>
+                    <span>{day(days[SPAN - 1])}</span>
                   </span>
                 </th>
                 <th>Buyer and item</th>

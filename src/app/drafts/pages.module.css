@@ -1,6 +1,7 @@
 .fig {
   margin: 0;
   min-width: 0;
+  container-type: inline-size;
 }
 
 .fig figcaption {
@@ -11,7 +12,6 @@
 
 /* A printed page: the one thing on these screens that is a real object, so it gets an edge. */
 .page {
-  container-type: inline-size;
   aspect-ratio: 8.5 / 11;
   background: #fff;
   color: #222;

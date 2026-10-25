@@ -12,6 +12,7 @@
   --t: 44rem; /* text column */
   --r: 8rem; /* right margin */
   --gap: 2.75rem;
+  --w: calc(12rem + 44rem + 8rem + 5.5rem);
   min-height: 100vh;
   background: var(--paper);
   color: var(--ink);
@@ -102,6 +103,7 @@
   color: var(--ink);
 }
 
+
 .mastSeller {
   color: var(--ink3);
   white-space: nowrap;
@@ -112,6 +114,12 @@
 /* ---- the file grid ---- */
 .file {
   padding-top: 3.2rem;
+}
+
+.row,
+.mast {
+  max-width: var(--w);
+  margin-inline: auto;
 }
 
 .row {
@@ -188,7 +196,7 @@
 .facts {
   display: grid;
   grid-template-columns: 7.5em 1fr;
-  margin: 0 0 3.2rem;
+  margin: 0 0 2.4rem;
   border-top: 1px solid var(--line);
 }
 
@@ -213,13 +221,13 @@
   font-style: italic;
   font-size: 1.22em;
   line-height: 1.5;
-  margin-bottom: 3.6rem;
+  margin-bottom: 2.6rem;
   color: var(--ink);
 }
 
 /* ---- the recommendation ---- */
 .recommend {
-  padding: 2.4rem 0 2.8rem;
+  padding-block: 2.2rem 2.6rem;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   margin-bottom: 3.6rem;
@@ -361,7 +369,7 @@
 }
 
 .steps li {
-  padding: 0.7em 0;
+  padding-block: 0.7em;
 }
 
 .steps li .text {
@@ -495,7 +503,7 @@
 }
 
 .entries li {
-  padding: 1.1em 0 1.15em;
+  padding-block: 1.1em 1.15em;
   border-top: 1px solid var(--line);
 }
 
@@ -561,6 +569,7 @@
     --m: 14rem;
     --t: 46rem;
     --r: 9rem;
+    --w: calc(14rem + 46rem + 9rem + 5.5rem);
   }
 }
 
@@ -571,6 +580,7 @@
     --t: minmax(0, 40rem);
     --r: 6rem;
     --gap: 1.8rem;
+    --w: none;
   }
 }
 
@@ -587,6 +597,7 @@
   }
   .mast {
     display: flex;
+    justify-content: flex-start;
     flex-wrap: wrap;
     gap: 0.6em 1.4em;
     padding-top: 1.1rem;
@@ -608,9 +619,6 @@
   .margin {
     text-align: left;
     padding: 0 0 0.35em;
-  }
-  .margin br {
-    display: none;
   }
   .right {
     padding-top: 0.3em;
@@ -667,4 +675,8 @@
   .cal {
     grid-template-columns: repeat(14, 3.6em);
   }
+}
+
+.evidenceHead {
+  margin-top: 3.6rem;
 }
