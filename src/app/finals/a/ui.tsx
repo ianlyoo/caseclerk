@@ -35,7 +35,7 @@ export function Num({ value, money = true, cause, className }: { value: number; 
   );
 }
 
-const WORDS = ["Nothing", "One", "Two", "Three", "Four", "Five"];
+const WORDS = ["Nothing", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
 export function WaitingCount() {
   const n = usePendingApprovals();
   return <Num value={n} money={false} cause="approve" />;
@@ -120,18 +120,14 @@ function shortName(l: WireLine): string {
   for (const [re, n] of SHORT) if (re.test(l.path)) return `${m?.[1]} ${n}`;
   return `${m?.[1] ?? ""} ${l.path.split("/").at(-1)}`.trim();
 }
-function midTrunc(p: string, max: number): string {
-  if (p.length <= max) return p;
-  const head = Math.ceil((max - 1) * 0.4);
-  return p.slice(0, head) + "…" + p.slice(p.length - (max - 1 - head));
-}
 
 function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
   const reduce = useReducedMotion();
   const real = l.origin === "paypal";
   const path = l.dir === "in" ? (l.status.startsWith("RESOLVED") ? "outcome" : "status") : l.path.replace(/^(GET|POST) /, "");
   const status = l.inflight ? "sending" : l.dir === "in" ? "verified" : l.status;
-  const second = l.dir === "in" ? l.status : midTrunc(path, real ? 26 : 40);
+  const second = l.dir === "in" ? l.status : path;
+  const cut = Math.min(18, Math.floor(second.length / 2));
   return (
     <motion.li
       layout={reduce ? false : "position"}
@@ -160,11 +156,13 @@ function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
         {status}
       </motion.span>
       <span className={s.lPath}>
+        {/* Truncated in the middle: the head shrinks with an ellipsis, the tail always shows. */}
         <span className={s.lPathText}>
-          <bdi>{second}</bdi>
+          <span className={s.lHead}>{second.slice(0, second.length - cut)}</span>
+          <span className={s.lTail}>{second.slice(second.length - cut)}</span>
         </span>
         {l.debugId && <span className={s.lDebug}>debug {l.debugId}</span>}
-        {!real && l.dir === "out" && !l.inflight && l.status === "200" && <span className={s.lDebug}>sample, no debug id</span>}
+        {!real && l.dir === "out" && !l.inflight && l.status === "200" && <span className={s.lDebug}>sample</span>}
       </span>
       {l.inflight && <span className={s.inflight} data-inflight data-cause="paypal-call" aria-hidden />}
     </motion.li>

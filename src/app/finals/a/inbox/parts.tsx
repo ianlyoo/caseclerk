@@ -19,7 +19,7 @@ function Last({ c }: { c: InboxCase }) {
   if (a && phase === "filed") return <>{a.done} PayPal is reviewing it.</>;
   if (a && (phase === "undo" || phase === "sending")) return <>Sending to PayPal now.</>;
   if (a && phase === "declined") return <>You declined; nothing was sent.</>;
-  if (c.state === "approval") return <span className={s.green}>Waiting for you: {c.lastEvent.toLowerCase()}.</span>;
+  if (c.state === "approval") return <span className={s.green}>Waiting for you. {c.lastEvent}.</span>;
   return <>{c.lastEvent}.</>;
 }
 
@@ -99,7 +99,8 @@ export function Strip() {
                 data-due={c.dueAt}
                 title={`${c.buyer}, ${thing(c.item)}, due ${weekday(c.dueAt!)} ${time(c.dueAt!)}`}
               >
-                {c.buyer.split(" ")[1]} {usd0(c.amount)}
+                <span>{usd0(c.amount)}</span>
+                <span className={s.sample}>{c.buyer.split(" ")[1]}</span>
               </Link>
             ))}
         </div>

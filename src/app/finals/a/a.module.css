@@ -183,9 +183,9 @@
 .line {
   position: relative;
   display: grid;
-  grid-template-columns: 76px 34px minmax(0, 1fr) auto;
-  column-gap: 10px;
-  padding: 7px 24px 7px 22px;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  column-gap: 8px;
+  padding: 7px 16px 7px 14px;
   border-left: 2px solid transparent;
 }
 .line > span {
@@ -212,12 +212,17 @@
   color: var(--wire2);
 }
 .lPathText {
+  display: flex;
+  min-width: 0;
+  white-space: nowrap;
+}
+.lHead {
   min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
-  direction: rtl;
-  text-align: left;
   text-overflow: ellipsis;
+}
+.lTail {
+  flex: none;
 }
 .lDebug {
   flex: none;
@@ -782,7 +787,8 @@
   white-space: nowrap;
 }
 .mark {
-  display: block;
+  display: flex;
+  flex-direction: column;
   margin-top: 6px;
   padding-left: 6px;
   border-left: 2px solid var(--ink);
@@ -984,6 +990,10 @@
     display: none;
   }
   .wireBar {
+    order: -1;
+    position: sticky;
+    top: 0;
+    z-index: 8;
     display: flex;
     gap: 10px;
     align-items: center;

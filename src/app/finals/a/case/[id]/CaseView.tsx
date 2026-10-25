@@ -86,7 +86,6 @@ function Header({ d, phase }: { d: CaseDetail; phase?: string }) {
             <img src={photo.src} alt={photo.alt} data-credit={photo.credit} width={144} height={104} />
           </div>
         )}
-        <Position id={d.c.id} />
       </div>
       <div className={s.col}>
         <AnimatePresence mode="wait" initial={false}>
@@ -145,7 +144,10 @@ function SlipRow({ d, e, dec }: { d: CaseDetail; e: Entry; dec: Dec }) {
     const line = d.outcome?.line ?? d.working ?? d.decision?.headline;
     return (
       <>
-        <div className={s.margin}>{d.working ? "The agent, now" : d.outcome ? "Outcome" : "Recommendation"}</div>
+        <div className={`${s.margin} ${s.marginStack}`}>
+          <span>{d.working ? "The agent, now" : d.outcome ? "Outcome" : "Recommendation"}</span>
+          <Position id={d.c.id} />
+        </div>
         <div className={s.col}>
           <motion.p
             className={s.filedHead}
@@ -164,7 +166,8 @@ function SlipRow({ d, e, dec }: { d: CaseDetail; e: Entry; dec: Dec }) {
   const live = e.phase === "pending" || e.phase === "undo" || e.phase === "sending";
   return (
     <>
-      <div className={s.margin}>
+      <div className={`${s.margin} ${s.marginStack}`}>
+        <div>
         {live ? (
           <>
             <span className={s.green}>Waiting for you</span>
@@ -175,6 +178,8 @@ function SlipRow({ d, e, dec }: { d: CaseDetail; e: Entry; dec: Dec }) {
         ) : (
           <span className={s.green}>You approved it</span>
         )}
+        </div>
+        <Position id={d.c.id} />
       </div>
       <div className={`${s.col} ${s.slipArea}`}>
         {live ? <Slip d={d} e={e} dec={dec} /> : <AfterSlip d={d} e={e} dec={dec} />}
