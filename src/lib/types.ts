@@ -58,6 +58,8 @@ export type OrderContext = {
   shipping?: { carrier: string; trackingNumber: string; status?: string; deliveredAt?: string; trackingUrl?: string }[];
   buyerCountry?: string;
   paidAt?: string;
+  /** Total the buyer paid (items + shipping/tax), from the capture. */
+  amountCharged?: Money;
 };
 
 export type TriageCategory = "not_received" | "not_as_described" | "unauthorized" | "duplicate_or_billing" | "other";

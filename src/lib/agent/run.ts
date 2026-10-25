@@ -4,13 +4,14 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { AgentTrigger, CaseRecord, CaseStatus, Decision, DisputeSnapshot, Money, SellerPolicy } from "../types";
 import { SpendCapError } from "../spend";
-import { audit, statusAfter, submitAction, ACTION_LABEL, type ActionParams, type SubmitResult } from "./actions";
+import { audit, denyWith, executeApprovedWith, statusAfter, submitAction, ACTION_LABEL, type ActionParams, type ApprovalResult, type SubmitResult } from "./actions";
 import { resolveConfig, type AgentConfig } from "./config";
 import { amountUsd, applyPolicyToStrategy, expectedValues } from "./ev";
 import { unknownIdentifiers } from "./facts";
 import { guardedCall, textOf } from "./llm";
 import type { AgentDeps, EvidenceItem, OfferType, OrderFacts, TrackingInfo, TransactionFacts } from "./ports";
 import { agentSystem, policyLines } from "./prompts";
+import { agentDeps } from "./registry";
 import { replayStoredRun } from "./replay";
 import { ACTIONABLE_RELS, EVIDENCE_TYPES, toolsFor, WRITE_TOOL_NAMES } from "./tools";
 import { runTriage } from "./triage";
@@ -23,6 +24,19 @@ export type RunOutcome = {
 
 /** Seconds a run may hold the case lock (Vercel functions stop at 300 s). */
 const LOCK_TTL_S = 290;
+
+/** Webhook (via after()), approvals and manual re-runs. Uses the registered deps (live wiring by default). */
+export async function runAgent(caseId: string, trigger: AgentTrigger): Promise<RunOutcome> {
+  return runAgentWith(await agentDeps(), caseId, trigger);
+}
+
+export async function executeApproved(actionId: string): Promise<ApprovalResult> {
+  return executeApprovedWith(await agentDeps(), actionId);
+}
+
+export async function deny(actionId: string, note?: string): Promise<ApprovalResult> {
+  return denyWith(await agentDeps(), actionId, note);
+}
 
 export async function runAgentWith(deps: AgentDeps, caseId: string, trigger: AgentTrigger): Promise<RunOutcome> {
   const lock = await deps.db.locks.withCaseLock(caseId, () => runLocked(deps, caseId, trigger), { ttlS: LOCK_TTL_S });

@@ -1,17 +1,16 @@
 // One live end-to-end agent run on a real sandbox dispute; prints the audit trail (no PII) and cost.
 //   node --import ./eval/register.mjs eval/run-live.ts <disputeId> [--record <scenario>]
 // --record writes the run as a replay fixture to src/lib/agent/fixtures/<scenario>.json.
-// Uses an in-memory store and eval adapters for PayPal/PDF until W1/W4 code is on main.
+// Real PayPal (W1), evidence PDF (W1) and Claude; W4's in-memory repo so nothing lands in the app DB.
 import { writeFileSync } from "node:fs";
+import { createMemoryRepo } from "../src/lib/db/memory";
 import { anthropicLlm } from "../src/lib/agent/llm";
 import type { AgentDeps } from "../src/lib/agent/ports";
 import { runAgentWith } from "../src/lib/agent/run";
 import type { RecordedRun } from "../src/lib/agent/replay";
+import { liveEvidence, livePaypal } from "../src/lib/agent/wiring";
+import { getDispute } from "../src/lib/paypal";
 import { createSpend, readCaps } from "../src/lib/spend";
-import { DEFAULT_POLICY } from "../src/lib/types";
-import { memoryDb } from "../tests/agent/fakes";
-import { evalPaypal, getDispute } from "./lib/paypal";
-import { evalEvidence } from "./lib/pdf";
 
 async function main() {
   const id = process.argv[2];
@@ -19,13 +18,13 @@ async function main() {
   const rec = process.argv.indexOf("--record");
   const scenario = rec > 0 ? process.argv[rec + 1] : undefined;
 
-  const db = memoryDb(DEFAULT_POLICY, () => new Date().toISOString());
+  const db = createMemoryRepo();
   const snap = await getDispute(id);
-  db.seed(snap, { isTestDispute: true });
+  await db.cases.upsertFromSnapshot(snap, { isTestDispute: true });
   const deps: AgentDeps = {
     db,
-    paypal: evalPaypal(),
-    evidence: evalEvidence,
+    paypal: livePaypal({ transactionSearch: process.env.PAYPAL_TRANSACTION_SEARCH === "1" }),
+    evidence: liveEvidence,
     llm: anthropicLlm(),
     // Same caps as production, but a $1 ceiling for this one run.
     spend: createSpend(db.spend, { ...readCaps(), dailyUsd: 1, totalUsd: 1 }),
@@ -36,14 +35,15 @@ async function main() {
   const out = await runAgentWith(deps, id, { kind: "manual" });
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
 
+  const trail = await db.audit.listByCase(id);
   console.log("\nTimeline:");
-  for (const e of db._audit) {
+  for (const e of trail) {
     const cost = e.costUsd ? `  [$${e.costUsd.toFixed(4)}]` : "";
     const tool = typeof e.data?.tool === "string" ? ` (${e.data.tool})` : "";
     console.log(`${e.at.slice(11, 19)}  ${e.actor.padEnd(6)} ${e.kind.padEnd(24)} ${e.summary}${tool}${cost}`);
   }
   const c = await db.cases.get(id);
-  const steps = db._audit.filter((e) => e.kind === "agent.step");
+  const steps = trail.filter((e) => e.kind === "agent.step");
   const tokens = steps.reduce(
     (a, e) => ({
       input: a.input + Number(e.data?.inputTokens ?? 0),
@@ -68,7 +68,7 @@ async function main() {
       costUsd: out.costUsd,
       triage: { category: c.triage.category, summary: c.triage.summary },
       decision: { ...c.decision },
-      timeline: db._audit
+      timeline: trail
         .filter((e) => !e.kind.startsWith("agent.run."))
         .map((e) => ({ actor: e.actor, kind: e.kind, summary: e.summary, ...(e.costUsd ? { costUsd: e.costUsd } : {}) })),
     };

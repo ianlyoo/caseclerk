@@ -40,7 +40,7 @@ async function sandboxSnapshots(cases: Case[]): Promise<Record<string, SnapLite>
   const cached: Record<string, SnapLite> = existsSync(SNAPS) ? JSON.parse(readFileSync(SNAPS, "utf8")) : {};
   const missing = cases.filter((c) => c.kind === "sandbox" && !cached[c.disputeId!]);
   if (missing.length) {
-    const { getDispute } = await import("./lib/paypal");
+    const { getDispute } = await import("../src/lib/paypal");
     for (const c of missing) {
       const s = await getDispute(c.disputeId!);
       cached[s.id] = { id: s.id, reason: s.reason, stage: s.stage, channel: s.channel, amount: s.amount, messages: s.messages };
