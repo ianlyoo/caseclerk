@@ -468,20 +468,16 @@ async function buildEvidence(ctx: Ctx, input: Record<string, unknown>) {
   const allowedTypes = new Set<string>(EVIDENCE_TYPES);
   let types = [...new Set((Array.isArray(input.evidence_types) ? input.evidence_types : []).map(String))].filter((t) => allowedTypes.has(t));
   if (!tracking.length) types = types.filter((t) => t !== "PROOF_OF_FULFILLMENT");
-  if (!types.includes("OTHER") && !types.length) types.push("OTHER");
-  const evidences: EvidenceItem[] = types.map((t, i) => {
-    const item: EvidenceItem = { evidenceType: t };
-    if (t === "PROOF_OF_FULFILLMENT") {
-      item.trackingInfo = tracking.map((x) => ({ carrierName: x.carrier, trackingNumber: x.trackingNumber }));
-      item.notes = "Shipment tracking from the seller's PayPal records; full account in the attached evidence pack.";
-    } else if (t === "OTHER" || i === 0) {
-      item.notes = narrative.slice(0, 2000);
-    } else {
-      item.notes = "See the attached evidence pack.";
-    }
-    return item;
-  });
-  if (!evidences.some((e) => e.notes === narrative.slice(0, 2000))) evidences[0].notes = narrative.slice(0, 2000);
+  // One evidence item: PayPal rejects several without per-item ids (ITEM_ID_IS_MANDATORY_FOR_MULTIPLE_EVIDENCES,
+  // seen live). Tracking goes with PROOF_OF_FULFILLMENT; the PDF pack carries everything else.
+  const type = types.includes("PROOF_OF_FULFILLMENT") ? "PROOF_OF_FULFILLMENT" : (types[0] ?? "OTHER");
+  const evidences: EvidenceItem[] = [
+    {
+      evidenceType: type,
+      notes: narrative.slice(0, 2000),
+      ...(type === "PROOF_OF_FULFILLMENT" ? { trackingInfo: tracking.map((x) => ({ carrierName: x.carrier, trackingNumber: x.trackingNumber })) } : {}),
+    },
+  ];
   return { evidences, narrative, exhibits, round: ctx.snap.updateTime };
 }
 
@@ -544,7 +540,10 @@ function caseStatusAfterRun(ctx: Ctx): CaseStatus {
 function runSummary(ctx: Ctx): string {
   const d = ctx.decision;
   if (!d) return "The agent finished without a decision; it continues on the next PayPal update.";
-  const acts = ctx.acted.map((a) => `${ACTION_LABEL[a.kind as keyof typeof ACTION_LABEL]}: ${OUTCOME[a.result.outcome]}`);
+  const acts = ctx.acted.map((a) => {
+    const failed = a.result.outcome === "execute" && a.result.action?.status === "failed";
+    return `${ACTION_LABEL[a.kind as keyof typeof ACTION_LABEL]}: ${failed ? "failed" : OUTCOME[a.result.outcome]}`;
+  });
   return `Agent finished: ${STRATEGY[d.strategy]}${acts.length ? `; ${acts.join("; ")}` : ""}. Cost ${usd4(ctx.costUsd)}.`;
 }
 

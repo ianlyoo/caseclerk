@@ -55,7 +55,7 @@ describe("runAgent: chargeback with tracking", () => {
     const ev = paypal.calls.filter((c) => c.name === "provideEvidence");
     expect(ev).toHaveLength(1);
     const req = ev[0].args[1] as { evidences: { evidenceType: string; trackingInfo?: unknown[] }[]; files: unknown[] };
-    expect(req.evidences.map((e) => e.evidenceType)).toEqual(["PROOF_OF_FULFILLMENT", "OTHER"]);
+    expect(req.evidences.map((e) => e.evidenceType)).toEqual(["PROOF_OF_FULFILLMENT"]);
     expect(req.evidences[0].trackingInfo).toEqual([{ carrierName: "USPS", trackingNumber: "9400111899223344556677" }]);
     expect(req.files).toHaveLength(1);
     expect(pdfs[0].narrative).toBe(NARRATIVE);
