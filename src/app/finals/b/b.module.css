@@ -427,6 +427,19 @@
 .sec {
   margin-top: 40px;
 }
+/* PayPal's pinned request sits close to the newest-first list it heads, so both still clear the decision sheet. */
+.sec.secPin {
+  margin-top: 14px;
+}
+.secPin .secHead {
+  margin-bottom: 4px;
+}
+.secPin .tlRow {
+  padding: 10px 0;
+}
+.secPin + .sec {
+  margin-top: 12px;
+}
 .secHead {
   display: flex;
   align-items: baseline;

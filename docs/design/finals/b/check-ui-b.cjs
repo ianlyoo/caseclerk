@@ -234,7 +234,7 @@ async function pageChecks(browser) {
       if (name === "case-pending" && vp === 1440) {
         const f = await page.evaluate(() => {
           const sheet = document.querySelector("[data-sheet]").getBoundingClientRect();
-          const rows = [...document.querySelectorAll("main ol[aria-label^='What happened'] li")].slice(0, 2).map((li) => ({ pp: !!li.querySelector("[data-wire-line],[data-origin=paypal]"), bottom: li.getBoundingClientRect().bottom }));
+          const rows = [...document.querySelectorAll("main ol[class*=_tl_] > li")].slice(0, 2).map((li) => ({ pp: !!li.querySelector("[data-wire-line],[data-origin=paypal]"), bottom: li.getBoundingClientRect().bottom }));
           const note = document.querySelector("[data-sheet] [class*=sdNote]");
           const lh = parseFloat(getComputedStyle(note).lineHeight) || 24;
           return { sheetH: sheet.height, sheetTop: sheet.top, rows, noteLines: Math.round(note.getBoundingClientRect().height / lh), noteText: note.innerText, clipped: note.scrollWidth > note.clientWidth };
@@ -470,7 +470,7 @@ async function round2(browser) {
   ]) {
     const { ctx, page } = await open(browser, 1440, p);
     const o = await page.evaluate(() => {
-      const lis = [...document.querySelectorAll("main ol[aria-label^='What happened'] > li")];
+      const lis = [...document.querySelectorAll("main ol[class*=_tl_] > li")];
       const routine = (li) => { const t = li.innerText; return /\b(GET|verify-webhook-signature)\b/.test(t) && !!li.querySelector("[data-wire-line]"); };
       let runs = 0;
       for (let i = 1; i < lis.length; i++) if (routine(lis[i]) && routine(lis[i - 1])) runs++;
@@ -588,7 +588,7 @@ async function round3(browser) {
   {
     const { ctx, page } = await open(browser, 390, PAGES["case-pending"]);
     const o = await page.evaluate(() => {
-      const li = document.querySelector("main ol[aria-label^='What happened'] > li");
+      const li = document.querySelector("main ol[class*=_tl_] > li");
       return { row: Math.round(li.getBoundingClientRect().bottom), sheet: Math.round(document.querySelector("[data-sheet]").getBoundingClientRect().top) };
     });
     out(o.row <= o.sheet, `r3 fix 5 case-pending @390: the top PayPal row, event id included, clears the sheet`, `row ends ${o.row}, sheet starts ${o.sheet}`);
@@ -656,6 +656,41 @@ async function round4(browser) {
     await page.waitForFunction(() => /PayPal closed the case\.$/.test(document.querySelector("h1")?.innerText || ""), null, { timeout: 20000 }).catch(() => {});
     const t = await page.evaluate(() => ({ h1: document.querySelector("h1").innerText, fig: ((p) => [...p.childNodes].map((e) => { const n = e.querySelector?.("number-flow-react"); const d = n && (n.data || n._data); return d ? [...d.pre, ...d.integer, ...d.fraction, ...d.post].map((x) => x.value).join("") : e.textContent; }).join(" "))(document.querySelector("p[class*=_figure_]")), meta: document.querySelector("[class*=figMeta]").innerText }));
     out(t.h1.endsWith("PayPal closed the case.") && /Youkept\$380\.38/.test(t.fig.replace(/\s+/g, "")) && /The \$391\.00 sale less PayPal's \$10\.62 fee/.test(t.meta) && /the sum of its model calls in this case's log/.test(t.meta), `r4 fix 2/4 IHX resolved: short h1, "You kept $380.38", the sale less the fee, the cost sourced`, t.h1);
+    await ctx.close();
+  }
+}
+
+// Judge round 5: PayPal's pinned request gets its own heading, so "newest first" holds; the sandbox control row says
+// "we", not "you"; the case pager walks open cases only, as the inbox folds the closed ones.
+async function round5(browser) {
+  for (const vp of [1440, 1920, 390]) {
+    const { ctx, page } = await open(browser, vp, PAGES["case-pending"]);
+    const t = await page.evaluate(() => {
+      const h2s = [...document.querySelectorAll("main h2")].map((h) => h.innerText);
+      const pin = document.querySelector("main ol[aria-label=\"PayPal's request\"]");
+      const times = [...document.querySelectorAll("main ol[aria-label^='What happened'] > li > time")].map((x) => Date.parse(x.getAttribute("datetime")));
+      return { h2s, pin: pin ? pin.innerText : "", n: pin ? pin.children.length : 0, ordered: times.every((x, i) => !i || x <= times[i - 1]), newest: times[0], pinAt: pin ? Date.parse(pin.querySelector("time").getAttribute("datetime")) : 0 };
+    });
+    const a = t.h2s.indexOf("PayPal's request");
+    const b = t.h2s.indexOf("What happened, newest first");
+    out(a >= 0 && a < b && t.n === 1 && /CUSTOMER\.DISPUTE\.UPDATED/.test(t.pin) && t.ordered && t.pinAt < t.newest, `r5 fix 3 case-pending @${vp}: PayPal's request has its own heading above "What happened, newest first", and that list is newest first`, `${t.h2s.join(" | ")}; ordered ${t.ordered}`);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 1440, PAGES["case-deciding"]);
+    const t = await page.evaluate(() => document.querySelector("main").innerText);
+    out(/Sandbox test control: we asked PayPal's sandbox to rule \(a live account can't do this\)/.test(t) && !/you asked PayPal|Sandbox control:/.test(t), `r5 fix 4 JKB: the adjudicate row reads "we asked PayPal's sandbox", not "you"`);
+    await ctx.close();
+  }
+  for (const p of [PAGES["case-resolved"], `/finals/b/case/PP-R-IHX-10194506`, PAGES["case-pending"]]) {
+    const { ctx, page } = await open(browser, 1440, p);
+    const t = await page.evaluate(async () => {
+      const links = [...document.querySelectorAll("aside a[href^='/finals/b/case/']")].map((a) => ({ id: a.getAttribute("href").split("/").pop(), text: a.innerText.replace(/\s+/g, " ") }));
+      const j = await (await fetch("/api/cases?test=true&limit=50")).json();
+      const status = Object.fromEntries(j.cases.map((c) => [c.id, c.status]));
+      return { links, closed: links.filter((l) => status[l.id] === "resolved").map((l) => l.text) };
+    });
+    out(t.links.length > 0 && t.closed.length === 0, `r5 fix 5 ${p.split("/").pop()}: the Previous / Next pager links open cases only`, t.links.map((l) => l.text).join(" | "));
     await ctx.close();
   }
 }
@@ -808,7 +843,7 @@ function durationOf(f) {
     if (process.argv.includes("--video-only")) return await video(browser);
     const only = (process.argv.find((x) => x.startsWith("--only=")) || "").slice(7);
     if (only) {
-      const fns = { realLoop, round2, round3, round4, honesty, failurePath, reader, links, pageChecks, approve: (b) => approvePath(b, 1440, false) };
+      const fns = { realLoop, round2, round3, round4, round5, honesty, failurePath, reader, links, pageChecks, approve: (b) => approvePath(b, 1440, false) };
       for (const n of only.split(",")) await fns[n](browser);
       return;
     }
@@ -818,6 +853,7 @@ function durationOf(f) {
     await round2(browser);
     await round3(browser);
     await round4(browser);
+    await round5(browser);
     for (const vp of [1440, 1920, 1536, 390]) await approvePath(browser, vp, false);
     await approvePath(browser, 1440, true);
     await failurePath(browser);

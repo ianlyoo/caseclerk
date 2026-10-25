@@ -94,8 +94,8 @@ const OUTCOME: Record<string, string> = {
 const CALL_SAY: [RegExp, string][] = [
   [/verify-webhook-signature/, "Checked PayPal's signature on the webhook"],
   [/\/provide-evidence$/, "Filed the evidence"],
-  [/\/require-evidence$/, "Sandbox control: asked PayPal to request more evidence"],
-  [/\/adjudicate$/, "Sandbox control: asked PayPal to decide"],
+  [/\/require-evidence$/, "Sandbox test control: we asked PayPal's sandbox to request more evidence"],
+  [/\/adjudicate$/, "Sandbox test control: we asked PayPal's sandbox to rule (a live account can't do this)"],
   [/\/accept-claim$/, "Accepted the claim"],
   [/\/make-offer$/, "Made an offer to the buyer"],
   [/\/send-message$/, "Sent the buyer a message"],
@@ -190,7 +190,7 @@ export function rowsOf(j: ApiCase): Row[] {
       if (a.kind === "demo.require_evidence") askedAgain = true;
       const k = a.kind === "demo.adjudicate" ? "adjudicate" : "require-evidence";
       const r = actionNear(k.replace("-", "_"), a.at);
-      out.push({ kind: "paypal", at: a.at, dir: "out", name: k, method: "POST", path: `/v1/customer/disputes/${id}/${k}`, status: r?.httpStatus ? String(r.httpStatus) : undefined, debugId: r?.debugId, say: k === "adjudicate" ? "Sandbox control: you asked PayPal to rule for the seller" : "Sandbox control: you asked PayPal to request more evidence" });
+      out.push({ kind: "paypal", at: a.at, dir: "out", name: k, method: "POST", path: `/v1/customer/disputes/${id}/${k}`, status: r?.httpStatus ? String(r.httpStatus) : undefined, debugId: r?.debugId, say: k === "adjudicate" ? "Sandbox test control: we asked PayPal's sandbox to rule (a live account can't do this)" : "Sandbox test control: we asked PayPal's sandbox to request more evidence" });
     } else if (a.kind === "tool.get_order" && early && o) {
       out.push({ kind: "paypal", at: a.at, dir: "out", name: "get order", method: "GET", path: `/v2/checkout/orders/${o.orderId}`, say: a.summary });
     } else if (a.kind === "tool.get_tracking" && early && o?.shipping?.[0]) {

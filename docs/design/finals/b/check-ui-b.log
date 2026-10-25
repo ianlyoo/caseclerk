@@ -114,11 +114,11 @@ PASS  case-pending @1440: G3 animations <= 900 ms
 PASS  case-pending @1440: G2 every running animation has a data-cause
 PASS  case-pending @1440: G7 PayPal rows are PayPal-only (0 of 2)
 PASS  case-pending @1440: G13 first screen shows a webhook (case pages, landing), a debug id >= 14 px and cents ({"event":true,"debug":true,"cents":true,"replay":false})
-PASS  case-pending @1440: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (2 rows, 0 off )
+PASS  case-pending @1440: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (1 rows, 0 off )
 PASS  case-pending @1440: fix 2 agent rows have no rule
-PASS  case-pending @1440: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (PayPal sandbox last webhook on this case 6 h 11 min ago)
+PASS  case-pending @1440: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (PayPal sandbox last webhook on this case 7 h 0 min ago)
 PASS  case-pending @1440: fix 3 the sheet is <= 340 px tall (r4: the recommendation lines) (337 px)
-PASS  case-pending @1440: fix 3 the two newest PayPal rows sit above the sheet ([{"pp":true,"bottom":340.640625},{"pp":true,"bottom":450.40625}])
+PASS  case-pending @1440: fix 3 the two newest PayPal rows sit above the sheet ([{"pp":true,"bottom":310.640625},{"pp":true,"bottom":470.65625}])
 PASS  case-pending @1440: fix 3 "What PayPal receives" is one complete line (What PayPal receives: seller statement, order details, shipment and tracking.)
 PASS  case-pending @1440: G14 the amount and Approve on the first screen (button bottom 792 of 810, sheet 337 px)
 PASS  case-pending @1440: G14 the Approve label sits on one line inside the button
@@ -133,9 +133,9 @@ PASS  case-pending @1920: G3 only the live dot and in-flight rules loop
 PASS  case-pending @1920: G3 animations <= 900 ms
 PASS  case-pending @1920: G2 every running animation has a data-cause
 PASS  case-pending @1920: G7 PayPal rows are PayPal-only (0 of 2)
-PASS  case-pending @1920: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (2 rows, 0 off )
+PASS  case-pending @1920: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (1 rows, 0 off )
 PASS  case-pending @1920: fix 2 agent rows have no rule
-PASS  case-pending @1920: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (PayPal sandbox last webhook on this case 6 h 11 min ago)
+PASS  case-pending @1920: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (PayPal sandbox last webhook on this case 7 h 0 min ago)
 PASS  case-pending @1920: G14 the amount and Approve on the first screen (button bottom 1062 of 1080, sheet 337 px)
 PASS  case-pending @1920: G14 the Approve label sits on one line inside the button
 PASS  case-pending @1920: G14 the button names the amount (File the evidence on $412.00)
@@ -149,9 +149,9 @@ PASS  case-pending @1536: G3 only the live dot and in-flight rules loop
 PASS  case-pending @1536: G3 animations <= 900 ms
 PASS  case-pending @1536: G2 every running animation has a data-cause
 PASS  case-pending @1536: G7 PayPal rows are PayPal-only (0 of 2)
-PASS  case-pending @1536: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (2 rows, 0 off )
+PASS  case-pending @1536: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (1 rows, 0 off )
 PASS  case-pending @1536: fix 2 agent rows have no rule
-PASS  case-pending @1536: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (PayPal sandbox last webhook on this case 6 h 11 min ago)
+PASS  case-pending @1536: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (PayPal sandbox last webhook on this case 7 h 0 min ago)
 PASS  case-pending @1536: G14 the amount and Approve on the first screen (button bottom 734 of 752, sheet 337 px)
 PASS  case-pending @1536: G14 the Approve label sits on one line inside the button
 PASS  case-pending @1536: G14 the button names the amount (File the evidence on $412.00)
@@ -165,9 +165,9 @@ PASS  case-pending @2560: G3 only the live dot and in-flight rules loop
 PASS  case-pending @2560: G3 animations <= 900 ms
 PASS  case-pending @2560: G2 every running animation has a data-cause
 PASS  case-pending @2560: G7 PayPal rows are PayPal-only (0 of 2)
-PASS  case-pending @2560: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (2 rows, 0 off )
+PASS  case-pending @2560: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (1 rows, 0 off )
 PASS  case-pending @2560: fix 2 agent rows have no rule
-PASS  case-pending @2560: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (PayPal sandbox last webhook on this case 6 h 12 min ago)
+PASS  case-pending @2560: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (PayPal sandbox last webhook on this case 7 h 0 min ago)
 PASS  case-pending @390: loads without errors
 PASS  case-pending @390: G5 one dark surface, only the decision sheet
 PASS  case-pending @390: B PayPal blue only in the PayPal register, no brass (fix 2, 8)
@@ -178,9 +178,9 @@ PASS  case-pending @390: G3 only the live dot and in-flight rules loop
 PASS  case-pending @390: G3 animations <= 900 ms
 PASS  case-pending @390: G2 every running animation has a data-cause
 PASS  case-pending @390: G7 PayPal rows are PayPal-only (0 of 2)
-PASS  case-pending @390: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (2 rows, 0 off )
+PASS  case-pending @390: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (1 rows, 0 off )
 PASS  case-pending @390: fix 2 agent rows have no rule
-PASS  case-pending @390: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (PayPal sandbox, last webhook on this case 6 h 12 min ago)
+PASS  case-pending @390: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (PayPal sandbox, last webhook on this case 7 h 1 min ago)
 PASS  case-pending @390: G14 the amount and Approve on the first screen (button bottom 790 of 844, sheet 339 px)
 PASS  case-pending @390: G14 the Approve label sits on one line inside the button
 PASS  case-pending @390: G14 the button names the amount (File the evidence on $412.00)
@@ -255,7 +255,7 @@ PASS  case-resolved @1440: G3 animations <= 900 ms
 PASS  case-resolved @1440: G2 every running animation has a data-cause
 PASS  case-resolved @1440: G7 PayPal rows are PayPal-only (0 of 7)
 PASS  case-resolved @1440: G13 first screen shows a webhook (case pages, landing), a debug id >= 14 px and cents ({"event":true,"debug":true,"cents":true,"replay":false})
-PASS  case-resolved @1440: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (7 rows, 0 off )
+PASS  case-resolved @1440: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (6 rows, 0 off )
 PASS  case-resolved @1440: fix 2 agent rows have no rule
 PASS  case-resolved @1920: loads without errors
 PASS  case-resolved @1920: G5 one dark surface, only the decision sheet
@@ -267,7 +267,7 @@ PASS  case-resolved @1920: G3 only the live dot and in-flight rules loop
 PASS  case-resolved @1920: G3 animations <= 900 ms
 PASS  case-resolved @1920: G2 every running animation has a data-cause
 PASS  case-resolved @1920: G7 PayPal rows are PayPal-only (0 of 7)
-PASS  case-resolved @1920: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (7 rows, 0 off )
+PASS  case-resolved @1920: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (6 rows, 0 off )
 PASS  case-resolved @1920: fix 2 agent rows have no rule
 PASS  case-resolved @1536: loads without errors
 PASS  case-resolved @1536: G5 one dark surface, only the decision sheet
@@ -279,7 +279,7 @@ PASS  case-resolved @1536: G3 only the live dot and in-flight rules loop
 PASS  case-resolved @1536: G3 animations <= 900 ms
 PASS  case-resolved @1536: G2 every running animation has a data-cause
 PASS  case-resolved @1536: G7 PayPal rows are PayPal-only (0 of 7)
-PASS  case-resolved @1536: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (7 rows, 0 off )
+PASS  case-resolved @1536: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (6 rows, 0 off )
 PASS  case-resolved @1536: fix 2 agent rows have no rule
 PASS  case-resolved @2560: loads without errors
 PASS  case-resolved @2560: G5 one dark surface, only the decision sheet
@@ -291,7 +291,7 @@ PASS  case-resolved @2560: G3 only the live dot and in-flight rules loop
 PASS  case-resolved @2560: G3 animations <= 900 ms
 PASS  case-resolved @2560: G2 every running animation has a data-cause
 PASS  case-resolved @2560: G7 PayPal rows are PayPal-only (0 of 7)
-PASS  case-resolved @2560: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (7 rows, 0 off )
+PASS  case-resolved @2560: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (6 rows, 0 off )
 PASS  case-resolved @2560: fix 2 agent rows have no rule
 PASS  case-resolved @390: loads without errors
 PASS  case-resolved @390: G5 one dark surface, only the decision sheet
@@ -303,7 +303,7 @@ PASS  case-resolved @390: G3 only the live dot and in-flight rules loop
 PASS  case-resolved @390: G3 animations <= 900 ms
 PASS  case-resolved @390: G2 every running animation has a data-cause
 PASS  case-resolved @390: G7 PayPal rows are PayPal-only (0 of 7)
-PASS  case-resolved @390: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (7 rows, 0 off )
+PASS  case-resolved @390: fix 2 real PayPal rows carry the 2 px #0059B8 rule and blue ids (6 rows, 0 off )
 PASS  case-resolved @390: fix 2 agent rows have no rule
 PASS  case-sample @1440: loads without errors
 PASS  case-sample @1440: G5 one dark surface, only the decision sheet
@@ -316,7 +316,7 @@ PASS  case-sample @1440: G3 animations <= 900 ms
 PASS  case-sample @1440: G2 every running animation has a data-cause
 PASS  case-sample @1440: G7 PayPal rows are PayPal-only (0 of 3)
 PASS  case-sample @1440: fix 2 sample rows: dashed rule, "staged", no 200 or verified (3 rows)
-PASS  case-sample @1440: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (Staged sample. Real PayPal sandbox traffic: last real webhook 1 h 47 min ago)
+PASS  case-sample @1440: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (Staged sample. Real PayPal sandbox traffic: last real webhook 2 h 36 min ago)
 PASS  case-sample @1920: loads without errors
 PASS  case-sample @1920: G5 one dark surface, only the decision sheet
 PASS  case-sample @1920: B PayPal blue only in the PayPal register, no brass (fix 2, 8)
@@ -328,7 +328,7 @@ PASS  case-sample @1920: G3 animations <= 900 ms
 PASS  case-sample @1920: G2 every running animation has a data-cause
 PASS  case-sample @1920: G7 PayPal rows are PayPal-only (0 of 3)
 PASS  case-sample @1920: fix 2 sample rows: dashed rule, "staged", no 200 or verified (3 rows)
-PASS  case-sample @1920: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (Staged sample. Real PayPal sandbox traffic: last real webhook 1 h 47 min ago)
+PASS  case-sample @1920: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (Staged sample. Real PayPal sandbox traffic: last real webhook 2 h 36 min ago)
 PASS  case-sample @1536: loads without errors
 PASS  case-sample @1536: G5 one dark surface, only the decision sheet
 PASS  case-sample @1536: B PayPal blue only in the PayPal register, no brass (fix 2, 8)
@@ -340,7 +340,7 @@ PASS  case-sample @1536: G3 animations <= 900 ms
 PASS  case-sample @1536: G2 every running animation has a data-cause
 PASS  case-sample @1536: G7 PayPal rows are PayPal-only (0 of 3)
 PASS  case-sample @1536: fix 2 sample rows: dashed rule, "staged", no 200 or verified (3 rows)
-PASS  case-sample @1536: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (Staged sample. Real PayPal sandbox traffic: last real webhook 1 h 47 min ago)
+PASS  case-sample @1536: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (Staged sample. Real PayPal sandbox traffic: last real webhook 2 h 36 min ago)
 PASS  case-sample @2560: loads without errors
 PASS  case-sample @2560: G5 one dark surface, only the decision sheet
 PASS  case-sample @2560: B PayPal blue only in the PayPal register, no brass (fix 2, 8)
@@ -352,7 +352,7 @@ PASS  case-sample @2560: G3 animations <= 900 ms
 PASS  case-sample @2560: G2 every running animation has a data-cause
 PASS  case-sample @2560: G7 PayPal rows are PayPal-only (0 of 3)
 PASS  case-sample @2560: fix 2 sample rows: dashed rule, "staged", no 200 or verified (3 rows)
-PASS  case-sample @2560: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (Staged sample. Real PayPal sandbox traffic: last real webhook 1 h 47 min ago)
+PASS  case-sample @2560: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (Staged sample. Real PayPal sandbox traffic: last real webhook 2 h 36 min ago)
 PASS  case-sample @390: loads without errors
 PASS  case-sample @390: G5 one dark surface, only the decision sheet
 PASS  case-sample @390: B PayPal blue only in the PayPal register, no brass (fix 2, 8)
@@ -364,7 +364,7 @@ PASS  case-sample @390: G3 animations <= 900 ms
 PASS  case-sample @390: G2 every running animation has a data-cause
 PASS  case-sample @390: G7 PayPal rows are PayPal-only (0 of 3)
 PASS  case-sample @390: fix 2 sample rows: dashed rule, "staged", no 200 or verified (3 rows)
-PASS  case-sample @390: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (Staged sample, real webhook 1 h 47 min ago)
+PASS  case-sample @390: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner (Staged sample, real webhook 2 h 36 min ago)
 PASS  G12 /finals/b: every PayPal id shown exists in production's payload (1 debug ids, 2 event ids, unknown: none)
 PASS  G12 /finals/b: no debug id is attached to two rows (1 rows with ids)
 PASS  /finals/b: fix 10 one time zone, PT (outside the evidence pack, which mirrors the PDF)
@@ -388,16 +388,16 @@ PASS  /finals/b/inbox: fix 6/10 no "defended", no inbox meta sentence
 PASS  G12 /finals/b/case/PP-R-NKT-10227591: marked "Staged sample", no PayPal ids, no future dates
 PASS  G12 /finals/b/case/PP-R-NKT-10227591?state=approved: marked "Staged sample", no PayPal ids, no future dates
 PASS  G12 /finals/b/case/PP-R-NKT-10227591?state=resolved: marked "Staged sample", no PayPal ids, no future dates
-PASS  real loop: r2 fix 8 while the sheet says "Sending to PayPal" the timeline shows only the in-flight row and the headline holds, even after a poll that carries the filing (Oct 25 | 07:50:49 PT |  | To PayPal)
+PASS  real loop: r2 fix 8 while the sheet says "Sending to PayPal" the timeline shows only the in-flight row and the headline holds, even after a poll that carries the filing (Oct 25 | 08:39:48 PT |  | To PayPal)
 PASS  r4 fix 3 while "Sending to PayPal", the nav still counts this case (2) and the sheet still says "Waiting for you" (2 -> 2)
 PASS  r4 fix 3 when PayPal's 200 lands: "Filed with PayPal" label and title in the same render, and the nav count drops then (2 -> 1) (Filed with PayPalReal PayPal sandbox case At stake Evidence filed with PayPal. What PayPal)
-PASS  real loop: r2 fix 8 the timeline's filing row turns 200 in the same frame the sheet shows PayPal's answer (Oct 25 07:50:49 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/customer/dis)
+PASS  real loop: r2 fix 8 the timeline's filing row turns 200 in the same frame the sheet shows PayPal's answer (Oct 25 08:39:48 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/customer/dis)
 PASS  real loop (mocked API): fix 4 the 200 and the debug id land inside the dark sheet (PayPal answered provide-evidence 200 debug id f0000000000a1)
 PASS  real loop: the in-sheet line is in the PayPal register (solid blue rule) (rgb(111, 178, 255) solid paypal)
-PASS  real loop: the line holds about 1.5 s, then the sheet collapses (1465 ms)
-PASS  real loop: the bar reads "Evidence filed with PayPal <time> PT  debug id <id>" and "PayPal is deciding" (Evidence filed with PayPal 07:50:56 PT debug id f0000000000a1 $412.00 PayPal is deciding)
+PASS  real loop: the line holds about 1.5 s, then the sheet collapses (1470 ms)
+PASS  real loop: the bar reads "Evidence filed with PayPal <time> PT  debug id <id>" and "PayPal is deciding" (Evidence filed with PayPal 08:39:55 PT debug id f0000000000a1 $412.00 PayPal is deciding)
 PASS  real loop: the server's row replaces the local one (no doubled debug id) (1 rows)
-PASS  real loop: r2 fix 4 the filing's 200 is the pinned top row, above the later tracker calls (Oct 25 07:50:49 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/cu)
+PASS  real loop: r2 fix 4 the filing's 200 is the pinned top row, above the later tracker calls (Oct 25 08:39:48 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/cu)
 PASS  real loop: r2 fix 2 a tracker PUT reads "update tracker 204", not a read (To PayPal update tracker 204 CaseClerk updated the tracking on the PayPal payment PUT /v1/shipping/t)
 PASS  r2 fix 3 landing h1 ends on the close, not on "200" (A buyer's bank charged back a $389 Olympus camera. The seller said yes; CaseClerk filed the evidence, and PayPal closed the case 12 minutes after the filing.)
 PASS  r2 fix 3 primary: review the $412.00 case; secondary: open a test dispute (Review the $412.00 case waiting for you -> /finals/b/case/PP-R-VPY-10194485)
@@ -412,25 +412,25 @@ PASS  r2 fix 4 PP-R-JKB-10194463: the filing or the latest webhook is the pinned
 PASS  r2 fix 6 (r4) the resolved h1 is short; the figure carries the seller's money from PayPal's fund movements (A buyer's bank charged back the Olympus OM-1n body you sold. PayPal closed the case.)
 PASS  r2 fix 6 the money line and the sandbox-ruling disclosure ( then released all of it; it shows no chargeback fee and no debit. Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.)
 PASS  r2 fix 5 b @390: nothing runs off the right edge (390 px wide; )
-PASS  r2 fix 5 @390 the masthead is one short line, no middot (PayPal sandbox, last real webhook 1 h 49 min ago)
+PASS  r2 fix 5 @390 the masthead is one short line, no middot (PayPal sandbox, last real webhook 2 h 38 min ago)
 PASS  r2 fix 5 inbox @390: nothing runs off the right edge (390 px wide; )
-PASS  r2 fix 5 @390 the masthead is one short line, no middot (PayPal sandbox, last real webhook 1 h 49 min ago)
+PASS  r2 fix 5 @390 the masthead is one short line, no middot (PayPal sandbox, last real webhook 2 h 38 min ago)
 PASS  r2 fix 5 PP-R-VPY-10194485 @390: nothing runs off the right edge (390 px wide; )
-PASS  r2 fix 5 @390 the masthead is one short line, no middot (PayPal sandbox, last webhook on this case 6 h 14 min ago)
+PASS  r2 fix 5 @390 the masthead is one short line, no middot (PayPal sandbox, last webhook on this case 7 h 3 min ago)
 PASS  r2 fix 5 @390 the sheet's button keeps 16 px each side (16 / 16)
 PASS  r2 fix 5 PP-R-JKB-10194463 @390: nothing runs off the right edge (390 px wide; )
-PASS  r2 fix 5 @390 the masthead is one short line, no middot (PayPal sandbox, last webhook on this case 9 h 33 min ago)
+PASS  r2 fix 5 @390 the masthead is one short line, no middot (PayPal sandbox, last webhook on this case 10 h 22 min ago)
 PASS  r2 fix 5 PP-R-NJA-10194486 @390: nothing runs off the right edge (390 px wide; )
-PASS  r2 fix 5 @390 the masthead is one short line, no middot (PayPal sandbox, last webhook on this case 5 h 59 min ago)
+PASS  r2 fix 5 @390 the masthead is one short line, no middot (PayPal sandbox, last webhook on this case 6 h 48 min ago)
 PASS  r2 fix 5 PP-R-NKT-10227591 @390: nothing runs off the right edge (390 px wide; )
-PASS  r2 fix 5 @390 the masthead is one short line, no middot (Staged sample, real webhook 1 h 49 min ago)
+PASS  r2 fix 5 @390 the masthead is one short line, no middot (Staged sample, real webhook 2 h 38 min ago)
 PASS  r2 fix 5 @390 the sheet's button keeps 16 px each side (16 / 16)
 PASS  r2 fix 7 @1440: no case-list rail; the reading column is centred (left 186 right 186 width 1068)
 PASS  r2 fix 7 @1920: no case-list rail; the reading column is centred (left 410 right 410 width 1100)
-PASS  r3 fix 2 b: masthead global, no ids or enums (PayPal sandbox last real webhook 1 h 49 min ago)
-PASS  r3 fix 2 inbox: masthead global, no ids or enums (PayPal sandbox last real webhook 1 h 49 min ago)
-PASS  r3 fix 2 PP-R-VPY-10194485: masthead scoped to this case, no ids or enums (PayPal sandbox last webhook on this case 6 h 14 min ago)
-PASS  r3 fix 2 PP-R-IMW-10194496: masthead scoped to this case, no ids or enums (PayPal sandbox last webhook on this case 3 h 15 min ago)
+PASS  r3 fix 2 b: masthead global, no ids or enums (PayPal sandbox last real webhook 2 h 38 min ago)
+PASS  r3 fix 2 inbox: masthead global, no ids or enums (PayPal sandbox last real webhook 2 h 38 min ago)
+PASS  r3 fix 2 PP-R-VPY-10194485: masthead scoped to this case, no ids or enums (PayPal sandbox last webhook on this case 7 h 3 min ago)
+PASS  r3 fix 2 PP-R-IMW-10194496: masthead scoped to this case, no ids or enums (PayPal sandbox last webhook on this case 4 h 4 min ago)
 PASS  r3 fix 3 IMW: verified fund movements, "You kept $382.33" (A buyer's bank charged back the Olympus OM-1n body you sold. PayPal closed the case.)
 PASS  r3 fix 3 IMW: sandbox disclosure; PayPal's enum only in the Wire (argeback fee and no debit. Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.)
 PASS  r3 fix 5 IMW agent rows: "$393.00", "Case closed; nothing left to do." (Case closed; nothing left to do. | The agent read the case. Buyer disputes the order as not matching its description, with a chargeback for $393.00; no buyer message was provided.)
@@ -452,7 +452,7 @@ PASS  r3 fix 5 PP-R-VPY-10194485: no "Every id here…", no "once", no bare "USD
 PASS  r3 fix 5 PP-R-JKB-10194463: no "Every id here…", no "once", no bare "USD" amounts
 PASS  r3 fix 5 PP-R-NJA-10194486: no "Every id here…", no "once", no bare "USD" amounts
 PASS  r3 fix 5 landing @390: the primary CTA has no orphan word (287)
-PASS  r3 fix 5 case-pending @390: the top PayPal row, event id included, clears the sheet (row ends 503, sheet starts 505)
+PASS  r3 fix 5 case-pending @390: the top PayPal row, event id included, clears the sheet (row ends 450, sheet starts 505)
 PASS  r4 fix 1 case-pending @1440: the agent's call, its limit and "Review the evidence" are in the sheet (The agent recommends filing: 35% chance PayPal decides for you. Tracking proves delivery, not condition. Filing has no fee; accepting gives up the $412.00. Review the evidence)
 PASS  r4 fix 1 case-pending @1440: both answers and the link are on screen without scrolling
 PASS  reader: why filing at 35% still pays, in the sheet
@@ -470,6 +470,13 @@ PASS  reader 5 landing: one honest baseline under the result
 PASS  reader 2 landing: the CTA's case reads as a different case, and the CTA is in the first screen
 PASS  reader 4 + 1 JKB: the second filing says PayPal asked again; the first says it was under your line
 PASS  r4 fix 2/4 IHX resolved: short h1, "You kept $380.38", the sale less the fee, the cost sourced (A buyer's bank charged back the Olympus OM-1n body you sold. PayPal closed the case.)
+PASS  r5 fix 3 case-pending @1440: PayPal's request has its own heading above "What happened, newest first", and that list is newest first (PayPal's request | What happened, newest first | Why the agent recommends it | The evidence pack; ordered true)
+PASS  r5 fix 3 case-pending @1920: PayPal's request has its own heading above "What happened, newest first", and that list is newest first (PayPal's request | What happened, newest first | Why the agent recommends it | The evidence pack; ordered true)
+PASS  r5 fix 3 case-pending @390: PayPal's request has its own heading above "What happened, newest first", and that list is newest first (PayPal's request | What happened, newest first | Why the agent recommends it | The evidence pack; ordered true)
+PASS  r5 fix 4 JKB: the adjudicate row reads "we asked PayPal's sandbox", not "you"
+PASS  r5 fix 5 PP-R-NJA-10194486: the Previous / Next pager links open cases only (Previous (K) Ceramic ring dish, $17.95)
+PASS  r5 fix 5 PP-R-IHX-10194506: the Previous / Next pager links open cases only (Previous (K) Ceramic ring dish, $17.95)
+PASS  r5 fix 5 PP-R-VPY-10194485: the Previous / Next pager links open cases only (Next (J) Beeswax taper candles (pair), $49.95)
 PASS  approve @1440: G1 Approve starts the ink-on-paper fill (1 animations)
 PASS  approve @1440: a 4 s undo window with Undo and Send now
 PASS  approve @1440: G1 sending shows the in-flight rule (2 in-flight, 4 animations)
@@ -507,11 +514,11 @@ PASS  approve @1440 reduced motion: fix 4/6 the sheet collapses to one line with
 PASS  approve @1440 reduced motion: no way back to Approve after sending
 PASS  approve failure: "Nothing was sent." with PayPal's error name
 PASS  G21 /finals/b/case/PP-R-VPY-10194485: reader body text >= 16 px, nothing under 13 px (body 17.0 px, smallest 15.0 px)
-PASS  G21 /finals/b/case/PP-R-VPY-10194485: the download is a PDF built from the same input (5695 bytes)
+PASS  G21 /finals/b/case/PP-R-VPY-10194485: the download is a PDF built from the same input (5696 bytes)
 PASS  G21 /finals/b/case/PP-R-VPY-10194485: the reader's text equals the PDF's text (24 passages matched)
 PASS  /finals/b/case/PP-R-VPY-10194485: Esc closes the reader
 PASS  G21 /finals/b/case/PP-R-NJA-10194486: reader body text >= 16 px, nothing under 13 px (body 17.0 px, smallest 15.0 px)
-PASS  G21 /finals/b/case/PP-R-NJA-10194486: the download is a PDF built from the same input (5710 bytes)
+PASS  G21 /finals/b/case/PP-R-NJA-10194486: the download is a PDF built from the same input (5709 bytes)
 PASS  G21 /finals/b/case/PP-R-NJA-10194486: the reader's text equals the PDF's text (25 passages matched)
 PASS  /finals/b/case/PP-R-NJA-10194486: Esc closes the reader
 PASS  G15 every inbox row opens its own case (22 rows, 0 bad)
@@ -519,4 +526,4 @@ PASS  fix 7 the inbox opens on the real cases, the pending $412 first (PP-R-VPY-
 PASS  fix 7 /finals/b/case opens the real pending case (PP-R-VPY-10194485)
 PASS  J moves to the next case (PP-R-GDS-10194475)
 
-511 PASS, 0 FAIL
+518 PASS, 0 FAIL

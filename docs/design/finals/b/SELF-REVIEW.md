@@ -66,3 +66,14 @@ Rows above that say "brass", "no blue", "Sample case" or "You kept $392.00" desc
 | R4 | "PayPal asked for more evidence, so CaseClerk filed again; PayPal answered 200". | `case-deciding-*.png` |
 | R5 | "Without an answer by the deadline, PayPal rules for the buyer: the seller would have lost the $389.00 and the fee." | `landing-*.png` |
 | Small | Why filing at 35% pays (no fee vs the amount); "11 minutes after you approved"; "$0.05 … the sum of its model calls in this case's log". | as above |
+
+## Judge round 5 (2026-10-26)
+Files the earlier rounds cite that no longer match the build are gone: the LTK round-1 set, `case-approve-real-before/after.png` (frames of the take's older build), `case-approve-real-recut.log.txt`, `recut-b3.cjs` and `recut-b4.cjs` (`recut-b5.cjs` does both cuts).
+
+| # | Fix | Evidence |
+|---|---|---|
+| 1 | Video, still the B4 take with no new click: it runs at 1x through the full 3.3 s PayPal wait to the last "Sending to PayPal" frame (f00577, 9.97 s), then cuts to the settled filed state (f00788) under a masthead label "Cut: same case, 3.5 s later, after the filing". The old build's "File this evidence with PayPal?" above the 200 is no longer in the film. Disclosed: the take's nav badge drops 3 → 2 at ~7.8 s, during "Sending to PayPal"; that is the take's older build, before the J3 fix (the current build drops it only on the 200, `check-ui-b.log` r4 fix 3). | `case-approve-real.mp4` (23.0 s), `case-approve-real.log.txt` (Round 5), `recut-b5.cjs` |
+| 2 | `case-real.mp4` re-recorded read-only (hover only, every POST blocked) from the current build: the pending sheet with its recommendation, then the resolved NJA page with the short h1. Stale LTK files removed (above). | `case-real.mp4` (14.8 s) |
+| 3 | When PayPal's latest webhook is not the newest row, it gets its own heading ("PayPal's request" on a pending case, "PayPal's decision" on a resolved one) above "What happened, newest first", and that list is strictly newest first. A filing's 200 stays pinned inside the list, so it never jumps between lists as polls land. | `case-pending-*.png`, `case-resolved-*.png`, `check-ui-b.log` (r5 fix 3) |
+| 4 | JKB: "Sandbox test control: we asked PayPal's sandbox to rule (a live account can't do this)"; the require-evidence row reads "we asked PayPal's sandbox to request more evidence". | `case-deciding-*.png`, `check-ui-b.log` (r5 fix 4) |
+| 5 | The Previous / Next pager walks open cases only (and the case on screen), as the inbox folds the closed ones; IHX and NJA now point to the ring dish, not sibling Olympus cases. | `case-resolved-*.png`, `case-approve-real-end.png`, `check-ui-b.log` (r5 fix 5) |

@@ -12,7 +12,7 @@ import { Masthead } from "./Masthead";
 import { Photo } from "./Photo";
 import { CountUp, LANDED_MS, Sheet, UNDO_MS } from "./Sheet";
 import { useDesk } from "./store";
-import { Timeline, type LiveRow } from "./Timeline";
+import { pinLabel, pinnedOf, Timeline, type LiveRow } from "./Timeline";
 import { useT } from "./motion";
 import s from "../b.module.css";
 
@@ -74,8 +74,9 @@ function useRealCase(id: string, enabled: boolean): { c?: Case; refresh: () => v
 
 function Neighbours({ c }: { c: Case }) {
   const { real } = useDesk();
-  // A real case walks the real cases, the ones every count is over; a staged sample walks the samples.
-  const list = sorted(real).filter((x) => x.real === c.real);
+  // A real case walks the real cases, the ones every count is over; a staged sample walks the samples. Closed cases
+  // stay folded, as in the inbox: the pager walks the open ones (and the case on screen).
+  const list = sorted(real).filter((x) => x.real === c.real && (isOpen(x) || x.id === c.id));
   const i = list.findIndex((x) => x.id === c.id);
   const prev = list[i - 1];
   const next = list[i + 1];
@@ -272,6 +273,7 @@ function CaseBody({ c: polled, refresh }: { c: Case; refresh: () => void }) {
   const resolved = phase === "resolved";
   const resolvedEvent = rows.flatMap((r) => (r.kind === "paypal" && r.name === "CUSTOMER.DISPUTE.RESOLVED" && r.eventId ? [r.eventId] : []))[0];
   const sent = phase === "sent" || phase === "landed" || resolved;
+  const pin = pinnedOf(rows, !!approval && !sent);
   const due = c.dueAt && isOpen(c) && !resolved;
   const urgent = due && hoursLeft(c.dueAt!) < 72;
   const decided = resolved && c.ending;
@@ -353,6 +355,14 @@ function CaseBody({ c: polled, refresh }: { c: Case; refresh: () => void }) {
                 {decided ? <motion.span className={s.keptRule} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={T({ duration: 0.6, ease: EASE, delay: 0.3 })} data-cause="resolve" aria-hidden /> : null}
               </div>
 
+              {pin ? (
+                <section className={`${s.sec} ${s.secPin}`} aria-label={pinLabel(pin)}>
+                  <div className={s.secHead}>
+                    <h2 className={s.h2}>{pinLabel(pin)}</h2>
+                  </div>
+                  <Timeline rows={[pin]} real={c.real} fold={false} label={pinLabel(pin)} />
+                </section>
+              ) : null}
               <section className={s.sec} aria-label="What happened">
                 <div className={s.secHead}>
                   <h2 className={s.h2}>What happened, newest first</h2>
@@ -360,7 +370,7 @@ function CaseBody({ c: polled, refresh }: { c: Case; refresh: () => void }) {
                     {c.real ? "Blue rows are PayPal traffic. Times in PT." : "Dashed rows are staged: the shape of PayPal traffic, nothing sent. Times in PT."}
                   </p>
                 </div>
-                <Timeline rows={rows} real={c.real} pending={!!approval && !sent} />
+                <Timeline rows={rows} real={c.real} pending={!!approval && !sent} skip={pin} />
               </section>
 
               {c.rationale ? (

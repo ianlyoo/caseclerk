@@ -1,6 +1,0 @@
-REAL http://localhost:4102/api/actions/f4a7b703-aa55-4a59-a03d-20ed9574f0cc/approve
-LANDED PayPal answered provide-evidence 200 debug id f9050504c99e6
-BAR Evidence filed with PayPal 02:49:49 PT debug id f9050504c99e6 $398.00 PayPal is deciding
-TOP ROWS Oct 25 02:49:47 PT To PayPal get tracker 204 Read the tracking PUT /v1/shipping/trackers/3XF555001T731522H-9400111899622344435537 debug id f15717752d682 | Oct 25 02:49:47 PT To PayPal get tracker 200 Read the tracking GET /v1/shipping/trackers debug id f4610138c2e08 | Oct 25 02:49:44 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/customer/disputes/PP-R-LTK-10194490/provide-evidence debug id f9050504c99e6
-H1 A buyer's bank charged back the Olympus OM-1n body you sold. CaseClerk filed the evidence on PayPal once, and PayPal is deciding.
-video /Users/youngin/company-work/g251-pm-104-host/ceremony/case-approve-real.mp4 31.1 s, 1841 frames

@@ -78,21 +78,39 @@ const keyOf = (r: LiveRow) =>
 
 type Item = { key: string; row: LiveRow } | { key: string; fold: PP[]; open: boolean };
 
+/** Newest first; while the decision sheet is up, the agent's rows after PayPal's latest webhook are hidden. */
+function visible(rows: LiveRow[], pending?: boolean) {
+  const sorted = [...rows].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  const hook = pending ? sorted.find((r) => r.kind === "paypal" && r.dir === "in") : undefined;
+  return hook ? sorted.filter((r) => r.kind !== "agent" || Date.parse(r.at) <= Date.parse(hook.at)) : sorted;
+}
+
+/**
+ * PayPal's latest word (a webhook) when newer rows sit below it: it gets its own labelled block above the
+ * newest-first list. A filing's 200 stays pinned inside the list, so it never moves between lists as polls land.
+ */
+export function pinnedOf(rows: LiveRow[], pending?: boolean): PP | undefined {
+  const list = visible(rows, pending);
+  const top = list.find(receipt);
+  return top && top !== list[0] && top.dir === "in" ? top : undefined;
+}
+
+export const pinLabel = (r: PP) =>
+  r.name === "CUSTOMER.DISPUTE.UPDATED" ? "PayPal's request" : r.name === "CUSTOMER.DISPUTE.RESOLVED" ? "PayPal's decision" : "PayPal's latest answer";
+
 /**
  * Newest first, with PayPal's latest receipt pinned on top (the filing's 200, the RESOLVED webhook, the UPDATED one
  * asking for evidence) and each run of routine calls folded into one line that opens in place.
  * While the decision sheet is up (`pending`), the agent's rows after PayPal's latest webhook are hidden: the sheet
  * is those rows (the recommendation and the pack), so the column opens on what PayPal last said.
  */
-export function Timeline({ rows, real, limit, pending, fold = true }: { rows: LiveRow[]; real: boolean; limit?: number; pending?: boolean; fold?: boolean }) {
+export function Timeline({ rows, real, limit, pending, fold = true, skip, label = "What happened, newest first" }: { rows: LiveRow[]; real: boolean; limit?: number; pending?: boolean; fold?: boolean; skip?: LiveRow; label?: string }) {
   const T = useT();
   const [opened, setOpened] = useState<Set<string>>(() => new Set());
-  const sorted = [...rows].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
-  const hook = pending ? sorted.find((r) => r.kind === "paypal" && r.dir === "in") : undefined;
-  let list = hook ? sorted.filter((r) => r.kind !== "agent" || Date.parse(r.at) <= Date.parse(hook.at)) : sorted;
+  let list = visible(rows, pending).filter((r) => r !== skip);
   const items: Item[] = [];
   if (fold) {
-    const top = list.find(receipt);
+    const top = skip ? undefined : list.find(receipt);
     if (top) list = [top, ...list.filter((r) => r !== top)];
     let run: PP[] = [];
     const flush = () => {
@@ -121,7 +139,7 @@ export function Timeline({ rows, real, limit, pending, fold = true }: { rows: Li
       return n;
     });
   return (
-    <ol className={s.tl} aria-label="What happened, newest first">
+    <ol className={s.tl} aria-label={label}>
       <AnimatePresence initial={false}>
         {items.slice(0, limit).map((it) => {
           if ("fold" in it) {
