@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.vercel/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.scratch/
+coverage/
+dist/
+*.log
+.DS_Store
