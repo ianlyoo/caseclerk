@@ -133,7 +133,7 @@ export function wireRowLines(rows: ApiWireRow[], caseId: string | null, events: 
       out.push({ at: w.at, dir: "in", name: w.eventType, status: "", path: w.eventType, eventId: w.eventId, origin: "paypal" });
     } else if (w.kind === "call" && w.debugId && w.path && !debugs.has(w.debugId)) {
       debugs.add(w.debugId);
-      out.push({ at: w.at, dir: "out", name: w.path.split("/").at(-1) ?? w.path, status: String(w.status ?? ""), path: `${w.method ?? "GET"} ${w.path}`, debugId: w.debugId, origin: "paypal" });
+      out.push({ at: w.at, dir: "out", name: w.path.includes("/shipping/trackers/") ? "tracker" : (w.path.split("/").at(-1) ?? w.path), status: String(w.status ?? ""), path: `${w.method ?? "GET"} ${w.path}`, debugId: w.debugId, origin: "paypal" });
     }
   }
   return out;

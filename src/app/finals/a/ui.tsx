@@ -155,7 +155,9 @@ export function plainOf(l: WireLine): string {
     return "PayPal updated the case";
   }
   const ok = /^2\d\d$/.test(l.status);
-  const path = l.path.replace(/^(GET|POST) /, "");
+  const path = l.path.replace(/^(GET|POST|PUT|PATCH) /, "");
+  if (!l.status) return "Sent to PayPal; waiting for its answer";
+  if (l.path.startsWith("PUT /v1/shipping/trackers/")) return "CaseClerk updated the tracking on the PayPal payment";
   if (!ok) return `PayPal refused the call (${l.status})`;
   if (path.endsWith("/provide-evidence")) return "CaseClerk filed the evidence and PayPal accepted it";
   if (path.endsWith("/accept-claim")) return "CaseClerk accepted the claim and PayPal refunded the buyer";
