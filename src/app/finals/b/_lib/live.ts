@@ -106,15 +106,18 @@ export function rowsOf(j: ApiCase): Row[] {
       const a = j.audit.find((x) => (x.data as { eventId?: string } | undefined)?.eventId === w.eventId);
       out.push({ kind: "paypal", at: w.at, dir: "in", name: w.eventType ?? "webhook", status: "verified", eventId: w.eventId, say: a ? eventSay(a.summary) : "PayPal sent a webhook" });
     } else if (w.path) {
-      const say = CALL_SAY.find(([re]) => re.test(w.path!))?.[1] ?? "Called PayPal";
-      const tool = /orders/.test(w.path) ? "tool.get_order" : /trackers/.test(w.path) ? "tool.get_tracking" : "";
+      const method = (w.method ?? "GET").toUpperCase() as "GET" | "POST" | "PUT" | "PATCH";
+      // A tracker write (PUT/PATCH while filing) is not a read; name it for what it did.
+      const write = method !== "GET" && /\/v1\/shipping\/trackers/.test(w.path);
+      const say = write ? "Updated the tracking on PayPal" : CALL_SAY.find(([re]) => re.test(w.path!))?.[1] ?? "Called PayPal";
+      const tool = write ? "" : /orders/.test(w.path) ? "tool.get_order" : /trackers/.test(w.path) ? "tool.get_tracking" : "";
       const detail = tool ? auditNear(tool, w.at)?.summary : undefined;
       out.push({
         kind: "paypal",
         at: w.at,
         dir: "out",
-        name: callName(w.path),
-        method: (w.method as "GET" | "POST") ?? "GET",
+        name: write ? "update tracker" : callName(w.path),
+        method,
         path: w.path,
         status: w.status ? String(w.status) : undefined,
         debugId: w.debugId,

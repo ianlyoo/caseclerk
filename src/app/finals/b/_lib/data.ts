@@ -20,7 +20,7 @@ export type Row =
       at: string;
       dir: "in" | "out";
       name: string; // CUSTOMER.DISPUTE.CREATED, provide-evidence, get order
-      method?: "GET" | "POST";
+      method?: "GET" | "POST" | "PUT" | "PATCH";
       path?: string;
       status?: string; // "200", "verified"
       debugId?: string; // real cases only
