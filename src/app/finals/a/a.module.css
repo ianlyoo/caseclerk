@@ -480,6 +480,16 @@
 .btn:disabled {
   cursor: default;
 }
+/* Inline links on paper: ink, quiet underline. :where keeps this below every class rule. */
+:where(.paper) a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--ink3);
+}
+:where(.paper) a:hover {
+  text-decoration-color: currentColor;
+}
 .link {
   padding: 0;
   border: 0;
@@ -1102,7 +1112,8 @@
   .policy {
     display: none;
   }
-  .h1 {
+  .h1,
+  .headline {
     font-size: 32px;
   }
   .figureRow {

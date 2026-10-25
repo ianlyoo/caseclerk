@@ -109,7 +109,20 @@ const pageProbe = (page, firstOnly) =>
       const bg = rgb(cs.backgroundColor);
       if (bg.length >= 3 && (bg.length === 3 || bg[3] > 0.9) && lum(bg) < 0.1 && box.width * box.height > area * 0.04 && !el.closest("[data-wire]") && !el.closest("button") && vis(el)) r.dark.push(el.tagName + "." + el.className);
       if ((cs.backdropFilter && cs.backdropFilter !== "none") || /blur/.test(cs.filter) || /conic-gradient|radial-gradient|repeating-/.test(cs.backgroundImage)) r.fx.push(el.tagName);
-      for (const c of [cs.color, cs.backgroundColor, cs.borderLeftColor, cs.borderTopColor]) if (BLUE.includes(c) && !el.closest("[data-origin=paypal]") && vis(el) && (c !== cs.borderLeftColor || cs.borderLeftWidth !== "0px") && (c !== cs.borderTopColor || cs.borderTopWidth !== "0px")) r.blue.push(`${el.tagName}.${String(el.className).slice(0, 30)} ${c}`);
+      const isBlue = (c) => {
+        const v = rgb(c);
+        if (v.length < 3 || (v.length === 4 && v[3] === 0)) return false;
+        const [h, , sat] = hls(v.slice(0, 3));
+        return BLUE.includes(c) || (h >= 200 && h <= 250 && sat > 0.5);
+      };
+      const paints = [
+        [cs.color, true],
+        [cs.backgroundColor, true],
+        [cs.borderLeftColor, cs.borderLeftWidth !== "0px" && cs.borderLeftStyle !== "none"],
+        [cs.borderTopColor, cs.borderTopWidth !== "0px" && cs.borderTopStyle !== "none"],
+        [cs.textDecorationColor, cs.textDecorationLine !== "none"],
+      ];
+      for (const [c, used] of paints) if (used && isBlue(c) && !el.closest("[data-origin=paypal]") && vis(el)) r.blue.push(`${el.tagName}.${String(el.className).slice(0, 30)} ${c}`);
       if (cs.boxShadow !== "none" && vis(el) && !/(^|_)(slip|sheet|mat|tooltip)(_|$|\s)/.test(String(el.className))) r.shadow.push(String(el.className).slice(0, 40));
       if (cs.backgroundColor === "rgb(236, 231, 219)" && vis(el) && !el.hasAttribute("data-well")) r.shadow.push("well colour outside [data-well]: " + el.tagName);
       if (el.closest("[data-wire]") && vis(el) && el.closest("[data-origin=paypal]") && BLUE.includes(cs.color)) {
