@@ -14,7 +14,6 @@
   --sheet-hair: #3a352c;
   --fill: #d8d1c1; /* the Approve fill: ink on a darker paper */
   --pp-dark: #6fb2ff; /* PayPal blue on the dark sheet */
-  --brass-paper: #8a5a00;
   --live: #2c7449;
   --verm: #b23a1c;
   --pp: #0059b8; /* PayPal blue: only on traffic at PayPal's boundary */
@@ -248,6 +247,16 @@
 }
 .mainSheet {
   padding-bottom: 340px;
+}
+/* While the decision sheet is up it carries the amount; the column gives its first screen to PayPal's latest rows. */
+.mainSheet .h1 {
+  font-size: clamp(30px, 0.8vw + 22px, 38px);
+}
+.mainSheet .figureRow {
+  display: none;
+}
+.mainSheet .sec {
+  margin-top: 26px;
 }
 .caseGrid {
   display: grid;
@@ -715,10 +724,9 @@
   align-content: center;
   gap: 4px 16px;
   font-size: 17px;
-  box-shadow: inset 2px 0 0 var(--pp-dark);
+  border-left: 2px solid var(--pp-dark);
 }
 .sdLanded[data-sample] {
-  box-shadow: none;
   border-left: 2px dashed var(--sheet-2);
 }
 .sdLanded code {

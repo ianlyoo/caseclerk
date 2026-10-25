@@ -142,6 +142,11 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
   const [error, setError] = useState<{ name: string; debugId?: string }>();
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const local = desk.phase(c.id);
+  // Once approved, the next poll no longer carries the pending action; the sheet keeps the approval it showed so the
+  // 200 can land in it and it can collapse to the filed bar.
+  const kept = useRef(c.approval);
+  if (c.approval) kept.current = c.approval;
+  const approval = c.approval ?? (c.real && local && local !== "pending" && c.desk !== "won" ? kept.current : undefined);
   // A real case's phase is PayPal's: pending while an action waits, resolved once PayPal closed it. The local phase
   // only covers the seconds between Approve and the next poll.
   const phase = c.real
@@ -186,7 +191,7 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     desk.set(c.id, "sending");
-    const a = c.approval!;
+    const a = approval!;
     const inflight: LiveRow = { kind: "paypal", at: c.real ? new Date().toISOString() : sampleClock(start.current), dir: "out", name: a.name, method: a.method, path: a.path, say: c.real ? "CaseClerk is filing the evidence" : "Staged: on a real case, CaseClerk files the evidence and PayPal returns a debug id here.", inflight: true, fresh: true };
     setExtra((x) => [...x.filter((r) => !(r.kind === "paypal" && r.inflight)), inflight]);
     const clear = () => setExtra((x) => x.filter((r) => !(r.kind === "paypal" && r.inflight)));
@@ -228,7 +233,7 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
       later(LANDED_MS + 1100, () => setExtra((x) => [...x, { ...updatedRow(sampleClock(start.current)), fresh: true }]));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [c, forceFail, landed]);
+  }, [c, approval, forceFail, landed]);
 
   const approve = useCallback(() => {
     desk.set(c.id, "undo");
@@ -252,6 +257,7 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
     return [...(c.rows as Row[]), ...extra.filter((r) => !(r.kind === "paypal" && r.debugId && ids.has(r.debugId)))];
   }, [c.rows, extra]);
   const resolved = phase === "resolved";
+  const resolvedEvent = rows.flatMap((r) => (r.kind === "paypal" && r.name === "CUSTOMER.DISPUTE.RESOLVED" && r.eventId ? [r.eventId] : []))[0];
   const sent = phase === "sent" || phase === "landed" || resolved;
   const due = c.dueAt && isOpen(c) && !resolved;
   const urgent = due && hoursLeft(c.dueAt!) < 72;
@@ -262,7 +268,7 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
       <Masthead sample={!c.real} />
       <div className={s.desk}>
         <CaseList current={c.id} />
-        <main className={`${s.main} ${c.approval && !sent ? s.mainSheet : ""}`} id="case">
+        <main className={`${s.main} ${approval && !sent ? s.mainSheet : ""}`} id="case">
           <div className={s.caseGrid}>
             <aside className={s.margin}>
               <p className={s.caseId}>
@@ -304,7 +310,13 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
                   {decided ? (
                     c.real ? (
                       <>
-                        PayPal closed the case on {day(c.ending!.at)} at {clock(c.ending!.at)} PT. The agent spent ${(c.costUsd ?? 0).toFixed(2)} on it.
+                        PayPal closed the case on {day(c.ending!.at)} at {clock(c.ending!.at)} PT
+                        {resolvedEvent ? (
+                          <>
+                            , webhook <code className={s.ppId} data-origin="paypal">event {resolvedEvent}</code>
+                          </>
+                        ) : null}
+                        . The agent spent ${(c.costUsd ?? 0).toFixed(2)} on it.
                       </>
                     ) : (
                       <>Staged ending. On a real case this is PayPal&apos;s RESOLVED webhook and the money it released.</>
@@ -329,12 +341,12 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
                     {c.real ? "Blue rows are PayPal's own traffic, with the ids PayPal returned. Times in PT." : "Dashed rows are staged: the shape of PayPal traffic, nothing sent. Times in PT."}
                   </p>
                 </div>
-                <Timeline rows={rows} real={c.real} pending={!!c.approval && !sent} />
+                <Timeline rows={rows} real={c.real} pending={!!approval && !sent} />
               </section>
 
               {c.rationale ? (
                 <section className={s.sec} aria-label="Why">
-                  {!c.approval || sent ? <p className={s.rec}>{c.recommendation ?? c.approval?.head}</p> : null}
+                  {!approval || sent ? <p className={s.rec}>{c.recommendation ?? approval?.head}</p> : null}
                   <h2 className={s.h2}>Why the agent recommends it</h2>
                   <p className={s.why}>{c.rationale}</p>
                   {c.values ? (
@@ -377,8 +389,8 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
           </div>
         </main>
       </div>
-      {c.approval && phase && phase !== "resolved" ? (
-        <Sheet a={c.approval} phase={phase} real={c.real} sent={desk.sentAt(c.id)} error={error} onApprove={approve} onUndo={undo} onSendNow={send} onRetry={() => { setError(undefined); desk.set(c.id, "pending"); }} />
+      {approval && phase && phase !== "resolved" ? (
+        <Sheet a={approval} phase={phase} real={c.real} sent={desk.sentAt(c.id)} error={error} onApprove={approve} onUndo={undo} onSendNow={send} onRetry={() => { setError(undefined); desk.set(c.id, "pending"); }} />
       ) : null}
     </>
   );

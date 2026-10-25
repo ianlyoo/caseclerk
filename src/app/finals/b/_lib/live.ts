@@ -1,4 +1,4 @@
-// Real cases, read from the production API (GET /api/cases/:id → { case, actions, audit, wire }).
+// Real cases, read from the production API (GET /api/cases/:id returns { case, actions, audit, wire }).
 // Every id and status shown for a real case comes from PayPal through this payload; nothing is written here.
 // The JSON files in ./real are snapshots of the same payload, used for the first render and when the API is down.
 
@@ -218,7 +218,7 @@ export function fromApi(j: ApiCase): Case {
     approval = {
       actionId: pending.id,
       kind: evidence ? "provide_evidence" : pending.kind === "make_offer" ? "make_offer" : "accept_claim",
-      head: evidence ? `File the evidence on the $${money(amount)} case.` : pending.rationale,
+      head: evidence ? "File this evidence with PayPal?" : pending.rationale,
       amount: pending.amountUsd ? pending.amountUsd.toFixed(2) : amount,
       button: evidence ? `File the evidence on $${money(amount)}` : `Approve $${money(pending.amountUsd ?? amount)}`,
       decline: evidence ? "Don't file; accept the chargeback" : "Decline",

@@ -23,9 +23,9 @@ function fm(m?: { value: string; currency_code: string }) {
 function fd(iso?: string, withTime = false) {
   if (!iso) return "-";
   const d = new Date(iso);
-  const date = d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "America/Los_Angeles" });
+  const date = d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
   if (!withTime) return date;
-  return `${date}, ${d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Los_Angeles" })} PT`;
+  return `${date}, ${d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" })} UTC`;
 }
 
 function pages(input: EvidencePdfInput) {

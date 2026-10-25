@@ -159,7 +159,7 @@ const hero: Case = {
   valueNote: "A returned camera is worth $118.00 to you: $240.00 resale after a $95.00 shutter service, less $27.00 selling fees.",
   approval: {
     kind: "provide_evidence",
-    head: "File the evidence on the $412.00 case.",
+    head: "File this evidence with PayPal?",
     amount: "412.00",
     button: "File the evidence on $412.00",
     decline: "Decline, accept the claim instead",

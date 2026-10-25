@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Static "slop tells" for Final B (verdict G9/G10/G11 plus B's own rules: no blue or teal, shadows only on objects).
+# Static "slop tells" for Final B (verdict G9/G10/G11 plus B's own rules: PayPal blue only as the PayPal register,
+# no brass or gold, shadows only on objects).
 #   bash docs/design/finals/b/check-tells-b.sh
 cd "$(dirname "$0")/../../../.." || exit 2
 SRC="src/app/finals/b"
@@ -19,7 +20,10 @@ check "no arrows in copy"                        '→|←|↗|↘|➜|&rarr;'   
 check "no shimmer, typewriter, confetti, glow"   'shimmer|typewriter|confetti|glow|sparkle|skeleton'   -i --include=*.tsx --include=*.css
 check "no overshooting easings"                  'cubic-bezier\([^)]*(-0?\.[0-9]|1\.[0-9])'             --include=*.css --include=*.tsx
 check "no bounce springs (bounce/overshoot)"     'bounce|type:\s*"spring"[^}]*damping:\s*[0-9]\b'       --include=*.tsx
-check "no blue or teal hex"                      '#(0[0-9a-f]{2}[89a-f][0-9a-f]{2}|[0-3][0-9a-f][4-9a-f][0-9a-f][a-f][0-9a-f])\b' -i --include=*.css --include=*.tsx
+check "no blue or teal hex besides the two PayPal tokens" '#(0[0-9a-f]{2}[89a-f][0-9a-f]{2}|[0-3][0-9a-f][4-9a-f][0-9a-f][a-f][0-9a-f])\b' -i --include=*.tsx
+pp=$(grep -niE '#(0[0-9a-f]{2}[89a-f][0-9a-f]{2}|[0-3][0-9a-f][4-9a-f][0-9a-f][a-f][0-9a-f])\b|#6fb2ff' "$SRC/b.module.css" | grep -viE '^[0-9]+:\s*--pp(-dark)?:\s*#(0059b8|6fb2ff);')
+if [ -n "$pp" ]; then echo "FAIL  PayPal blue only as --pp / --pp-dark"; echo "$pp" | head -5 | sed 's/^/      /'; fails=$((fails+1)); else echo "PASS  PayPal blue only as --pp / --pp-dark"; fi
+check "no brass or gold"                         '--brass:|var\(--brass\)|gold|#(b8860b|c9a227|a67c00|d4af37|8a5a00)\b' -i --include=*.css --include=*.tsx
 check "no emoji"                                 $'[\xF0][\x9F]'                                        --include=*.tsx --include=*.ts
 check "no AI cliches in copy"                    'Seamless|Effortless|Supercharge|Unlock|Revolutioniz|AI-powered|magic|✨' -i --include=*.tsx --include=*.ts
 check "no backdrop blur"                         'backdrop-filter'                                      --include=*.css
