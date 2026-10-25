@@ -8,12 +8,7 @@
     }
   ],
   "git": {
-    "deploymentEnabled": {
-      "spike": false,
-      "s3-w1-paypal": false,
-      "s3-w2-agent": false,
-      "s3-w4-data": false
-    }
+    "deploymentEnabled": false
   },
   "regions": [
     "sin1"
