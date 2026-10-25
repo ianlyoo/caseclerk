@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useAnimate, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { agentCost, caseDetail, thenSteps, wireOf, type CaseDetail, type Exhibit, type Step } from "../../../_shared/cases";
-import { countdown, day, hoursLeft, sortedCases, time, usd, weekday } from "../../../_shared/data";
+import { countdown, day, hoursLeft, NOW, sortedCases, time, usd, weekday } from "../../../_shared/data";
 import { PHOTOS } from "../../../_shared/photos";
 import { REAL_ID, REAL_WIRE } from "../../../_shared/real";
 import { entryFor, useDecision, usePendingApprovals, UNDO_MS, type Entry } from "../../../_shared/store";
@@ -50,7 +50,7 @@ export function CaseView({ id, state }: { id: string; state?: string }) {
       <div className={s.paper}>
         <Masthead here="case" />
         <article className={s.file}>
-          <Header d={d} phase={phase} />
+          <Header d={d} phase={phase} resolvedAt={e.resolvedAt} />
           <SlipRow d={d} e={e} dec={dec} />
           <Why d={d} />
           <Dossier d={d} />
@@ -66,7 +66,7 @@ export function CaseView({ id, state }: { id: string; state?: string }) {
 
 // ---- Header: margin (id, mat) | h1, figure ----
 
-function Header({ d, phase }: { d: CaseDetail; phase?: string }) {
+function Header({ d, phase, resolvedAt }: { d: CaseDetail; phase?: string; resolvedAt?: string }) {
   const reduce = useReducedMotion();
   const photo = PHOTOS[d.c.id];
   const resolved = phase === "resolved";
@@ -113,7 +113,7 @@ function Header({ d, phase }: { d: CaseDetail; phase?: string }) {
             <Num value={Number(d.c.amount)} cause="resolve" className={s.figure} />
           )}
           {kept !== undefined ? (
-            <span className={s.due}>of {usd(d.c.amount)}, closed {resolved ? "today" : day(d.c.closedAt!)}</span>
+            <span className={s.due}>of {usd(d.c.amount)}, closed {resolved ? (resolvedAt && day(resolvedAt) !== day(NOW) ? day(resolvedAt) : "today") : day(d.c.closedAt!)}</span>
           ) : d.c.dueAt ? (
             <span className={red ? s.red : s.due}>
               respond within {countdown(d.c.dueAt)}, by {weekday(d.c.dueAt)} {day(d.c.dueAt)}

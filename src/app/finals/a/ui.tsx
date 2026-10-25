@@ -128,7 +128,8 @@ function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
   const path = l.dir === "in" ? (l.status.startsWith("RESOLVED") ? "outcome" : "status") : l.path.replace(/^(GET|POST) /, "");
   const status = l.inflight ? "sending" : l.dir === "in" ? "verified" : l.status;
   const second = l.dir === "in" ? l.status : path;
-  const cut = Math.min(18, Math.floor(second.length / 2));
+  // With a debug id beside it, the tail keeps only the last path segment.
+  const cut = l.debugId && second.includes("/") ? second.length - second.lastIndexOf("/") : Math.min(18, Math.floor(second.length / 2));
   return (
     <motion.li
       layout={reduce ? false : "position"}

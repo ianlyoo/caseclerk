@@ -141,6 +141,15 @@ const pageProbe = (page, firstOnly) =>
         if (h >= 150 && h <= 200 && s > 0.25) r.tealWire.push(cs.color);
       }
     }
+    r.overlap = [];
+    for (const li of document.querySelectorAll("[data-wire-line]")) {
+      const spans = [...li.querySelectorAll("span")].filter((x) => x.children.length === 0 && x.getBoundingClientRect().width > 0 && vis(x));
+      for (let i = 0; i < spans.length; i++)
+        for (let j = i + 1; j < spans.length; j++) {
+          const a = spans[i].getBoundingClientRect(), b = spans[j].getBoundingClientRect();
+          if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) r.overlap.push(`${spans[i].textContent.slice(-12)} / ${spans[j].textContent.slice(0, 12)}`);
+        }
+    }
     const h1 = document.querySelector("h1");
     r.h1 = h1 ? parseFloat(getComputedStyle(h1).fontSize) : 0;
     const fig = document.querySelector("[class*='figureRow'] number-flow-react");
@@ -153,6 +162,7 @@ function judgePage(r, where, { h1Min, moneyMin } = {}) {
   out(!r.fx.length, `G5 no backdrop-filter, blur, conic / radial / repeating gradients, ${where}`, r.fx.slice(0, 3).join(", "));
   out(!r.blue.length, `G6 blue only inside [data-origin=paypal], ${where}`, r.blue.slice(0, 3).join("; "));
   out(!r.wireBad.length, `G7 Wire lines are PayPal or sample, no model / cost / policy words, ${where}`, r.wireBad.slice(0, 2).join("; "));
+  out(!r.overlap.length, `Wire text never overlaps inside a line, ${where}`, r.overlap.slice(0, 2).join("; "));
   out(!r.shadow.length && r.wells <= 2, `G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, ${where}`, r.shadow.slice(0, 3).join(", ") || `${r.wells} wells`);
   out(!r.small.length && !r.wireSmall.length, `G9 text >= 13 px, Wire >= 14 px, ${where}`, [...r.small, ...r.wireSmall].slice(0, 3).join("; "));
   if (h1Min) out(r.h1 >= h1Min, `G9 h1 >= ${h1Min} px, ${where}`, `${r.h1} px`);

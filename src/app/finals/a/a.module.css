@@ -214,6 +214,7 @@
 .lPathText {
   display: flex;
   min-width: 0;
+  overflow: hidden;
   white-space: nowrap;
 }
 .lHead {
