@@ -13,10 +13,26 @@ const m = vi.hoisted(() => ({
   paypalFetch: vi.fn(),
   runAgent: vi.fn(),
   afterTasks: [] as (() => Promise<void>)[],
+  observer: null as null | ((c: Record<string, unknown>) => Promise<void>),
 }));
 
 vi.mock("@/lib/paypal/webhook", () => ({ verifyWebhookSignature: m.verify }));
-vi.mock("@/lib/paypal/client", () => ({ paypalFetch: m.paypalFetch }));
+// Like W1's client: each paypalFetch reports to the registered observer (the wire log).
+vi.mock("@/lib/paypal/client", () => ({
+  paypalFetch: async (path: string, init?: { method?: string }) => {
+    const report = (status: number) =>
+      m.observer?.({ method: init?.method ?? "GET", path, status, debugId: "dbg-w", durationMs: 5, at: new Date().toISOString() });
+    try {
+      const r = await m.paypalFetch(path, init);
+      await report(r.status);
+      return r;
+    } catch (e) {
+      await report(500);
+      throw e;
+    }
+  },
+  setPayPalCallObserver: (fn: typeof m.observer) => (m.observer = fn),
+}));
 vi.mock("next/server", () => ({ after: (fn: () => Promise<void>) => m.afterTasks.push(fn) }));
 vi.mock("@/lib/agent/run", () => ({ runAgent: m.runAgent }));
 
@@ -45,7 +61,7 @@ describe("POST /api/webhooks/paypal", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ received: true, caseId: DISPUTE_ID, changed: true });
     expect(m.verify).toHaveBeenCalledWith(expect.any(Headers), event);
-    expect(m.paypalFetch).toHaveBeenCalledWith(`/v1/customer/disputes/${DISPUTE_ID}`);
+    expect(m.paypalFetch).toHaveBeenCalledWith(`/v1/customer/disputes/${DISPUTE_ID}`, undefined);
 
     const c = await db.cases.get(DISPUTE_ID);
     expect(c).toMatchObject({
@@ -122,4 +138,72 @@ describe("POST /api/webhooks/paypal", () => {
     expect(kinds).toEqual(["webhook.received", "agent.error"]);
   });
 
+  it("logs the delivery and every PayPal call on the wire, attributed to webhook and agent", async () => {
+    const CAPTURE = dispute.disputed_transactions[0].seller_transaction_id as string;
+    await db.testCaptures.record({ captureId: CAPTURE });
+    const pre = await db.wire.append({ kind: "call", origin: "seller", method: "POST", path: "/v2/checkout/orders", status: 201, ref: CAPTURE });
+    m.runAgent.mockImplementationOnce(async () => {
+      const { paypalFetch } = await import("@/lib/paypal/client");
+      await paypalFetch(`/v1/customer/disputes/${DISPUTE_ID}/send-message`, { method: "POST" });
+      return { status: "done", summary: "ok", costUsd: 0 };
+    });
+    await post();
+    await flushAfter();
+    await post(); // duplicate delivery: one more event row, no PayPal call
+    const rows = await db.wire.listByCase(DISPUTE_ID);
+    expect(rows.map((w) => [w.kind, w.origin, w.path ?? w.eventType])).toEqual([
+      ["call", "seller", "/v2/checkout/orders"], // the test dispute's own calls, linked by capture id
+      ["event", "webhook", "CUSTOMER.DISPUTE.CREATED"], // stamped at receipt
+      ["call", "webhook", `/v1/customer/disputes/${DISPUTE_ID}`],
+      ["call", "agent", `/v1/customer/disputes/${DISPUTE_ID}/send-message`],
+      ["event", "webhook", "CUSTOMER.DISPUTE.CREATED"],
+    ]);
+    expect(rows[0].id).toBe(pre.id);
+    expect(rows[1]).toMatchObject({ eventId: JSON.parse(event).id, verify: "SUCCESS", status: 200, detail: { result: "processed" } });
+    expect(rows[1].durationMs).toBeGreaterThanOrEqual(0);
+    expect(rows[4].detail).toEqual({ result: "duplicate" });
+
+    m.verify.mockResolvedValueOnce({ verified: false, status: "FAILURE" });
+    await post();
+    expect(await db.wire.listByCase(DISPUTE_ID)).toHaveLength(5); // the forged one stays off the wire
+    expect((await db.wire.listByCase(DISPUTE_ID, { includeUnverified: true })).at(-1)).toMatchObject({ kind: "event", verify: "FAILURE", status: 401 });
+  });
+
+  it("never stores a case, runs the agent or shows a row for a forged delivery", async () => {
+    // A forged POST: the signature check itself calls PayPal, which answers FAILURE.
+    const { paypalFetch } = await import("@/lib/paypal/client");
+    const forged = [
+      { verified: false, status: "FAILURE" },
+      { verified: false, status: "MISSING_HEADER" },
+      { verified: true, status: "FAILURE" }, // a malformed result must not pass either
+    ];
+    for (const v of forged) {
+      m.verify.mockImplementationOnce(async () => {
+        await paypalFetch("/v1/notifications/verify-webhook-signature", { method: "POST" });
+        return v;
+      });
+      expect((await post()).status).toBe(401);
+    }
+    m.verify.mockRejectedValueOnce(new Error("verify blew up"));
+    expect((await post()).status).toBe(401);
+    m.verify.mockResolvedValueOnce({ verified: false, status: "NOT_CONFIGURED" });
+    expect((await post()).status).toBe(503);
+    await flushAfter();
+
+    expect(await db.cases.get(DISPUTE_ID)).toBeNull();
+    expect(await db.audit.listByCase(DISPUTE_ID)).toEqual([]);
+    expect(m.runAgent).not.toHaveBeenCalled();
+    expect(m.paypalFetch).not.toHaveBeenCalledWith(`/v1/customer/disputes/${DISPUTE_ID}`, undefined);
+    expect(await db.wire.listByCase(DISPUTE_ID)).toEqual([]);
+    expect(await db.wire.listRecent()).toEqual([]);
+    const stored = await db.wire.listRecent({ includeUnverified: true });
+    expect(stored.filter((w) => w.kind === "event").map((w) => w.verify)).toEqual(["FAILURE", "MISSING_HEADER", "FAILURE", "ERROR", "NOT_CONFIGURED"]);
+    expect(stored.filter((w) => w.kind === "call")).toHaveLength(3);
+    expect(stored.every((w) => w.verify !== "SUCCESS" && w.verify !== "PENDING")).toBe(true);
+
+    // The real delivery afterwards still goes through (the forged ones didn't burn its event id).
+    expect((await post()).status).toBe(200);
+    await flushAfter();
+    expect(m.runAgent).toHaveBeenCalledTimes(1);
+  });
 });

@@ -170,6 +170,66 @@ export function repoContract(name: string, make: () => Promise<Repo>, uniq: () =
       expect((await db.locks.withCaseLock(id, async () => 2)).acquired).toBe(true);
     });
 
+    it("logs wire rows per case in time order, recent rows across cases, and links refs", async () => {
+      const id = `PP-R-W-${u}`;
+      const t0 = Date.now() - 60_000;
+      const at = (s: number) => new Date(t0 + s * 1000).toISOString();
+      const second = await db.wire.append({ kind: "call", origin: "agent", caseId: id, method: "GET", path: `/v1/customer/disputes/${id}`, status: 200, debugId: "dbg-2", durationMs: 120.4, at: at(2) });
+      await db.wire.append({ kind: "event", origin: "webhook", caseId: id, eventId: `WH-${u}`, eventType: "CUSTOMER.DISPUTE.CREATED", verify: "SUCCESS", status: 200, durationMs: 900, at: at(1), detail: { result: "processed" } });
+      const pre = await db.wire.append({ kind: "call", origin: "cron", method: "POST", path: "/v2/checkout/orders", status: 201, durationMs: 300, at: at(0) });
+      expect(second).toMatchObject({ kind: "call", origin: "agent", caseId: id, status: 200, debugId: "dbg-2", durationMs: 120 });
+      expect(pre.caseId).toBeUndefined();
+
+      const byCase = await db.wire.listByCase(id);
+      expect(byCase.map((w) => w.kind)).toEqual(["event", "call"]);
+      expect(byCase[0]).toMatchObject({ eventId: `WH-${u}`, eventType: "CUSTOMER.DISPUTE.CREATED", verify: "SUCCESS", detail: { result: "processed" } });
+
+      await db.wire.tag([pre.id], { ref: `CAP-W-${u}` });
+      await db.wire.linkRef(`CAP-W-${u}`, id);
+      expect((await db.wire.listByCase(id)).map((w) => w.id)).toEqual([pre.id, byCase[0].id, second.id]);
+
+      const recent = (await db.wire.listRecent({ since: at(0.5) })).filter((w) => w.caseId === id);
+      expect(recent.map((w) => w.id)).toEqual([byCase[0].id, second.id]);
+      const all = await db.wire.listRecent({ limit: 2 });
+      expect(all).toHaveLength(2);
+      expect(all[0].at <= all[1].at).toBe(true);
+      expect((await db.wire.listRecent({ since: "not a date" })).length).toBeGreaterThan(0);
+    });
+
+    it("breaks wire timestamp ties by insertion order and fills in rows later", async () => {
+      const id = `PP-R-WT-${u}`;
+      const at = new Date(Date.now() - 1000).toISOString();
+      const ev = await db.wire.append({ kind: "event", origin: "webhook", caseId: id, eventId: `WH-T-${u}`, at });
+      const ids = [ev.id];
+      for (let i = 0; i < 4; i++) ids.push((await db.wire.append({ kind: "call", origin: "webhook", caseId: id, path: `/p${i}`, status: 200, at })).id);
+      await db.wire.update(ev.id, { status: 200, verify: "SUCCESS", durationMs: 41.6, detail: { result: "processed" } });
+
+      for (let run = 0; run < 3; run++) {
+        expect((await db.wire.listByCase(id)).map((w) => w.id)).toEqual(ids);
+        const recent = (await db.wire.listRecent({ since: new Date(Date.parse(at) - 1).toISOString(), limit: 200 })).filter((w) => w.caseId === id);
+        expect(recent.map((w) => w.id)).toEqual(ids);
+      }
+      expect((await db.wire.listByCase(id))[0]).toMatchObject({ kind: "event", status: 200, verify: "SUCCESS", durationMs: 42, detail: { result: "processed" } });
+    });
+
+    it("hides unverified webhook rows from the wire unless asked", async () => {
+      const id = `PP-R-WV-${u}`;
+      const at = new Date(Date.now() - 1000).toISOString();
+      const ok = await db.wire.append({ kind: "event", origin: "webhook", caseId: id, verify: "SUCCESS", at });
+      const forged = await db.wire.append({ kind: "event", origin: "webhook", caseId: id, verify: "PENDING", at });
+      const check = await db.wire.append({ kind: "call", origin: "webhook", caseId: id, path: "/v1/notifications/verify-webhook-signature", verify: "PENDING", at });
+      const plain = await db.wire.append({ kind: "call", origin: "agent", caseId: id, path: "/v1/x", status: 200, at });
+      expect((await db.wire.listByCase(id)).map((w) => w.id)).toEqual([ok.id, plain.id]); // pending: hidden
+      await db.wire.update(forged.id, { verify: "FAILURE", status: 401 });
+      await db.wire.update(check.id, { verify: "FAILURE" });
+      const since = new Date(Date.parse(at) - 1).toISOString();
+      const mine = (rows: { caseId?: string; id: string }[]) => rows.filter((w) => w.caseId === id).map((w) => w.id);
+      expect(mine(await db.wire.listRecent({ since, limit: 200 }))).toEqual([ok.id, plain.id]);
+      expect((await db.wire.listByCase(id)).map((w) => w.id)).toEqual([ok.id, plain.id]);
+      expect((await db.wire.listByCase(id, { includeUnverified: true })).map((w) => w.id)).toEqual([ok.id, forged.id, check.id, plain.id]);
+      expect(mine(await db.wire.listRecent({ since, limit: 200, includeUnverified: true }))).toHaveLength(4);
+    });
+
     it("stores the policy", async () => {
       const before = await db.policy.get();
       const p = { ...DEFAULT_POLICY, approvalAboveUsd: 75 + Math.floor(Math.random() * 10) };

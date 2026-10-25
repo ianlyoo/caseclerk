@@ -2,6 +2,7 @@ import { z } from "zod";
 import { actions, audit, cases, rateLimit } from "@/lib/db";
 import type { DisputeLinkRel } from "@/lib/types";
 import { caseDto, clientKey, envInt, errMessage, json, jsonError, parseBody } from "../../../_lib/http";
+import { withWire } from "@/lib/db/wire";
 import { getDispute } from "@/lib/paypal/disputes";
 import { PayPalError } from "@/lib/paypal/client";
 import { adjudicate, requireEvidence } from "@/lib/paypal/simulators";
@@ -20,6 +21,10 @@ const LABEL = { require_evidence: "Request more evidence", adjudicate: "Adjudica
 // Sandbox demo controls; test disputes only. PayPal's webhook then reports the new state.
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
+  return withWire({ origin: "seller", caseId: id }, () => simulate(req, id));
+}
+
+async function simulate(req: Request, id: string): Promise<Response> {
   const body = await parseBody(req, Body);
   if (body instanceof Response) return body;
 
