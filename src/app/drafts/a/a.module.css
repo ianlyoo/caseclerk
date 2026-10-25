@@ -738,6 +738,7 @@
 
 .live .mono {
   color: var(--ink);
+  font-size: 1em;
 }
 
 /* The one live signal on the page: a still green dot, no pulse. */
@@ -869,18 +870,26 @@
 
 .dlSpan,
 .dlSpanHot {
+  --c: var(--ink2);
   grid-row: 1;
   position: relative;
   height: 1px;
-  background: var(--ink2);
   margin-left: 50%;
 }
 
 .dlSpanHot {
-  background: var(--red);
+  --c: var(--red);
 }
 
-/* The deadline: a tick at the end of the line, with the time left beside it. */
+/* The line from opened to due, and a tick at the deadline with the time left above it. */
+.dlSpan::before,
+.dlSpanHot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--c);
+}
+
 .dlSpan::after,
 .dlSpanHot::after {
   content: "";
@@ -889,7 +898,7 @@
   top: -0.45em;
   width: 2px;
   height: 0.9em;
-  background: inherit;
+  background: var(--c);
 }
 
 .dlDue {
@@ -1161,6 +1170,8 @@
     height: auto;
     margin: 0;
   }
+  .dlSpan::before,
+  .dlSpanHot::before,
   .dlSpan::after,
   .dlSpanHot::after {
     display: none;

@@ -114,12 +114,19 @@ const contrastFails = (page, firstScreenOnly) =>
       const before = await navCount(page);
       await approveBtn(page).click();
       await page.waitForTimeout(5500); // the 4 s undo window, then "sent"
-      const body = await page.evaluate(() => document.body.innerText);
+      // The case list in A's left pane keeps the other case waiting (Grace); judge Daniel's case, not the list.
+      const body = await page.evaluate(() => {
+        const list = document.querySelector("aside[aria-label='Cases']");
+        if (list) list.style.display = "none";
+        const t = document.body.innerText;
+        if (list) list.style.display = "";
+        return t;
+      });
       const after = await navCount(page);
       out(after === before - 1, `${D} after Approve the nav count drops`, `${before} to ${after}`);
       out(!/Needs your approval|until you decide/.test(body), `${D} after Approve no "Needs your approval" / "until you decide"`);
       out(body.includes("You approved the $180.00 offer"), `${D} after Approve the timeline has "You approved the $180.00 offer"`);
-      out(/Sent to PayPal[\s\S]*make-offer[\s\S]*3c81e0f5a9d27/.test(body), `${D} after Approve "Sent to PayPal" with endpoint and debug id`);
+      out(["Sent to PayPal", `/v1/customer/disputes/${HERO}/make-offer`, "3c81e0f5a9d27"].every((x) => body.includes(x)), `${D} after Approve "Sent to PayPal" with endpoint and debug id`);
       out((await approveBtn(page).count()) === 0, `${D} after sending, no Approve button`);
       await page.screenshot({ path: `${process.env.SHOTS || "/tmp"}/${d}-case-approved-1920.png` });
       await page.reload({ waitUntil: "networkidle" });
