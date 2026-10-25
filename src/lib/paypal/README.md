@@ -13,7 +13,7 @@ Server-only. Import from `@/lib/paypal` (barrel) or the single files. Sandbox on
 | `tracking.ts` | `addTracking`, `updateTracking`, `getTracking`, `restoreTrackers`, `trackingUrl` | `/v1/shipping/trackers-batch` on the capture id. A 200 that contains only `errors` is thrown as `PayPalError`. |
 | `refunds.ts` | `refundCapture(captureId, amount?)` | Throws `RefundBlockedError` when any dispute on the capture isn't RESOLVED (refund + chargeback = double payout), or the capture isn't COMPLETED/PARTIALLY_REFUNDED. |
 | `transactions.ts` | `searchTransactions({transactionId} \| {dateRange})` | Throws `NotEnabledError` on 403/NOT_AUTHORIZED (Transaction Search not ticked on the app). Window max 31 days. |
-| `testDispute.ts` | `openTestDispute({scenario})` | Scenarios `not_received`, `not_as_described`, `unauthorized`. Order from a handmade-goods shop (1–2 items + $5.95 shipping) → USPS tracking DELIVERED → chargeback. Returns `{disputeId, orderId, captureId, amount, order: OrderContext, debugIds}`. |
+| `testDispute.ts` | `openTestDispute({scenario, items?, shippingFee?, reasonCode?, cardBrand?, shopName?})` | Scenarios `not_received`, `not_as_described`, `unauthorized`. Order from a handmade-goods shop (1–2 items + $5.95 shipping) → USPS tracking DELIVERED → chargeback. Returns `{disputeId, orderId, captureId, amount, order: OrderContext, debugIds}`. |
 | `webhook.ts` | `verifyWebhookSignature(headers, raw)` | Raw body spliced in unchanged. |
 | `consent.ts` | `consentUrl`, `consentRedirectUri` | Buyer consent for the inquiry simulator. |
 | `../evidence/pdf.ts` | `buildEvidencePdf({case, order, narrative, exhibits, seller?, amountCharged?})` | pdf-lib, US Letter, 1–3 pages, ~6 KB. Sample: `docs/samples/evidence-sample.pdf`. |
@@ -57,6 +57,8 @@ Scripts (keys loaded by `scripts/run.sh`, which runs TypeScript with Node's type
 ```bash
 scripts/run.sh scripts/open-test-dispute.ts not_received     # prints ids
 scripts/run.sh scripts/demo-prep.ts --count 2 --stage evidence   # pre-made demo disputes: evidence | review | resolved
+scripts/run.sh scripts/demo-prep.ts --stage evidence --scenario not_as_described \
+  --item "Olympus OM-1n body, chrome" --amounts 412.00,389.00 --shop "Northlight Camera Exchange"   # fixed item, free shipping
 scripts/run.sh scripts/webhooks.ts list                       # sandbox webhook registrations
 scripts/run.sh scripts/fetch-dispute-fixture.ts <id> <name>  # new PII-stripped fixture
 node --import ./scripts/lib/register.mjs scripts/build-sample-evidence.ts   # docs/samples/evidence-sample.pdf
