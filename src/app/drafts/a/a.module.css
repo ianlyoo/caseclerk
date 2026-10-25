@@ -727,10 +727,6 @@
 
 /* ---- case additions ---- */
 .live {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  column-gap: 0.35em;
   margin: 0 0 1.1em;
   color: var(--ink2);
   font-size: 0.94em;
@@ -743,12 +739,13 @@
 
 /* The one live signal on the page: a still green dot, no pulse. */
 .liveDot {
+  display: inline-block;
   width: 0.5em;
   height: 0.5em;
   border-radius: 50%;
   background: var(--green);
-  align-self: center;
-  margin-right: 0.2em;
+  margin-right: 0.5em;
+  vertical-align: 0.1em;
 }
 
 .hot {

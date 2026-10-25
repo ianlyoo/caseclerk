@@ -28,3 +28,26 @@ Known judgement calls the PM may want to re-check:
 - A's "Sandbox" word in the top bar is amber text, not a badge.
 - B's buttons are pills (999px). They are the only filled shapes on B; a square button would also pass.
 - The contact sheet on PDF page 4 is a grid of small rectangles. It is a picture of film frames printed in the PDF, not a UI tile grid.
+
+## Round 2 (critic fixes, 2026-10-25)
+
+Run: `bash docs/design/check-tells.sh <deploy-url>`. The static greps above run first, then `docs/design/check-ui.cjs` runs in headless Chromium on the Mac over ssh (fresh context, temp dir removed on exit).
+
+| Critic finding | Check | Result |
+|---|---|---|
+| `/board` reachable from Deadlines (A1, B1, tell 1) | grep `/board` in drafts = 0; browser: every link on inbox, case and deadlines resolves 200 and none goes to `/board`; nav links stay inside their draft | PASS |
+| Page doesn't change after Approve (A2, B3) | browser: click Approve, wait out the 4 s undo; nav count 2 to 1; no "Needs your approval" / "until you decide" on Daniel's case; timeline has "You approved the $180.00 offer" and "Sent to PayPal" with the make-offer endpoint and debug id | PASS |
+| A way back to Approve after sending (A7, B9) | grep "Back to the proposal / Show the proposal again" = 0; browser: no Approve button after sending, nor after a reload | PASS |
+| Every row opens the hero; no resolved state (A3, B4) | browser: every case link in the inbox opens a page with its own h1 and dispute id (11 of 11); the set covers approval, agent working and closed; sandbox "buyer accepts" gives CUSTOMER.DISPUTE.RESOLVED and "you kept $232.00" | PASS |
+| B Approve below the fold (B2) | browser: Approve bottom ≤ innerHeight − 24 at 1920×940 and 1536×752 @1.25, both drafts | PASS (B 468/940, 439/752; A 228/940, 212/752) |
+| Live PayPal loop not on the first screen (A5, B6) | browser: the "Live on PayPal sandbox" line with a webhook event and a debug id sits in the first viewport, ids ≥ 13 px, at both fold sizes | PASS |
+| A base text 13.2 px (A6) | browser: root font at 1920 ≥ 15 px | PASS (15.06 px) |
+| Calendar hides 2 days (B5) | browser: 14 day cells inside the list box, no cell with scrollWidth > clientWidth, no scrolling ancestor, at 1920×940, 1536×752 @1.25 and 2560×1440 | PASS |
+| Grey below 4.5:1 (A10, B11) | browser: every visible text element against its first opaque background ≥ 4.5:1, on the first screen at both fold sizes and on 8 whole pages. Excluded: text inside the PDF page previews (`figure`), which are pictures of printed pages | PASS |
+| Phone nav clipped, Approve late (A12, B12) | browser at 390×844: header nav scrollWidth = clientWidth, no sideways page scroll, Approve bottom ≤ 844; grep `<wbr>` in B's reason code | PASS (A 524, B 653) |
+| Approve without amount (B8) | browser: button text contains "$180.00" | PASS |
+| RESOLVED_WITH_PAYOUT label (A8) | grep `RESOLVED_WITH_PAYOUT: "PayPal covered it"` = 1 | PASS |
+| Progress-meter lanes, stats trio (tells 2, 3) | grep `barHot`, `bar2`, `s.totals` = 0 | PASS |
+| Per-step cost column (tell 4) | grep `cost(st.costUsd)`, `tlCost` = 0; one total per case with the split in a tooltip | PASS |
+
+Last run: 87 PASS, 0 FAIL. Not covered by a check: the fairness of the expected-value maths (read by hand; see `_cases.ts`, Daniel's decision and `valueNote`) and the tracker attribution (A9: PayPal tracker row and UPS Track API row are now separate steps).

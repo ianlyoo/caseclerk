@@ -30,3 +30,13 @@
 
 ## Which one for judges
 A. Judges spend about two minutes per entry. A shows the whole loop on one screen: the dispute, the agent's tool calls with PayPal endpoints and costs, the decision, and the approval. That's the "real live sandbox loop" edge. B is the better read, and better for the video's narration beats.
+
+## Round 2, after the critique
+
+The critic recommends B for judges; I agree now that B's Approve, live PayPal line and decision sit on the first screen at 1920 and at 125 %. A stays the alternative for a seller who works many cases at once: a denser desk, 15 px base type, and the same approval path.
+
+Both drafts now share one approval store. Approving updates the nav count, the case list row, the state, the margin note and the live line, and appends two timeline steps (you approved; sent to PayPal with endpoint and debug id). A 4 s undo comes first, then there is no way back. Each inbox row opens its own case: 4 are written in full (Daniel, Grace, Sam, Hannah), the rest are built from their row. Each draft has its own deadlines page: A uses a day grid, Oct 15 to Nov 7, with a line from opened to due; B uses a ledger by due day.
+
+The decision maths now values the returned camera at $118.00 ($240.00 resale after a $95.00 service, less $27.00 fees). Offer $229.89, fight $217.96, refund now $71.20. The offer still wins, by a smaller margin, and the table says so.
+
+Left as is: A's three-pane silhouette (critic A5/tell 5). It is A's identity and the brief said no redesign.
