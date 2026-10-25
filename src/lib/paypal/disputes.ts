@@ -225,10 +225,12 @@ export function evidenceInput(evidences: EvidenceItem[]) {
  * When an evidence item carries tracking, PayPal rewrites the capture's tracker as SHIPPED; we read the
  * trackers first and put back any status that went down (DELIVERED stays DELIVERED). `trackingRestored`
  * lists the tracking numbers that needed it. Restoring is best effort and never fails the submission.
+ * With `deferRestore`, the restore is handed to that scheduler (e.g. next/server after()) instead of
+ * delaying the return; it then logs its own outcome and `trackingRestored` is not set.
  */
 export async function provideEvidence(
   id: string,
-  req: { evidences: EvidenceItem[]; files: EvidenceFile[]; captureId?: string },
+  req: { evidences: EvidenceItem[]; files: EvidenceFile[]; captureId?: string; deferRestore?: (task: () => Promise<void>) => void },
 ): Promise<ActionResult & { trackingRestored?: string[]; trackingRestoreError?: string }> {
   if (!req.evidences.length) throw new Error("provideEvidence: at least one evidence item is required");
   const total = req.files.reduce((n, f) => n + f.bytes.byteLength, 0);
@@ -257,7 +259,18 @@ export async function provideEvidence(
     await paypalFetch(`${D}/${enc(id)}/provide-evidence`, { method: "POST", body: form, retryOn400: true }),
   );
 
-  if (captureId && before.length) {
+  if (captureId && before.length && req.deferRestore) {
+    const cap = captureId;
+    const prior = before;
+    req.deferRestore(async () => {
+      try {
+        const restored = await restoreTrackers(cap, prior);
+        if (restored.length) console.log(`[paypal] dispute=${id} restored ${restored.length} tracker status(es)`);
+      } catch (e) {
+        console.warn(`[paypal] dispute=${id} could not restore tracker status: ${(e as Error).message}`);
+      }
+    });
+  } else if (captureId && before.length) {
     try {
       result.trackingRestored = await restoreTrackers(captureId, before);
     } catch (e) {

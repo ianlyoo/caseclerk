@@ -237,7 +237,7 @@ export function createMemoryRepo(): Repo {
         const row: WireEntry = {
           ...clone(defined),
           ...(e.durationMs !== undefined ? { durationMs: Math.round(e.durationMs) } : {}),
-          id: randomUUID(),
+          id: e.id ?? randomUUID(),
           at: e.at && !Number.isNaN(Date.parse(e.at)) ? new Date(e.at).toISOString() : now(),
         };
         wire.push(row);

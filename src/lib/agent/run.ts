@@ -4,7 +4,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { AgentTrigger, CaseRecord, CaseStatus, Decision, DisputeSnapshot, Money, SellerPolicy } from "../types";
 import { SpendCapError } from "../spend";
-import { audit, denyWith, executeApprovedWith, statusAfter, submitAction, ACTION_LABEL, type ActionParams, type ApprovalResult, type SubmitResult } from "./actions";
+import { audit, denyWith, executeApprovedWith, statusAfter, submitAction, ACTION_LABEL, type ActionParams, type ApprovalResult, type Defer, type SubmitResult } from "./actions";
 import { resolveConfig, type AgentConfig } from "./config";
 import { amountUsd, applyPolicyToStrategy, expectedValues } from "./ev";
 import { unknownIdentifiers } from "./facts";
@@ -30,8 +30,8 @@ export async function runAgent(caseId: string, trigger: AgentTrigger): Promise<R
   return runAgentWith(await agentDeps(), caseId, trigger);
 }
 
-export async function executeApproved(actionId: string): Promise<ApprovalResult> {
-  return executeApprovedWith(await agentDeps(), actionId);
+export async function executeApproved(actionId: string, opts: { defer?: Defer } = {}): Promise<ApprovalResult> {
+  return executeApprovedWith(await agentDeps(), actionId, opts);
 }
 
 export async function deny(actionId: string, note?: string): Promise<ApprovalResult> {

@@ -377,7 +377,7 @@ export function createPostgresRepo(url: string, query?: Query): Repo {
                    $12, $13, $14, $15::jsonb)
            RETURNING *`,
           [
-            randomUUID(),
+            e.id && isUuid(e.id) ? e.id : randomUUID(),
             validTime(e.at),
             e.kind,
             e.origin,

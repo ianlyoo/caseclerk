@@ -203,6 +203,9 @@ export function repoContract(name: string, make: () => Promise<Repo>, uniq: () =
       const ids = [ev.id];
       for (let i = 0; i < 4; i++) ids.push((await db.wire.append({ kind: "call", origin: "webhook", caseId: id, path: `/p${i}`, status: 200, at })).id);
       await db.wire.update(ev.id, { status: 200, verify: "SUCCESS", durationMs: 41.6, detail: { result: "processed" } });
+      const given = (await import("node:crypto")).randomUUID();
+      expect((await db.wire.append({ id: given, kind: "call", origin: "seller", caseId: `${id}-own`, status: 200 })).id).toBe(given);
+      expect((await db.wire.listByCase(`${id}-own`)).map((w) => w.id)).toEqual([given]);
 
       for (let run = 0; run < 3; run++) {
         expect((await db.wire.listByCase(id)).map((w) => w.id)).toEqual(ids);
