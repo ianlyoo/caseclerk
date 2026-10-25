@@ -6,6 +6,7 @@ export const API_BASE = process.env.PAYPAL_API_BASE ?? "https://api-m.sandbox.pa
 const RUN_LOG = process.env.SPIKE_RUN_LOG ?? "/srv/company/work/g251-pm-104/w-spike/.scratch/runs.jsonl";
 
 let token;
+export let tokenScope = "";
 export async function accessToken() {
   if (token) return token;
   const id = process.env.PAYPAL_CLIENT_ID;
@@ -23,6 +24,7 @@ export async function accessToken() {
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(`oauth2/token ${res.status} ${json.error ?? ""} ${json.error_description ?? ""}`);
   log({ step: "oauth2/token", status: res.status, scope: json.scope, app_id: json.app_id });
+  tokenScope = json.scope ?? "";
   token = json.access_token;
   return token;
 }
