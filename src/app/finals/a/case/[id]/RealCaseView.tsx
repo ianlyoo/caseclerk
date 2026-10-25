@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { POLICY, EVIDENCE_GATE_USD } from "../../../_shared/data";
 import { PHOTOS } from "../../../_shared/photos";
 import { EASE_OUT, Masthead, Wire, plainOf, realDay, realTime, wireClock, type ShownLine } from "../../ui";
-import { buttonFor, headline, pendingAction, realLines, realState, rulingAsked, slipSummary, story, usd, whyWaits, type ApiCase } from "../../_real/model";
+import { buttonFor, headline, pendingAction, realLines, realState, ptify, rulingAsked, slipSummary, story, usd, whyWaits, type ApiCase } from "../../_real/model";
 import s from "../../a.module.css";
 
 const POLL_MS = 5000;
@@ -117,7 +117,10 @@ function Header({ r }: { r: ApiCase }) {
                 PayPal closed it {realDay(resolvedAt)}, {pt(resolvedAt)}
               </>
             ) : state === "pending" ? (
-              <span className={s.green}>Waiting for you</span>
+              <>
+                <span className={s.green}>Waiting for you</span>
+                {c.snapshot.sellerResponseDueDate && <>; PayPal needs your answer by {realDay(c.snapshot.sellerResponseDueDate)}, {realTime(c.snapshot.sellerResponseDueDate)} PT</>}
+              </>
             ) : asked ? (
               <>PayPal is deciding; sandbox ruling requested {pt(asked)}</>
             ) : (
@@ -302,7 +305,7 @@ function Decision({ r }: { r: ApiCase }) {
               (fighting costs {usd(Math.abs(ev.fight))} on average against {usd(Math.abs(ev.refund))} for a refund)
             </>
           )}
-          , {realDay(d.at)} {pt(d.at)}. {d.rationale}
+          , {realDay(d.at)} {pt(d.at)}. {ptify(d.rationale ?? "")}
         </p>
       </div>
     </>

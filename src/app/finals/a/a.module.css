@@ -259,9 +259,11 @@
 .line[data-sample] {
   color: var(--wire2);
 }
-.line[data-sample] .lName,
-.line[data-sample] .lStatus {
+.line[data-sample] .lName {
   color: var(--wire2);
+}
+.line[data-sample] .lStatus {
+  color: var(--wire3);
 }
 .line[data-origin="paypal"].fresh {
   animation: marker 900ms var(--ease-out) forwards;

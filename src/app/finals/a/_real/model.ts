@@ -8,7 +8,9 @@ import type { WireLine } from "../../_shared/cases";
  *  VPY waits for the seller's approval on camera: nothing in this repo approves it. */
 export const HERO_ID = "PP-R-VPY-10194485";
 export const REAL_CASE_IDS = [HERO_ID, "PP-R-NJA-10194486", "PP-R-JKB-10194463", "PP-R-RCJ-10194476"];
-export const REAL_HREF = "/finals/a/case/PP-R-JKB-10194463";
+/** The landing's replay: the real run from chargeback to RESOLVED, with the seller's approval in the middle. */
+export const REPLAY_ID = "PP-R-NJA-10194486";
+export const REAL_HREF = `/finals/a/case/${REPLAY_ID}`;
 
 type Money = { value: string; currency_code?: string };
 export type ApiAudit = { at: string; actor: string; kind: string; summary: string; data?: Record<string, unknown> };
@@ -32,7 +34,7 @@ export type ApiCase = {
     status: string;
     isTestDispute?: boolean;
     createdAt: string;
-    snapshot: { id: string; stage: string; status: string; outcome?: string; reason: string; amount: Money; createTime: string; updateTime: string };
+    snapshot: { id: string; stage: string; status: string; outcome?: string; reason: string; amount: Money; createTime: string; updateTime: string; sellerResponseDueDate?: string };
     order?: { orderId?: string; captureId?: string; items?: { name: string; description?: string; unitAmount?: Money }[]; shipping?: { carrier?: string; trackingNumber?: string; status?: string }[] };
     triage?: { summary?: string; category?: string };
     decision?: { at: string; strategy: string; winProbability: number; expectedValueUsd?: { fight: number; refund: number }; rationale?: string };
@@ -55,7 +57,7 @@ export function realState(r: ApiCase): RealState {
 /** The action waiting for the seller, if any: the slip. */
 export const pendingAction = (r: ApiCase) => r.actions.find((a) => a.status === "awaiting_approval" || a.status === "approved" || a.status === "executing");
 
-/** "Ceramic ring dish, sage glaze" → "ceramic ring dish"; brand names keep their capital. */
+/** "Ceramic ring dish, sage glaze" becomes "ceramic ring dish"; brand names keep their capital. */
 export function thingOf(r: ApiCase): string {
   const name = (r.case.order?.items?.[0]?.name ?? "order").split(",")[0];
   const second = name.split(/[\s-]/)[1] ?? "";
@@ -121,7 +123,7 @@ export function realLines(r: ApiCase): WireLine[] {
   return out.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 }
 
-/** /api/wire rows → lines, skipping any event or debug id already shown. Mutates the seen sets. */
+/** /api/wire rows to lines, skipping any event or debug id already shown. Mutates the seen sets. */
 export function wireRowLines(rows: ApiWireRow[], caseId: string | null, events: Set<string>, debugs: Set<string>): WireLine[] {
   const out: WireLine[] = [];
   for (const w of rows) {
@@ -148,6 +150,8 @@ export function headline(r: ApiCase): string {
   const state = realState(r);
   if (state === "resolved") {
     const o = r.case.snapshot.outcome ?? "";
+    const approved = r.audit.some((x) => x.kind === "action.approved") && executed(r, "provide_evidence").length > 0;
+    if (o === "RESOLVED_WITH_PAYOUT" && approved) return `You approved the evidence, CaseClerk filed it, and PayPal closed the ${amt} ${thing} chargeback, paying the buyer itself.`;
     if (o === "RESOLVED_WITH_PAYOUT") return `PayPal closed the ${amt} ${thing} chargeback and paid the buyer itself.`;
     if (o === "RESOLVED_SELLER_FAVOUR") return `PayPal ruled for you on the ${amt} ${thing}.`;
     if (o === "RESOLVED_BUYER_FAVOUR") return `PayPal ruled for the buyer on the ${amt} ${thing}.`;
@@ -165,6 +169,12 @@ export const rulingAsked = (r: ApiCase) => {
   return a ? answeredAt(r, a) : undefined;
 };
 
+const ptFmt = new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+/** Rewrites UTC timestamps inside agent text ("2026-10-25 at 08:33:51 UTC", "2026-11-05 04:59 UTC") as Pacific, marked PT. */
+export function ptify(text: string): string {
+  return text.replace(/(\d{4}-\d{2}-\d{2})(?: at |[ T])(\d{2}:\d{2})(:\d{2})?(?:\.\d+)?(?:Z| UTC)/g, (_, d, hm, s) => `${ptFmt.format(new Date(`${d}T${hm}${s ?? ":00"}Z`)).replace(/[\s\u202f]AM$/, " am").replace(/[\s\u202f]PM$/, " pm")} PT`);
+}
+
 export type StoryRow = { at: string; who: "From PayPal" | "To PayPal" | "CaseClerk"; title: string; plain: string; id?: string; idKind?: "event" | "debug id"; status?: string; line?: WireLine };
 
 /** "What happened, newest first": PayPal's traffic plus the agent's own decisions. */
@@ -178,8 +188,8 @@ export function story(r: ApiCase, plainOf: (l: WireLine) => string): StoryRow[] 
   );
   for (const x of r.audit) {
     if (x.kind === "action.approved") rows.push({ at: x.at, who: "CaseClerk", title: "You approved it", plain: "The seller approved the evidence filing in CaseClerk." });
-    if (x.kind === "action.awaiting_approval") rows.push({ at: x.at, who: "CaseClerk", title: "Waiting for you", plain: x.summary.replace(/\.?$/, ".") });
-    if (x.kind === "decision" || x.kind === "triage") rows.push({ at: x.at, who: "CaseClerk", title: x.kind === "decision" ? "Decision" : "Sorted the case", plain: x.summary.replace(/^(Decision|Triage): /, "").replace(/\.?$/, ".") });
+    if (x.kind === "action.awaiting_approval") rows.push({ at: x.at, who: "CaseClerk", title: "Waiting for you", plain: "The evidence is ready. Filing it waits for your approval." });
+    if (x.kind === "decision" || x.kind === "triage") rows.push({ at: x.at, who: "CaseClerk", title: x.kind === "decision" ? "Decision" : "Sorted the case", plain: ptify(x.summary).replace(/^(Decision|Triage): /, "").replace(/\.?$/, ".") });
   }
   return rows.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 }
@@ -235,4 +245,9 @@ export function realRow(r: ApiCase, ptTime: (iso: string) => string): RealRow {
     lastCall: call && { at: call.at, path: call.path, status: call.status, debugId: call.debugId },
     lastEvent: ev?.eventId ? { at: ev.at, eventId: ev.eventId } : undefined,
   };
+}
+
+/** The landing replay: webhooks, the seller's approval and the calls that changed the case, oldest first. */
+export function replayLines(r: ApiCase): WireLine[] {
+  return realLines(r).filter((l) => l.dir === "in" || l.path.startsWith("POST /v1/customer/disputes/"));
 }

@@ -10,6 +10,7 @@ import { PHOTOS } from "../../../_shared/photos";
 import { REAL_ID, REAL_WIRE } from "../../../_shared/real";
 import { entryFor, useDecision, usePendingApprovals, UNDO_MS, type Entry } from "../../../_shared/store";
 import { BASE, EASE_OUT, Masthead, Num, SPRING, Wire, countWord, wireClock, type ShownLine, type WireSection } from "../../ui";
+import { REAL_HREF } from "../../_real/model";
 import s from "../../a.module.css";
 
 const plus = (iso: string, sec: number) => new Date(Date.parse(iso) + sec * 1000).toISOString();
@@ -70,8 +71,9 @@ function Header({ d, phase, resolvedAt }: { d: CaseDetail; phase?: string; resol
   const reduce = useReducedMotion();
   const photo = PHOTOS[d.c.id];
   const resolved = phase === "resolved";
-  const kept = resolved ? d.approval!.resolved.kept : d.outcome?.kept;
-  const h1 = resolved ? d.approval!.resolved.headline : d.headline;
+  // A staged ruling claims no money: the real ruling is on the real case.
+  const kept = resolved ? undefined : d.outcome?.kept;
+  const h1 = resolved ? "A staged ending. On a real case, PayPal\u2019s ruling lands here." : d.headline;
   const red = d.c.dueAt && hoursLeft(d.c.dueAt) < 72;
   return (
     <>
@@ -114,6 +116,10 @@ function Header({ d, phase, resolvedAt }: { d: CaseDetail; phase?: string; resol
           )}
           {kept !== undefined ? (
             <span className={s.due}>of {usd(d.c.amount)}, closed {resolved ? (resolvedAt && day(resolvedAt) !== day(NOW) ? day(resolvedAt) : "today") : day(d.c.closedAt!)}</span>
+          ) : resolved ? (
+            <span className={s.due} data-staged-ruling>
+              staged ruling, sample only. <Link href={REAL_HREF}>See a real ruling</Link>
+            </span>
           ) : d.c.dueAt ? (
             <span className={red ? s.red : s.due}>
               respond within {countdown(d.c.dueAt)}, by {weekday(d.c.dueAt)} {day(d.c.dueAt)}
@@ -311,7 +317,7 @@ function AfterSlip({ d, e, dec }: { d: CaseDetail; e: Entry; dec: Dec }) {
       </p>
       <p className={s.filedSub}>
         Staged: on a real case this posts to <span className={s.mono}>{a.call.path.replace("POST ", "").replace(d.c.id, "{id}")}</span> and PayPal answers with a debug id.{" "}
-        {e.phase === "resolved" ? `PayPal ruled ${day(e.resolvedAt!)}.` : "PayPal and the card issuer usually decide within 30 days."}
+        {e.phase === "resolved" ? "The ruling here is staged too." : "PayPal and the card issuer usually decide within 30 days."}
       </p>
     </motion.div>
   );
@@ -470,8 +476,8 @@ function afterSteps(d: CaseDetail, e: Entry, thenShown: boolean): Step[] {
     out.push({
       at: e.resolvedAt!,
       actor: "paypal",
-      title: a.resolved.outcome === "RESOLVED_SELLER_FAVOUR" ? "PayPal decided in your favour" : "PayPal closed the case",
-      detail: `${a.resolved.line} You kept ${usd(a.resolved.kept)}.`,
+      title: "Staged ruling",
+      detail: "Sample only; nothing came from PayPal.",
       wire: { dir: "in", name: "CUSTOMER.DISPUTE.RESOLVED", status: a.resolved.outcome, path: "CUSTOMER.DISPUTE.RESOLVED" },
     });
   return out;

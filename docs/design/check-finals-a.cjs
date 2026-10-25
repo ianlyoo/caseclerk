@@ -7,6 +7,11 @@ const P = "/finals/a";
 const HERO = "PP-R-NKT-10227591";
 const CASE = `${P}/case/${HERO}`;
 const REAL_API = "https://caseclerk.vercel.app/api/cases/PP-R-JKB-10194463";
+// Real sandbox cases on production. VPY is CAMERA ONLY: these checks never approve it, and every context
+// aborts any request to an approve route, so no check can approve a real action even by mistake.
+const REAL_IDS = { "PP-R-VPY-10194485": "pending", "PP-R-NJA-10194486": "deciding|resolved", "PP-R-JKB-10194463": "deciding", "PP-R-RCJ-10194476": "resolved" };
+const API = "https://caseclerk.vercel.app/api/cases/";
+let approveAttempts = 0;
 const DUE = ["2026-10-26T23:59:00-07:00", "2026-10-27T23:59:00-07:00", "2026-10-28T23:59:00-07:00", "2026-10-29T23:59:00-07:00", "2026-11-04T23:59:00-08:00"];
 
 const V1440 = { name: "1440x810", viewport: { width: 1440, height: 810 }, deviceScaleFactor: 1 };
@@ -27,6 +32,10 @@ const out = (ok, name, note) => {
 
 async function open(browser, v, path, extra = {}) {
   const ctx = await browser.newContext({ ...v, ...extra });
+  await ctx.route(/\/(live\/actions|api\/actions)\//, (r) => {
+    approveAttempts++;
+    return r.abort();
+  });
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -217,6 +226,16 @@ const idsProbe = (page) =>
   const real = await (await fetch(REAL_API)).json();
   const realDebug = new Set(real.actions.map((a) => a.result && a.result.debugId).filter(Boolean));
   const realEvents = new Set(real.audit.map((a) => a.data && a.data.eventId).filter(Boolean));
+  const allReal = {};
+  const anyDebug = new Set();
+  const anyEvent = new Set();
+  for (const id of Object.keys(REAL_IDS)) {
+    const j = await (await fetch(API + id)).json();
+    allReal[id] = j;
+    for (const a of j.actions) if (a.result && a.result.debugId) anyDebug.add(a.result.debugId);
+    for (const a of j.audit) if (a.data && a.data.eventId) anyEvent.add(a.data.eventId);
+    for (const w of j.wire || []) (w.debugId ? anyDebug : w.eventId ? anyEvent : new Set()).add(w.debugId || w.eventId);
+  }
 
   // ---- Case page, pending: fold, type, colour, depth, at every size ----
   for (const v of ALL) {
@@ -232,7 +251,7 @@ const idsProbe = (page) =>
         const r = [...document.querySelectorAll("[data-slip] p")].find((p) => /^\$\d/.test(p.textContent));
         return r ? r.getBoundingClientRect().bottom : 9999;
       });
-      out(box && box.y + box.height <= 844 && amt <= 844, `G14 phone: amount and Approve visible without scrolling`, box ? `Approve bottom ${Math.round(box.y + box.height)}, amount bottom ${Math.round(amt)}` : "no button");
+      out(box && box.y + box.height <= 844 && /\$412\.00/.test((await btn.textContent()) || ""), `G14 phone: amount (on the button) and Approve visible without scrolling`, box ? `Approve bottom ${Math.round(box.y + box.height)}, amount bottom ${Math.round(amt)}` : "no button");
     } else {
       out(box && box.y + box.height <= vh - 24, `G14 Approve bottom <= innerHeight - 24 at ${v.name}`, box ? `${Math.round(box.y + box.height)} of ${vh - 24}` : "no button");
     }
@@ -257,7 +276,8 @@ const idsProbe = (page) =>
 
   // ---- Follow the Approve click at every size (G1, then all page state) ----
   for (const v of ALL) {
-    const { ctx, page } = await open(browser, v, `${CASE}?state=pending`);
+    const { ctx, page } = await open(browser, v, `${CASE}?state=pending&controls=1`);
+    await page.waitForTimeout(1500);
     const before = await navCount(page);
     await page.locator("[data-approve]").click();
     await page.waitForTimeout(300);
@@ -290,7 +310,7 @@ const idsProbe = (page) =>
     out((await page.locator("[data-approve]").count()) === 0 && (await page.locator("[data-inflight]").count()) === 0, `after the 200 no Approve button and no in-flight rule at ${v.name}`);
     if (v !== PHONE) {
       const wire = await page.evaluate(() => [...document.querySelectorAll("[data-wire-line]")].map((l) => l.textContent).join("\n"));
-      out(/POST provide-evidence\s*200/.test(wire), `the Wire shows POST provide-evidence 200 at ${v.name}`);
+      out(/POST provide-evidence\s*staged/.test(wire) && !/POST provide-evidence\s*200/.test(wire.split("\n").filter((l) => !/debug/.test(l)).join("\n")), `the sample filing lands on the Wire as staged, not 200, at ${v.name}`);
     }
     if (v === V1440) {
       judgePage(await pageProbe(page, true), "case after the 200 at 1440");
@@ -301,7 +321,7 @@ const idsProbe = (page) =>
       await page.locator("[data-resolve]").click();
       await page.waitForTimeout(1200);
       const end = await page.evaluate(() => ({ h1: document.querySelector("h1").textContent, body: document.body.innerText, wire: [...document.querySelectorAll("[data-wire-line]")].map((l) => l.textContent).join("\n") }));
-      out(/in your favour/.test(end.h1) && /You kept\s*\$392\.00/.test(end.body), "resolve: the h1 swaps to the ending and the figure reads You kept $392.00", end.h1);
+      out(/staged ending/.test(end.h1) && !/You kept\s*\$392\.00/.test(end.body) && /staged ruling, sample only/.test(end.body), "resolve (controls only): a staged ending, no You kept $392.00, links to a real ruling", end.h1);
       out(/CUSTOMER\.DISPUTE\.RESOLVED/.test(end.wire), "resolve: CUSTOMER.DISPUTE.RESOLVED lands on the Wire");
       judgePage(await pageProbe(page, true), "case resolved at 1440");
     }
@@ -310,7 +330,7 @@ const idsProbe = (page) =>
 
   // ---- G4 reduced motion ----
   {
-    const { ctx, page } = await open(browser, V1440, `${CASE}?state=pending`, { reducedMotion: "reduce" });
+    const { ctx, page } = await open(browser, V1440, `${CASE}?state=pending&controls=1`, { reducedMotion: "reduce" });
     const at = async (label) => {
       const list = await animProbe(page);
       const long = list.filter((a) => a.dur > 150 && !a.undo);
@@ -333,9 +353,9 @@ const idsProbe = (page) =>
   {
     const { ctx, page } = await open(browser, V1440, `${CASE}?state=approved`);
     out(/Evidence filed with PayPal/.test(await page.evaluate(() => document.body.innerText)), "?state=approved opens the approved state");
-    await page.goto(`${BASE}${CASE}?state=resolved`, { waitUntil: "networkidle" });
+    await page.goto(`${BASE}${CASE}?state=resolved&controls=1`, { waitUntil: "networkidle" });
     await page.waitForTimeout(1200);
-    out(/You kept\s*\$392\.00/.test(await page.evaluate(() => document.body.innerText)), "?state=resolved opens the resolved state");
+    out(/staged ruling, sample only/.test(await page.evaluate(() => document.body.innerText)), "?state=resolved opens the staged resolved state");
     await page.locator("[data-sheet]").first().click();
     await page.waitForTimeout(400);
     const rd = await page.evaluate(() => {
@@ -375,8 +395,21 @@ const idsProbe = (page) =>
       const live = await liveProbe(page);
       out(live && live.event && live.debug >= 1 && live.cents, "G13 inbox first screen: Wire with a PayPal event, a debug id >= 14 px, an amount with cents", JSON.stringify(live));
       const ids = await idsProbe(page);
-      const bad = [...ids.debug.filter((d) => !realDebug.has(d)), ...ids.events.filter((e) => !realEvents.has(e))];
-      out(!bad.length && ids.debug.length >= 3, `G12 every debug id and event id on the inbox Wire exists in the real run (${REAL_API.split("/").pop()})`, bad.join(", ") || `${ids.debug.length} debug ids, ${ids.events.length} event ids`);
+      for (const id of Object.keys(REAL_IDS)) {
+        const j = await (await fetch(API + id)).json();
+        for (const a of j.actions) if (a.result && a.result.debugId) anyDebug.add(a.result.debugId);
+        for (const a of j.audit) if (a.data && a.data.eventId) anyEvent.add(a.data.eventId);
+        for (const w of j.wire || []) (w.debugId ? anyDebug : w.eventId ? anyEvent : new Set()).add(w.debugId || w.eventId);
+      }
+      const bad = [...ids.debug.filter((d) => !anyDebug.has(d)), ...ids.events.filter((e) => !anyEvent.has(e))];
+      out(!bad.length && ids.debug.length >= 3, `G12 every debug id and event id on the inbox Wire exists in the production API for the real cases`, bad.join(", ") || `${ids.debug.length} debug ids, ${ids.events.length} event ids`);
+      const first = await page.evaluate(() => {
+        const a = document.querySelector("[data-case-row]");
+        const jkb = document.querySelector("[data-case-row='PP-R-JKB-10194463']");
+        return { real: a && a.hasAttribute("data-real-row"), text: a ? a.innerText : "", jkb: jkb ? jkb.innerText : "" };
+      });
+      out(first.real && /Real sandbox case/.test(first.text), "inbox row 1 is a real sandbox case, labelled Real sandbox case", first.text.split("\n")[1]);
+      out(/debug f2843364d3500/.test(first.jkb) && /Real sandbox case/.test(first.jkb), "the JKB row shows its last PayPal call, debug f2843364d3500", first.jkb.replace(/\n/g, " ").slice(0, 120));
       out(new Set(ids.debug).size === ids.debug.length, "G12 no debug id is attached to two lines");
       const imgs = await page.evaluate(() => [...document.querySelectorAll("img")].map((i) => ({ src: i.getAttribute("src"), credit: i.getAttribute("data-credit") })));
       const credits = await (await page.request.get(`${BASE}/finals/CREDITS.md`)).text().catch(() => "");
@@ -388,7 +421,7 @@ const idsProbe = (page) =>
       }
       out(imgs.length >= 3 && !badImg.length, `G11 every image has data-credit, is listed in CREDITS.md and <= 40 KB`, badImg.join(", ") || `${imgs.length} images`);
       // G15: each row opens its own case.
-      const rows = await page.$$eval("[data-case-row]", (as) => as.map((a) => ({ href: a.getAttribute("href"), buyer: a.querySelector("[class*='rowWho']").textContent.split(",")[0] })));
+      const rows = await page.$$eval("[data-case-row]:not([data-real-row])", (as) => as.map((a) => ({ href: a.getAttribute("href"), buyer: a.querySelector("[class*='rowWho']").textContent.split(",")[0] })));
       const wrong = [];
       const kinds = new Set();
       for (const r of rows) {
@@ -411,12 +444,41 @@ const idsProbe = (page) =>
     await page.waitForTimeout(9800);
     const live = await liveProbe(page);
     out(live && live.event && live.debug >= 1 && live.cents && live.replay, "G13 landing first screen: Replay of <id>, recorded <date>, a PayPal event, a debug id, an amount with cents", JSON.stringify(live));
-    const lines = await page.locator("[data-wire-line]").count();
-    out(lines === 10, "landing replay has landed every real line within 10.5 s", `${lines} lines`);
+    const nja = await (await fetch(API + "PP-R-NJA-10194486")).json();
+    const njaIds = new Set([...nja.actions.map((a) => a.result && a.result.debugId), ...nja.audit.map((a) => a.data && a.data.eventId), ...(nja.wire || []).map((w) => w.debugId || w.eventId)].filter(Boolean));
+    const land = await page.evaluate(() => {
+      const h1 = document.querySelector("main h1");
+      const lede = document.querySelector("main [class*='lede']");
+      const open = document.querySelector("a[data-open-real]");
+      const lines = [...document.querySelectorAll("[data-wire-line]")];
+      const clock = (re) => { const l = lines.find((x) => re.test(x.textContent)); return l ? l.querySelector("[class*='lTime']").textContent : ""; };
+      return {
+        n: lines.length,
+        top: lines[0] ? lines[0].textContent : "",
+        order: !!(h1 && lede && h1.compareDocumentPosition(lede) & Node.DOCUMENT_POSITION_FOLLOWING),
+        h1: h1 ? h1.textContent : "",
+        cta: (document.querySelector("[class*='ctaNote']") || {}).textContent || "",
+        open: open ? open.getAttribute("href") + " " + open.textContent : "",
+        end: (document.querySelector("[data-replay-end]") || {}).textContent || "",
+        created: clock(/CUSTOMER\.DISPUTE\.CREATED/),
+        resolved: clock(/CUSTOMER\.DISPUTE\.RESOLVED/),
+        filed: [...document.querySelectorAll("[data-wire-line]")].some((l) => /POST provide-evidence\s*200/.test(l.textContent) && /debug f8469524f503f/.test(l.textContent)),
+      };
+    });
+    out(land.n >= 5 && /CUSTOMER\.DISPUTE\.RESOLVED/.test(land.top) && land.filed, "landing replay of NJA lands every line within 10 s, POST provide-evidence 200 with debug f8469524f503f, RESOLVED on top", `${land.n} lines`);
     const ids = await idsProbe(page);
-    const bad = [...ids.debug.filter((d) => !realDebug.has(d)), ...ids.events.filter((e) => !realEvents.has(e))];
-    out(!bad.length && ids.debug.length === 4 && ids.events.length === 6, "G12 every replayed id exists in the real run", bad.join(", ") || `${ids.debug.length} debug ids, ${ids.events.length} event ids`);
-    out(!/RESOLVED|decided for the seller|You kept/.test(await page.evaluate(() => document.body.innerText)), "landing doesn't claim PayPal decided (the real run has no RESOLVED webhook)");
+    const bad = [...ids.debug, ...ids.events].filter((x) => !njaIds.has(x));
+    out(!bad.length && ids.debug.length >= 1 && ids.events.length >= 3, "G12 every replayed id exists in NJA's production record", bad.join(", ") || `${ids.debug.length} debug ids, ${ids.events.length} event ids`);
+    const to12 = (hms) => { const [h, m] = hms.split(":").map(Number); return `${h % 12 || 12}:${String(m).padStart(2, "0")}\u202f?\\s?${h < 12 ? "am" : "pm"}`; };
+    const appr = nja.audit.find((a) => a.kind === "action.approved");
+    const res = nja.audit.find((a) => a.kind === "webhook.received" && /RESOLVED/.test(a.data && a.data.eventType));
+    const minsLater = appr && res ? Math.round((Math.floor(Date.parse(res.at) / 1000) - Math.floor(Date.parse(appr.at) / 1000)) / 60) : -1;
+    out(land.order, "landing: the h1 comes before the 3-line intro");
+    out(land.created && new RegExp(`came in at ${to12(land.created)} PT`).test(land.h1) && new RegExp(`${minsLater} minutes later`).test(land.h1), "landing h1 facts match the Wire: the CREATED clock, minutes from approval to RESOLVED", `${land.h1} [${land.created}, ${minsLater} min]`);
+    out(land.cta.trim() === "A sandbox chargeback. PayPal\u2019s webhook reaches us in about 3 minutes.", "landing CTA note says it is a sandbox chargeback, webhook in about 3 minutes", land.cta);
+    out(land.open === "/finals/a/case/PP-R-NJA-10194486 Open this case", "landing: Open this case goes to the real case it replays", land.open);
+    out(land.resolved && land.end.includes(`PayPal closed the case at ${land.resolved} PT and paid the buyer itself`), "landing replay ends on the real RESOLVED, its clock matching the Wire", land.end);
+    out(!/You kept/.test(await page.evaluate(() => document.body.innerText)), "landing makes no sample You kept claim");
     judgePage(await pageProbe(page, true), "landing first screen 1440", { h1Min: 46 });
     judgeAnims(await animProbe(page), "landing after the replay");
     await page.locator("[data-open-test]").click();
@@ -457,16 +519,114 @@ const idsProbe = (page) =>
       out((await sw.getAttribute("aria-checked")) === "true" && before !== after && /calls nothing on PayPal/.test(after), "preview switch flips aria-checked and its consequence line", after.slice(0, 50));
       judgeAnims(await animProbe(page), "policy switch");
       out((await page.locator("header nav a[href='/finals/a/policy'][aria-current=page]").count()) === 1, "Policy is in the nav and marked current");
+      const sent = await page.evaluate(() => ({ text: (document.querySelector("[data-policy-sentence]") || {}).innerText || "", n: (document.querySelector("[data-consequence]") || {}).getAttribute?.("data-consequence") }));
+      out(/^Act on my own when the money is under/.test(sent.text) && sent.n === "3" && /With this policy, .{0,12}of your 7 open cases would wait for you/.test(sent.text.replace(/\s+/g, " ")), "policy reads as a sentence with editable values; 3 of 7 open cases would wait", sent.text.split("\n").slice(-2)[0]);
+      await page.locator("[data-policy-input=money]").fill("80");
+      await page.waitForTimeout(1100);
+      const n2 = await page.locator("[data-consequence]").getAttribute("data-consequence");
+      await page.locator("[data-policy-input=evidence]").fill("500");
+      await page.waitForTimeout(1100);
+      const n3 = await page.locator("[data-consequence]").getAttribute("data-consequence");
+      out(n2 === "2" && n3 === "0", "editing the lines rolls the consequence: $80.00 money line -> 2, $500.00 evidence line -> 0", `${n2}, ${n3}`);
     }
     await ctx.close();
   }
+
+  // ---- Judge round 1: sample honesty, the Wire, the slip, controls hidden ----
+  {
+    const { ctx, page } = await open(browser, V1440, `${CASE}?state=pending`);
+    const w = await page.evaluate(() => {
+      const lines = [...document.querySelectorAll("[data-wire-line]")];
+      const sample = lines.filter((l) => l.hasAttribute("data-sample"));
+      const real = lines.filter((l) => l.getAttribute("data-origin") === "paypal");
+      const statusOf = (l) => (l.querySelector("[class*='lStatus']") || {}).textContent || "";
+      const names = [...document.querySelectorAll("[data-wire-line] [class*='lName']")];
+      const times = lines.map((l) => l.getAttribute("data-key"));
+      return {
+        sampleBad: sample.filter((l) => statusOf(l) !== "staged" || /sample/i.test(l.textContent)).map((l) => l.textContent.slice(0, 40)),
+        sampleColor: sample.map((l) => getComputedStyle(l.querySelector("[class*='lStatus']")).color),
+        realNoPlain: real.filter((l) => !l.querySelector("[class*='lPlain']") || l.querySelector("[class*='lPlain']").textContent.length < 8).length,
+        plainFont: real.slice(0, 1).map((l) => { const c = getComputedStyle(l.querySelector("[class*='lPlain']")); return [c.fontSize, c.fontFamily.split(",")[0], c.color]; })[0],
+        cut: names.filter((n) => n.scrollWidth > n.clientWidth + 0.5).map((n) => n.textContent),
+        dates: document.querySelectorAll("[data-wire-date]").length,
+        bar: document.querySelectorAll("[data-resolve]").length,
+        label: document.body.innerText.includes("Sample case. Nothing on this page went to PayPal."),
+        slipAmts: ((document.querySelector("[data-slip]") || {}).innerText || "").match(/\$412\.00/g)?.length || 0,
+        btn: (document.querySelector("[data-approve]") || {}).textContent || "",
+        why: document.body.innerText.includes("Over your $250.00 evidence line, so it waits for you."),
+        wireW: (() => { const x = [...document.querySelectorAll("aside[data-wire]")][0]; return x ? x.getBoundingClientRect().width : 0; })(),
+      };
+    });
+    out(!w.sampleBad.length && w.sampleColor.every((c) => c === "rgb(140, 136, 127)"), "sample Wire lines say staged in wire3, no verified/200, no sample suffix", w.sampleBad.slice(0, 2).join("; ") || w.sampleColor[0]);
+    out(!w.realNoPlain && w.plainFont && w.plainFont[0] === "14px" && /Hanken/.test(w.plainFont[1]) && w.plainFont[2] === "rgb(162, 158, 149)", "every real Wire entry has a 14 px Hanken plain-English line in wire2", JSON.stringify(w.plainFont));
+    out(!w.cut.length, "no event name on the Wire is truncated", w.cut.join(", "));
+    out(w.dates >= 1, "the Wire shows the date where it changes", `${w.dates} date rows`);
+    out(w.bar === 0 && w.label, "state switcher hidden without ?controls=1; the margin says Sample case. Nothing on this page went to PayPal.");
+    out(w.slipAmts === 1 && w.btn.trim() === "File the evidence on the $412.00 case" && w.why, "slip: one $412.00 (on the button), the button and margin sentence as the verdict asks", `${w.slipAmts} x $412.00, ${w.btn.trim()}`);
+    await ctx.close();
+    // SSR and client render the same Wire header (no hydration flip).
+    const html = await (await fetch(`${BASE}${P}/inbox`)).text();
+    const ssr = (html.match(/data-origin="paypal"><b>([^<]+)<\/b>.*?<span class="[^"]*wireAgo[^"]*">([^<]+)</) || []).slice(1).join(" | ");
+    const { ctx: c2, page: p2 } = await open(browser, V1440, `${P}/inbox`);
+    const cli = await p2.evaluate(() => { const h = document.querySelector("[class*='wireHead']"); return h.querySelector("b").textContent + " | " + h.querySelector("[class*='wireAgo']").textContent; });
+    const ww = await p2.evaluate(() => [...document.querySelectorAll("aside[data-wire]")][0].getBoundingClientRect().width);
+    out(ssr && ssr === cli, "the Wire header renders the same on the server and the client", `${ssr} / ${cli}`);
+    out(ww >= 400, "the inbox Wire is at least 400 px wide at 1440", `${Math.round(ww)} px`);
+    await c2.close();
+  }
+
+  // ---- Real sandbox cases from the production API (never approved here) ----
+  for (const [id, want] of Object.entries(REAL_IDS)) {
+    for (const v of id === "PP-R-VPY-10194485" ? [V1440, V1920, PHONE] : [V1440]) {
+      const { ctx, page, status, errors } = await open(browser, v, `${P}/case/${id}`);
+      const r = await page.evaluate(() => ({
+        state: (document.querySelector("[data-real-case]") || {}).getAttribute?.("data-real-state"),
+        mark: (document.querySelector("[data-real-mark]") || {}).textContent || "",
+        body: document.body.innerText,
+        storyIds: [...document.querySelectorAll("[data-story-id]")].map((x) => x.getAttribute("data-story-id")),
+        wireDebug: [...document.querySelectorAll("[data-wire-line][data-origin=paypal]")].map((l) => (l.textContent.match(/debug ([0-9a-f]{12,13})/) || [])[1]).filter(Boolean),
+        wireEvents: [...document.querySelectorAll("[data-wire-line][data-origin=paypal]")].map((l) => ((l.getAttribute("title") || "").match(/^Event (\S+)$/) || [])[1]).filter(Boolean),
+        sample: document.querySelectorAll("[data-wire-line][data-sample]").length,
+        img: [...document.querySelectorAll("main img, article img")].map((i) => i.getAttribute("data-credit")),
+        btn: (document.querySelector("[data-real-approve]") || {}).textContent || "",
+      }));
+      const ok = status === 200 && !errors.length;
+      out(ok, `real case ${id} loads at ${v.name}`, errors.slice(0, 2).join("; "));
+      if (v !== V1440) {
+        judgePage(await pageProbe(page, true), `real case ${id} first screen ${v.name}`);
+        await ctx.close();
+        continue;
+      }
+      out(new RegExp(`^(${want})$`).test(r.state || ""), `${id} renders the API's state (${want})`, r.state);
+      out(r.mark.trim() === "Real PayPal sandbox case. Every id here came from PayPal." && /What happened, newest first/.test(r.body), `${id}: real-case label and What happened, newest first`);
+      const api = await (await fetch(API + id)).json();
+      const known = new Set([...api.actions.map((a) => a.result && a.result.debugId), ...api.audit.map((a) => a.data && a.data.eventId), ...(api.wire || []).map((w) => w.debugId || w.eventId)].filter(Boolean));
+      const bad = [...r.storyIds, ...r.wireDebug, ...r.wireEvents].filter((x) => !known.has(x));
+      out(!bad.length && r.storyIds.length >= 2 && r.sample === 0, `${id}: every id on the page and the Wire is in its production API record; no sample lines`, bad.join(", ") || `${r.storyIds.length} story ids, ${r.wireDebug.length} debug, ${r.wireEvents.length} events`);
+      out(/ PT\b/.test(r.body) && !/UTC/.test(r.body), `${id}: times are Pacific, marked PT`);
+      if (id === "PP-R-JKB-10194463") {
+        out(/PayPal is deciding; sandbox ruling requested 22:16:27 PT/.test(r.body), "JKB ends honestly: PayPal is deciding; sandbox ruling requested 22:16:27 PT");
+        out(r.img.length === 1 && /CC0|CC BY|Public domain/.test(r.img[0] || "") && /Photo: /.test(r.body), "JKB shows a credited ring dish photo", r.img.join());
+      }
+      if (id === "PP-R-VPY-10194485") {
+        out(r.btn.trim() === "File the evidence on the $412.00 case" && /Over your \$250\.00 evidence line, so it waits for you\./.test(r.body), "VPY: the real slip waits for you, button and margin sentence (not clicked: camera only)", r.btn.trim());
+      }
+      if (id === "PP-R-NJA-10194486") {
+        out(/debug id f8469524f503f/.test(r.body) && (r.state === "deciding" ? /PayPal is deciding/.test(r.body) : /You approved the evidence, CaseClerk filed it, and PayPal closed/.test(r.body) && /PayPal closed it/.test(r.body) && !/You kept/.test(r.body)), "NJA: the real filing shows debug f8469524f503f and the real ending, no You kept", r.state);
+      }
+      if (id === "PP-R-RCJ-10194476") out(/paid the buyer itself/.test(r.body) && !/You kept/.test(r.body), "RCJ: resolved with payout, no You kept claim");
+      if (id === "PP-R-JKB-10194463") judgePage(await pageProbe(page, true), `real case ${id} first screen 1440`, { h1Min: 46 });
+      await ctx.close();
+    }
+  }
+  out(approveAttempts === 0, "no check sent an approve request (VPY is camera only)", `${approveAttempts}`);
 
   // ---- Every link on Final A resolves; deadlines page ----
   {
     const { ctx, page } = await open(browser, V1440, `${P}/deadlines`);
     judgePage(await pageProbe(page, false), "deadlines whole page 1440", { h1Min: 46 });
     const hrefs = new Set();
-    for (const p of [P, `${P}/inbox`, `${P}/deadlines`, `${P}/policy`, CASE, `${P}/case/PP-R-RBN-10224961`]) {
+    for (const p of [P, `${P}/inbox`, `${P}/deadlines`, `${P}/policy`, CASE, `${P}/case/PP-R-RBN-10224961`, `${P}/case/PP-R-VPY-10194485`]) {
       await page.goto(BASE + p, { waitUntil: "networkidle" });
       for (const h of await page.$$eval("a[href]", (as) => as.map((a) => a.getAttribute("href")))) hrefs.add(h);
     }
@@ -485,6 +645,7 @@ const idsProbe = (page) =>
     await ctx.close();
   }
 
+  out(approveAttempts === 0, "end of run: no approve request was ever sent", `${approveAttempts}`);
   await browser.close();
   console.log(`${n - fail} PASS, ${fail} FAIL`);
   process.exit(fail ? 1 : 0);

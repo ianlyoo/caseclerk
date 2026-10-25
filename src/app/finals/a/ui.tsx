@@ -108,7 +108,7 @@ const wDay = new Intl.DateTimeFormat("en-US", { timeZone: TZ, month: "short", da
 const wTime = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
 export const wireClock = (iso: string) => wClock.format(new Date(iso));
 export const realDay = (iso: string) => wDay.format(new Date(iso));
-export const realTime = (iso: string) => wTime.format(new Date(iso)).replace(" AM", " am").replace(" PM", " pm");
+export const realTime = (iso: string) => wTime.format(new Date(iso)).replace(/[\s\u202f]AM$/, " am").replace(/[\s\u202f]PM$/, " pm");
 
 /** The header of every Wire: what the plane is. No relative time, so server and client render the same text. */
 function WireHead() {
@@ -130,6 +130,7 @@ const SHORT: [RegExp, string][] = [
   [/^GET \/v1\/customer\/disputes\/[^/]+$/, "dispute"],
   [/^GET \/v2\/checkout\/orders/, "order"],
   [/^GET \/v1\/shipping\/trackers/, "tracker"],
+  [/^GET \/v2\/payments\/captures/, "payment"],
 ];
 function shortName(l: WireLine): string {
   if (l.dir === "in") return l.name;

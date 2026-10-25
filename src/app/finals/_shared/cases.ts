@@ -117,7 +117,7 @@ const daniel: CaseDetail = {
   approval: {
     kind: "provide_evidence",
     amount: "412.00",
-    head: "File the evidence on the $412.00 case.",
+    head: "File the evidence with PayPal.",
     button: "File the evidence on the $412.00 case",
     decline: "Don't file; accept the chargeback",
     why: "Over your $250.00 evidence line, so it waits for you.",

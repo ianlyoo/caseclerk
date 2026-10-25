@@ -18,7 +18,7 @@ function Last({ c }: { c: InboxCase }) {
   const phase = usePhase(c.id);
   const d = caseDetail(c.id)!;
   const a = d.approval;
-  if (a && phase === "resolved") return <span className={s.green}>{a.resolved.headline.replace(/\.$/, "")}; you kept {usd(a.resolved.kept)}.</span>;
+  if (a && phase === "resolved") return <>Staged ruling, sample only.</>;
   if (a && phase === "filed") return <>{a.done} PayPal is reviewing it.</>;
   if (a && (phase === "undo" || phase === "sending")) return <>Sending to PayPal now.</>;
   if (a && phase === "declined") return <>You declined; nothing was sent.</>;
