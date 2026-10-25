@@ -61,7 +61,7 @@ function Page({ n, of, id, children, title }: { n: number; of: number; id: strin
       <p className={s.pageFoot}>
         <span>PayPal case {id}</span>
         <span>
-          Page {n} of {of}
+          Section {n} of {of}
         </span>
       </p>
     </article>

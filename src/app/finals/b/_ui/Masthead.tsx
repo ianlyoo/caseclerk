@@ -67,7 +67,7 @@ export function Masthead() {
           <Link key={n.label} href={n.href} className={n.on ? s.navOn : undefined} aria-current={n.on ? "page" : undefined}>
             {n.label}
             {n.count ? (
-              <span className={s.navCount} data-cause="approve">
+              <span className={s.navCount} data-cause="approve" data-count={waiting}>
                 <NumberFlow value={waiting} />
               </span>
             ) : null}

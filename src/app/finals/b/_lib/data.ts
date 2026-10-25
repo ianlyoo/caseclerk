@@ -266,8 +266,8 @@ const hero: Case = {
   rationale:
     "The test roll from October 7 shows every speed working before it shipped, and UPS has his signature. His video shows the slow speeds sticking now, which reads as wear in transit. Fighting keeps more on average than refunding, and the camera stays sold.",
   values: [
-    { name: "File the evidence", math: "58% PayPal decides for you and you keep $412.00", ev: "238.96", chosen: true },
-    { name: "Accept the claim", math: "Refund $412.00; the camera comes back at his cost", ev: "118.00" },
+    { name: "File the evidence", math: "55% you keep $412.00; 45% the camera comes back; the $20.00 chargeback fee either way", ev: "259.70", chosen: true },
+    { name: "Accept the chargeback", math: "The camera comes back; the $20.00 chargeback fee", ev: "98.00" },
   ],
   valueNote: "A returned camera is worth $118.00 to you: $240.00 resale after a $95.00 shutter service, less $27.00 selling fees.",
   approval: {
@@ -277,14 +277,14 @@ const hero: Case = {
     button: "File the evidence on $412.00",
     decline: "Decline, accept the claim instead",
     receives:
-      "A 4-page evidence pack: the seller statement, the order, UPS delivery signed OKAFOR, the listing, the October 7 test roll and the message thread. Evidence type: proof of fulfillment, with the UPS tracking number.",
+      "A 4-section evidence pack: the seller statement, the order, UPS delivery signed OKAFOR, the listing, the October 7 test roll and the message thread. Evidence type: proof of fulfillment, with the UPS tracking number.",
     policy: "Over your $250.00 evidence line, so it waits for you.",
     method: "POST",
     path: `/v1/customer/disputes/${HERO_ID}/provide-evidence`,
     name: "provide-evidence",
     sentLine: "Evidence filed with PayPal",
   },
-  ending: { sentence: "PayPal decided for you. You kept $412.00 and the camera stays sold.", kept: "412.00", at: "2026-11-04T14:20:00-08:00" },
+  ending: { sentence: "PayPal decided for you. You kept $392.00: the $412.00 less the $20.00 chargeback fee. The camera stays with Daniel.", kept: "392.00", at: "2026-11-04T14:20:00-08:00" },
   pack: { case: heroRecord, order: heroOrder, narrative: heroNarrative, exhibits: heroExhibits, amountCharged: heroOrder.amountCharged, seller: { name: SELLER.name }, generatedAt: new Date("2026-10-25T16:57:14Z") },
   packNote: "Built Oct 25 at 9:57 am. Not filed until you approve.",
   costUsd: 0.13,
@@ -298,7 +298,7 @@ const hero: Case = {
     { kind: "agent", at: "2026-10-23T16:47:53-07:00", say: "Asked Daniel for a short video of the slow speeds before deciding." },
     { kind: "buyer", at: "2026-10-25T09:56:00-07:00", words: "Video attached. 1/8 and 1/4 both stick. The haze is faint but it's there." },
     { kind: "paypal", at: "2026-10-25T09:56:40-07:00", dir: "in", name: "CUSTOMER.DISPUTE.UPDATED", status: "verified", say: "PayPal passed on Daniel's video" },
-    { kind: "agent", at: "2026-10-25T09:56:58-07:00", say: "Recommends fighting: the test roll and the signed delivery outweigh a shutter that slowed in transit.", detail: "Win chance 58%." },
+    { kind: "agent", at: "2026-10-25T09:56:58-07:00", say: "Recommends fighting: the test roll and the signed delivery outweigh a shutter that slowed in transit.", detail: "Win chance 55%. Filing keeps $259.70 on average; accepting keeps $98.00." },
     { kind: "agent", at: "2026-10-25T09:57:14-07:00", say: "Built the evidence pack: statement, order, delivery, listing, test roll, messages." },
   ],
 };

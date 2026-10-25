@@ -887,9 +887,23 @@
   gap: 1px;
   background: var(--hair);
 }
-.readerPages .page {
+.readerPages {
   container-type: inline-size;
+}
+/* In the reader the page text has floors, so a phone still reads it at 16 px. */
+.readerPages .page {
   background: var(--raised);
+  font-size: max(2.5cqw, 16px);
+}
+.readerPages .pgKicker,
+.readerPages .pageFoot {
+  font-size: max(2.2cqw, 14px);
+}
+.readerPages .pgH {
+  font-size: max(2.9cqw, 18px);
+}
+.readerPages .pgTitle {
+  font-size: max(4.6cqw, 26px);
 }
 
 /* A page sizes its text by the page width: 2.5cqw is 16 px at 640, and a thumbnail is the same page, smaller. */
