@@ -1,0 +1,153 @@
+{
+  "dispute_id": "PP-R-ADC-10194432",
+  "create_time": "2026-10-25T02:33:16.206Z",
+  "update_time": "2026-10-25T02:54:03.802Z",
+  "disputed_transactions": [
+    {
+      "buyer_transaction_id": "4R665946EH1094126",
+      "seller_transaction_id": "2UN05916MP311444Y",
+      "create_time": "2026-10-25T02:32:57.000Z",
+      "transaction_status": "COMPLETED",
+      "gross_amount": {
+        "currency_code": "USD",
+        "value": "12.00"
+      },
+      "buyer": {
+        "payer_id": "REDACTEDPAYER",
+        "name": "REDACTED NAME"
+      },
+      "seller": {
+        "email": "redacted@example.com",
+        "merchant_id": "LNGYMM7567428",
+        "name": "REDACTED NAME"
+      },
+      "seller_protection_eligible": false,
+      "seller_protection_type": "SELLER_PROTECTION_INELIGIBLE"
+    }
+  ],
+  "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+  "status": "RESOLVED",
+  "dispute_amount": {
+    "currency_code": "USD",
+    "value": "12.00"
+  },
+  "dispute_state": "RESOLVED",
+  "external_reason_code": "C2",
+  "dispute_outcome": {
+    "outcome_code": "RESOLVED_WITH_PAYOUT",
+    "outcome_reason": "REPRESENTED_BY_PAYPAL",
+    "amount_refunded": {
+      "currency_code": "USD",
+      "value": "12.00"
+    }
+  },
+  "adjudications": [
+    {
+      "type": "PAYOUT_TO_BUYER",
+      "adjudication_time": "2026-10-25T02:46:27.556Z",
+      "reason": "REPRESENTED_BY_PAYPAL",
+      "dispute_life_cycle_stage": "CHARGEBACK"
+    },
+    {
+      "type": "PAYOUT_TO_BUYER",
+      "adjudication_time": "2026-10-25T02:53:13.878Z",
+      "reason": "REPRESENTED_BY_PAYPAL",
+      "dispute_life_cycle_stage": "CHARGEBACK"
+    }
+  ],
+  "fund_movements": [
+    {
+      "party": "RECEIVER",
+      "amount": {
+        "currency_code": "USD",
+        "value": "11.20"
+      },
+      "initiated_time": "2026-10-25T02:36:34.000Z",
+      "type": "DEBIT",
+      "reason": "HOLD_PLACED"
+    },
+    {
+      "party": "RECEIVER",
+      "amount": {
+        "currency_code": "USD",
+        "value": "11.20"
+      },
+      "initiated_time": "2026-10-25T02:48:04.000Z",
+      "type": "CREDIT",
+      "reason": "HOLD_RELEASED"
+    }
+  ],
+  "dispute_life_cycle_stage": "CHARGEBACK",
+  "dispute_channel": "EXTERNAL",
+  "extensions": {
+    "buyer_contacted_time": "2026-10-25T02:33:14.000Z"
+  },
+  "evidences": [
+    {
+      "evidence_type": "CREATE",
+      "notes": "TEST_MEMO",
+      "source": "SUBMITTED_BY_BUYER",
+      "date": "2026-10-25T02:33:16.206Z",
+      "dispute_life_cycle_stage": "CHARGEBACK"
+    },
+    {
+      "evidence_type": "PROOF_OF_FULFILLMENT",
+      "evidence_info": {
+        "tracking_info": [
+          {
+            "carrier_name": "USPS",
+            "tracking_number": "9400111899223817000000"
+          }
+        ]
+      },
+      "documents": [
+        {
+          "name": "evidence-PP-R-ADC-10194432.pdf",
+          "url": "https://api-m.sandbox.paypal.com/v2/content/documents/DIS-010-11f1-d01d-10f581b0-a184-379250241a51/files/1/download"
+        }
+      ],
+      "notes": "Shipped with tracking; delivery confirmed. See attached evidence pack.",
+      "source": "SUBMITTED_BY_SELLER",
+      "date": "2026-10-25T02:37:48.560Z",
+      "action_info": {
+        "action": "PROVIDE_EVIDENCE"
+      },
+      "dispute_life_cycle_stage": "CHARGEBACK"
+    },
+    {
+      "evidence_type": "OTHER",
+      "documents": [
+        {
+          "name": "evidence-PP-R-ADC-10194432.pdf",
+          "url": "https://api-m.sandbox.paypal.com/v2/content/documents/DIS-010-11f1-d01d-c09ed620-9875-04b010d33b16/files/1/download"
+        }
+      ],
+      "notes": "Shipped with tracking; delivery confirmed. See attached evidence pack.",
+      "source": "SUBMITTED_BY_SELLER",
+      "date": "2026-10-25T02:42:43.301Z",
+      "action_info": {
+        "action": "PROVIDE_EVIDENCE"
+      },
+      "dispute_life_cycle_stage": "CHARGEBACK"
+    }
+  ],
+  "offer": {
+    "buyer_requested_amount": {
+      "currency_code": "USD",
+      "value": "12.00"
+    }
+  },
+  "refund_details": {
+    "allowed_refund_amount": {
+      "currency_code": "USD",
+      "value": "12.00"
+    }
+  },
+  "links": [
+    {
+      "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-ADC-10194432",
+      "rel": "self",
+      "method": "GET"
+    }
+  ]
+}

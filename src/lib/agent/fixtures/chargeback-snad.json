@@ -1,0 +1,71 @@
+{
+  "scenario": "chargeback-snad",
+  "reasons": [
+    "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED"
+  ],
+  "stage": "CHARGEBACK",
+  "recordedAt": "2026-10-25T04:26:00.665Z",
+  "sourceDisputeId": "PP-R-JZN-10194461",
+  "costUsd": 0.051208000000000004,
+  "triage": {
+    "category": "not_as_described",
+    "summary": "Buyer filed a chargeback under not-as-described for $31.00 USD; no buyer message was included, so the specific complaint is unknown."
+  },
+  "decision": {
+    "strategy": "fight",
+    "winProbability": 0.5,
+    "expectedValueUsd": {
+      "fight": -28.78,
+      "refund": -48.57
+    },
+    "rationale": "The not-as-described chargeback was opened 4 seconds after payment, before the dripper could have reached the buyer, and USPS tracking shows it shipped (not yet delivered). We have the item description and tracking, so contesting it is reasonable.",
+    "evidenceStrength": "medium",
+    "model": "claude-opus-5-5 (medium)"
+  },
+  "timeline": [
+    {
+      "actor": "agent",
+      "kind": "triage",
+      "summary": "Triage: not as described. Buyer filed a chargeback under not-as-described for $31.00 USD; no buyer message was included, so the specific complaint is unknown.",
+      "costUsd": 0.000112
+    },
+    {
+      "actor": "agent",
+      "kind": "agent.step",
+      "summary": "Agent step: get order, get tracking",
+      "costUsd": 0.018141
+    },
+    {
+      "actor": "agent",
+      "kind": "tool.get_order",
+      "summary": "Read the order: 1 item (Ceramic pour-over coffee dripper), paid 2026-10-25"
+    },
+    {
+      "actor": "agent",
+      "kind": "tool.get_tracking",
+      "summary": "Read tracking: USPS …853014, shipped"
+    },
+    {
+      "actor": "agent",
+      "kind": "agent.step",
+      "summary": "Agent step: record decision",
+      "costUsd": 0.012137
+    },
+    {
+      "actor": "agent",
+      "kind": "decision",
+      "summary": "Decision: fight with evidence (win chance 50%, expected result: fight -$28.78, refund -$48.57). The not-as-described chargeback was opened 4 seconds after payment, before the dripper could have reached the buyer, and USPS tracking shows it shipped (not yet delivered). We have the item description and tracking, so contesting it is reasonable."
+    },
+    {
+      "actor": "agent",
+      "kind": "agent.step",
+      "summary": "Agent step: provide evidence",
+      "costUsd": 0.020818
+    },
+    {
+      "actor": "paypal",
+      "kind": "action.executed",
+      "summary": "PayPal accepted the evidence submission (HTTP 200)"
+    }
+  ]
+}
