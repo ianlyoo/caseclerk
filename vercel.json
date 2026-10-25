@@ -14,5 +14,8 @@
       "s3-w2-agent": false,
       "s3-w4-data": false
     }
-  }
+  },
+  "regions": [
+    "sin1"
+  ]
 }
