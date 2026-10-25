@@ -23,8 +23,13 @@ async function auth(): Promise<string> {
   return token;
 }
 
-export async function pp<T = Record<string, unknown>>(method: string, path: string, body?: string | FormData): Promise<{ status: number; debugId?: string; json: T }> {
-  const headers: Record<string, string> = { Authorization: `Bearer ${await auth()}` };
+export async function pp<T = Record<string, unknown>>(
+  method: string,
+  path: string,
+  body?: string | FormData,
+  extraHeaders: Record<string, string> = {},
+): Promise<{ status: number; debugId?: string; json: T }> {
+  const headers: Record<string, string> = { Authorization: `Bearer ${await auth()}`, ...extraHeaders };
   if (typeof body === "string") headers["Content-Type"] = "application/json";
   const res = await fetch(`${BASE}${path}`, { method, headers, body });
   const text = await res.text();

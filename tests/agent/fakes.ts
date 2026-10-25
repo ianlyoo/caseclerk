@@ -32,7 +32,7 @@ export function snapshot(over: Partial<DisputeSnapshot> = {}): DisputeSnapshot {
   };
 }
 
-export function memoryDb(policy: SellerPolicy = DEFAULT_POLICY) {
+export function memoryDb(policy: SellerPolicy = DEFAULT_POLICY, clock?: () => string) {
   const cases = new Map<string, CaseRecord>();
   const actions = new Map<string, AgentAction>();
   const audit: AuditEntry[] = [];
@@ -40,7 +40,7 @@ export function memoryDb(policy: SellerPolicy = DEFAULT_POLICY) {
   const held = new Set<string>();
   let tick = 0;
   // Strictly increasing timestamps keep ordering deterministic within a test.
-  const now = () => new Date(Date.parse("2026-10-25T03:00:00.000Z") + ++tick * 1000).toISOString();
+  const now = clock ?? (() => new Date(Date.parse("2026-10-25T03:00:00.000Z") + ++tick * 1000).toISOString());
   const patch = (id: string, p: Partial<CaseRecord>) => {
     const c = cases.get(id);
     if (!c) return null;
