@@ -12,6 +12,8 @@ const [cmd, ...args] = process.argv.slice(2);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const D = "/v1/customer/disputes";
 const node = (...a) => execFileSync(process.execPath, a, { stdio: "inherit", cwd: import.meta.dirname });
+/** Runs one action; true only if the API call succeeded (sandbox actions sometimes 400 right after a link appears). */
+const act = (...a) => { try { node(...a); return true; } catch { console.log(`  ${a[0]} ${a[1]} failed; will retry on the next poll`); return false; } };
 const links = (d) => (d?.links ?? []).map((l) => l.rel);
 
 async function getDispute(id) {
@@ -99,16 +101,15 @@ switch (cmd) {
       const key = `${d?.status}/${d?.dispute_life_cycle_stage} links=${l.join(",")}`;
       if (key !== last) { console.log(`+${Math.round((Date.now() - t0) / 1000)}s ${key}`); last = key; }
       if (d?.status === "RESOLVED") { console.log(`outcome=${d.dispute_outcome?.outcome_code}`); break; }
-      if (l.includes("send_message") && !done.has("msg")) { node("disputes.mjs", "send-message", id); done.add("msg"); }
-      else if (l.includes("make_offer") && !done.has("offer")) { node("disputes.mjs", "make-offer", id, "3.00", d.allowed_response_options?.make_offer?.offer_types?.[0] ?? "REFUND"); done.add("offer"); }
+      if (l.includes("send_message") && !done.has("msg")) { if (act("disputes.mjs", "send-message", id)) done.add("msg"); }
+      else if (l.includes("make_offer") && !done.has("offer")) { if (act("disputes.mjs", "make-offer", id, "3.00", d.allowed_response_options?.make_offer?.offer_types?.[0] ?? "REFUND")) done.add("offer"); }
       else if (l.includes("provide_evidence") && !done.has(`ev${done.has("req") ? 2 : 1}`)) {
         const requested = d.evidences?.filter((e) => e.source === "REQUESTED_FROM_SELLER").map((e) => e.evidence_type) ?? [];
         const type = done.has("req") ? "OTHER" : (requested.includes("PROOF_OF_FULFILLMENT") || !requested.length ? "PROOF_OF_FULFILLMENT" : requested[0]);
-        node("disputes.mjs", "provide-evidence", id, type);
-        done.add(`ev${done.has("req") ? 2 : 1}`);
+        if (act("disputes.mjs", "provide-evidence", id, type)) done.add(`ev${done.has("req") ? 2 : 1}`);
       }
-      else if (l.includes("require_evidence") && !done.has("req")) { node("disputes.mjs", "require-evidence", id, "SELLER_EVIDENCE"); done.add("req"); }
-      else if (l.includes("adjudicate") && !done.has("adj")) { node("disputes.mjs", "adjudicate", id, args[1] ?? "SELLER_FAVOR"); done.add("adj"); }
+      else if (l.includes("require_evidence") && !done.has("req")) { if (act("disputes.mjs", "require-evidence", id, "SELLER_EVIDENCE")) done.add("req"); }
+      else if (l.includes("adjudicate") && !done.has("adj")) { if (act("disputes.mjs", "adjudicate", id, args[1] ?? "SELLER_FAVOR")) done.add("adj"); }
       await sleep(20_000);
     }
     log({ step: "flow.settle.done", dispute_id: id, total_s: (Date.now() - t0) / 1000, actions: [...done] });

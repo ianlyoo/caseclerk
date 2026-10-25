@@ -47,6 +47,8 @@ export async function api(method, path, { json, form, headers = {}, step } = {})
   const debugId = res.headers.get("paypal-debug-id");
   log({ step: step ?? `${method} ${path}`, method, path, status: res.status, ms: Date.now() - started, debug_id: debugId, request: json ?? (form ? "[multipart]" : undefined), response: data });
   console.log(`${method} ${path} → ${res.status} (${Date.now() - started} ms) debug_id=${debugId}`);
+  // Write calls that fail make the CLI exit non-zero, so flows can retry instead of assuming success.
+  if (!res.ok && method !== "GET") process.exitCode = 1;
   return { status: res.status, ok: res.ok, data };
 }
 
