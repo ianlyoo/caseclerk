@@ -395,7 +395,9 @@ const idsProbe = (page) =>
       const live = await liveProbe(page);
       out(live && live.event && live.debug >= 1 && live.cents, "G13 inbox first screen: Wire with a PayPal event, a debug id >= 14 px, an amount with cents", JSON.stringify(live));
       const ids = await idsProbe(page);
-      for (const id of Object.keys(REAL_IDS)) {
+      // The inbox lists every sandbox test case production returns, so the ids are checked against that same list.
+      const listed = (await (await fetch(API.replace(/\/$/, "") + "?test=true&limit=50")).json()).cases.map((c) => c.id);
+      for (const id of listed) {
         const j = await (await fetch(API + id)).json();
         for (const a of j.actions) if (a.result && a.result.debugId) anyDebug.add(a.result.debugId);
         for (const a of j.audit) if (a.data && a.data.eventId) anyEvent.add(a.data.eventId);
