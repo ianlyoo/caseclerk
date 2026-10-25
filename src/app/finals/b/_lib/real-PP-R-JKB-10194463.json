@@ -1,0 +1,727 @@
+{
+ "case": {
+  "id": "PP-R-JKB-10194463",
+  "snapshot": {
+   "id": "PP-R-JKB-10194463",
+   "stage": "CHARGEBACK",
+   "amount": {
+    "value": "17.95",
+    "currency_code": "USD"
+   },
+   "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+   "status": "UNDER_REVIEW",
+   "allowed": [],
+   "channel": "EXTERNAL",
+   "messages": [],
+   "invoiceId": "JC-261025-PAEV5",
+   "createTime": "2026-10-25T04:31:40.083Z",
+   "updateTime": "2026-10-25T05:18:04.029Z",
+   "buyerTransactionId": "5SK58518RS107872S",
+   "sellerTransactionId": "4LL39547DW370724C"
+  },
+  "order": {
+   "items": [
+    {
+     "name": "Ceramic ring dish, sage glaze",
+     "quantity": 1,
+     "unitAmount": {
+      "value": "12.00",
+      "currency_code": "USD"
+     },
+     "description": "3.5 in, wheel-thrown"
+    }
+   ],
+   "paidAt": "2026-10-25T04:31:36Z",
+   "orderId": "4DF014412V694000N",
+   "shipping": [
+    {
+     "status": "SHIPPED",
+     "carrier": "USPS",
+     "trackingUrl": "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899972441749681",
+     "trackingNumber": "9400111899972441749681"
+    }
+   ],
+   "captureId": "4LL39547DW370724C",
+   "buyerCountry": "US",
+   "amountCharged": {
+    "value": "17.95",
+    "currency_code": "USD"
+   }
+  },
+  "triage": {
+   "at": "2026-10-25T04:35:11.454Z",
+   "model": "claude-haiku-5-5 (medium)",
+   "summary": "Buyer's card issuer filed a chargeback claiming the $17.95 item was never received; no buyer message accompanies it.",
+   "category": "not_received"
+  },
+  "decision": {
+   "at": "2026-10-25T04:57:27.749Z",
+   "model": "claude-opus-5-5 (medium)",
+   "strategy": "fight",
+   "rationale": "PayPal asked for evidence again, and USPS tracking 9400111899972441749681 now shows only SHIPPED, not DELIVERED, with no signature proof, so the case is weaker than the earlier decision assumed. Shipment proof still supports a response, but the odds are below even.",
+   "winProbability": 0.3,
+   "evidenceStrength": "weak",
+   "expectedValueUsd": {
+    "fight": -28.85,
+    "refund": -35.07
+   }
+  },
+  "status": "waiting_on_paypal",
+  "isTestDispute": true,
+  "createdAt": "2026-10-25T04:35:07.073Z",
+  "updatedAt": "2026-10-25T05:18:41.028Z"
+ },
+ "actions": [
+  {
+   "id": "e899100c-cfcb-44bd-81a1-1652c5ff4455",
+   "caseId": "PP-R-JKB-10194463",
+   "kind": "provide_evidence",
+   "params": {
+    "round": "2026-10-25T04:35:34.221Z",
+    "exhibits": [
+     {
+      "body": "Order 4DF014412V694000N, capture 4LL39547DW370724C. 1 x Ceramic ring dish, sage glaze (3.5 in, wheel-thrown), USD 12.00. Total charged: USD 17.95. Buyer country: US. Paid 2026-10-25T04:31:36Z.",
+      "title": "Order details"
+     },
+     {
+      "body": "Carrier: USPS. Tracking number: 9400111899972441749681. Status: DELIVERED. Delivered at: 2026-10-25T04:31:39Z. https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899972441749681",
+      "title": "Shipment and tracking"
+     },
+     {
+      "body": "The buyer did not contact the seller before the chargeback, and no message came with it. The carrier shows the order as delivered, so the item was received.",
+      "title": "Seller statement"
+     }
+    ],
+    "evidences": [
+     {
+      "notes": "The cardholder says the item from this payment never arrived. The seller's shipping records show it was delivered.\n\nOrder 4DF014412V694000N (capture 4LL39547DW370724C) was paid on 2026-10-25 at 04:31:36 UTC. The total charge was USD 17.95, with a buyer in the US. The order had one item: 1 x \"Ceramic ring dish, sage glaze\" (3.5 in, wheel-thrown), item price USD 12.00.\n\nThe seller shipped the order with USPS under tracking number 9400111899972441749681. USPS tracking shows this shipment as DELIVERED, with a delivery time of 2026-10-25T04:31:39Z. Tracking link: https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899972441749681.\n\nThe chargeback was filed on 2026-10-25. The buyer did not send the seller a message about a missing package, and no request was made to look into the delivery before the dispute. Because the carrier shows the shipment as delivered, the claim that the item was not received is not supported. We ask that the chargeback be decided in the seller's favor. If the cardholder can't find the package, the seller is happy to help them check with USPS.",
+      "evidenceType": "PROOF_OF_FULFILLMENT",
+      "trackingInfo": [
+       {
+        "carrierName": "USPS",
+        "trackingNumber": "9400111899972441749681"
+       }
+      ]
+     }
+    ],
+    "narrative": "The cardholder says the item from this payment never arrived. The seller's shipping records show it was delivered.\n\nOrder 4DF014412V694000N (capture 4LL39547DW370724C) was paid on 2026-10-25 at 04:31:36 UTC. The total charge was USD 17.95, with a buyer in the US. The order had one item: 1 x \"Ceramic ring dish, sage glaze\" (3.5 in, wheel-thrown), item price USD 12.00.\n\nThe seller shipped the order with USPS under tracking number 9400111899972441749681. USPS tracking shows this shipment as DELIVERED, with a delivery time of 2026-10-25T04:31:39Z. Tracking link: https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899972441749681.\n\nThe chargeback was filed on 2026-10-25. The buyer did not send the seller a message about a missing package, and no request was made to look into the delivery before the dispute. Because the carrier shows the shipment as delivered, the claim that the item was not received is not supported. We ask that the chargeback be decided in the seller's favor. If the cardholder can't find the package, the seller is happy to help them check with USPS."
+   },
+   "rationale": "USPS tracking 9400111899972441749681 shows the package as DELIVERED, so this not-received chargeback can be won with proof of fulfillment. The recorded delivery time is only seconds after payment, which looks like a data problem and makes the evidence weaker.",
+   "requiresApproval": false,
+   "status": "executed",
+   "result": {
+    "debugId": "f2739769e12a1",
+    "httpStatus": 200
+   },
+   "createdAt": "2026-10-25T04:36:35.169Z",
+   "updatedAt": "2026-10-25T04:36:36.852Z"
+  },
+  {
+   "id": "5f4d011d-7ffd-4555-af6a-eff39816794d",
+   "caseId": "PP-R-JKB-10194463",
+   "kind": "require_evidence",
+   "params": {},
+   "rationale": "Sandbox demo control",
+   "requiresApproval": false,
+   "status": "executed",
+   "result": {
+    "debugId": "ca4fea1a69b06",
+    "httpStatus": 200
+   },
+   "createdAt": "2026-10-25T04:55:51.968Z",
+   "updatedAt": "2026-10-25T04:55:53.592Z"
+  },
+  {
+   "id": "f2eea9d3-b61a-46b2-97d7-76d31484d365",
+   "caseId": "PP-R-JKB-10194463",
+   "kind": "provide_evidence",
+   "params": {
+    "round": "2026-10-25T04:56:34.227Z",
+    "exhibits": [
+     {
+      "body": "Order 4DF014412V694000N, capture 4LL39547DW370724C. 1 x Ceramic ring dish, sage glaze (3.5 in, wheel-thrown), unit USD 12.00. Total charged USD 17.95. Buyer country: US. Paid 2026-10-25T04:31:36Z.",
+      "title": "Order details"
+     },
+     {
+      "body": "Carrier: USPS. Tracking number: 9400111899972441749681. Status: SHIPPED. URL: https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899972441749681",
+      "title": "Shipment and tracking"
+     },
+     {
+      "body": "2026-10-25 04:31:36 UTC payment captured. 2026-10-25 04:31:40 UTC chargeback opened (not received). No buyer messages on the dispute.",
+      "title": "Timeline"
+     }
+    ],
+    "evidences": [
+     {
+      "notes": "On 2026-10-25 at 04:31:36 UTC the buyer, located in the US, paid USD 17.95 (capture 4LL39547DW370724C, order 4DF014412V694000N) for one Ceramic ring dish, sage glaze (3.5 in, wheel-thrown), with a unit price of USD 12.00. The card issuer opened this chargeback (reason: merchandise not received) at 04:31:40 UTC the same day, four seconds after payment. That left no reasonable time for the item to ship or arrive before the claim was filed.\n\nThe seller shipped the order with USPS and added tracking number 9400111899972441749681 to this PayPal transaction. The carrier currently shows the shipment status as SHIPPED. The package is in the USPS network on its way to the buyer, and the tracking link is https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899972441749681. We do not have a delivery signature for this shipment.\n\nThe buyer sent the seller no message about the order before or after the chargeback. The item was ordered, paid for and handed to the carrier with tracking. The claim was filed before delivery could reasonably occur, so it is premature. We ask the issuer to rule for the seller, or to let the buyer receive the shipment that is already in transit.",
+      "evidenceType": "PROOF_OF_FULFILLMENT",
+      "trackingInfo": [
+       {
+        "carrierName": "USPS",
+        "trackingNumber": "9400111899972441749681"
+       }
+      ]
+     }
+    ],
+    "narrative": "On 2026-10-25 at 04:31:36 UTC the buyer, located in the US, paid USD 17.95 (capture 4LL39547DW370724C, order 4DF014412V694000N) for one Ceramic ring dish, sage glaze (3.5 in, wheel-thrown), with a unit price of USD 12.00. The card issuer opened this chargeback (reason: merchandise not received) at 04:31:40 UTC the same day, four seconds after payment. That left no reasonable time for the item to ship or arrive before the claim was filed.\n\nThe seller shipped the order with USPS and added tracking number 9400111899972441749681 to this PayPal transaction. The carrier currently shows the shipment status as SHIPPED. The package is in the USPS network on its way to the buyer, and the tracking link is https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899972441749681. We do not have a delivery signature for this shipment.\n\nThe buyer sent the seller no message about the order before or after the chargeback. The item was ordered, paid for and handed to the carrier with tracking. The claim was filed before delivery could reasonably occur, so it is premature. We ask the issuer to rule for the seller, or to let the buyer receive the shipment that is already in transit."
+   },
+   "rationale": "PayPal asked for evidence again, and USPS tracking 9400111899972441749681 now shows only SHIPPED, not DELIVERED, with no signature proof, so the case is weaker than the earlier decision assumed. Shipment proof still supports a response, but the odds are below even.",
+   "requiresApproval": false,
+   "status": "executed",
+   "result": {
+    "debugId": "f2843364d3500",
+    "httpStatus": 200
+   },
+   "createdAt": "2026-10-25T04:57:38.024Z",
+   "updatedAt": "2026-10-25T04:57:39.675Z"
+  },
+  {
+   "id": "29df58ff-cd07-4dc1-ba12-d8bf73158562",
+   "caseId": "PP-R-JKB-10194463",
+   "kind": "adjudicate",
+   "params": {
+    "outcome": "SELLER_FAVOR"
+   },
+   "rationale": "Sandbox demo control",
+   "requiresApproval": false,
+   "status": "executed",
+   "result": {
+    "debugId": "f1407090def3a",
+    "httpStatus": 200
+   },
+   "createdAt": "2026-10-25T05:16:25.125Z",
+   "updatedAt": "2026-10-25T05:16:26.814Z"
+  }
+ ],
+ "audit": [
+  {
+   "id": "aa12f884-2d07-4f11-a4b7-233a19319125",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:35:07.753Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute opened: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "changed": true,
+    "created": true,
+    "eventId": "WH-76E27498RC817000W-87748504UX535252T",
+    "eventType": "CUSTOMER.DISPUTE.CREATED"
+   }
+  },
+  {
+   "id": "f3241bc9-18be-42ff-b9d4-6cee54df117e",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:35:11.342Z",
+   "actor": "agent",
+   "kind": "agent.run.start",
+   "summary": "Agent started: CUSTOMER.DISPUTE.CREATED; merchandise or service not received, 17.95 USD",
+   "data": {
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "trigger": "webhook",
+    "eventType": "CUSTOMER.DISPUTE.CREATED"
+   }
+  },
+  {
+   "id": "59837263-850c-4e42-bf6f-506bb536d98f",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:35:13.330Z",
+   "actor": "agent",
+   "kind": "triage",
+   "summary": "Triage: item not received. Buyer's card issuer filed a chargeback claiming the $17.95 item was never received; no buyer message accompanies it.",
+   "data": {
+    "model": "claude-haiku-5-5 (medium)",
+    "category": "not_received"
+   },
+   "costUsd": 0.000108
+  },
+  {
+   "id": "f47063f6-ec7e-46d8-b1b9-67fa9bb28890",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:35:13.793Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "PayPal status under review (chargeback stage). No action is open to the seller yet; the agent continues when PayPal updates the case.",
+   "data": {
+    "trigger": "webhook",
+    "updateTime": "2026-10-25T04:34:36.867Z"
+   },
+   "costUsd": 0.000108
+  },
+  {
+   "id": "7ff262b3-740b-4ec5-a575-3ca3bc4daebc",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:36:07.661Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: waiting for seller response",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "WAITING_FOR_SELLER_RESPONSE",
+    "allowed": [
+     "provide_evidence",
+     "accept_claim"
+    ],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-82P84727SV255314P-65M51596N69169432",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "0ceb454e-5b9a-4210-bfd2-588101529c90",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:36:11.208Z",
+   "actor": "agent",
+   "kind": "agent.run.start",
+   "summary": "Agent started: CUSTOMER.DISPUTE.UPDATED; merchandise or service not received, 17.95 USD",
+   "data": {
+    "status": "WAITING_FOR_SELLER_RESPONSE",
+    "allowed": [
+     "provide_evidence",
+     "accept_claim"
+    ],
+    "trigger": "webhook",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "9ddbb0a1-fc5a-418a-aabb-60313cd308dc",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:36:14.121Z",
+   "actor": "agent",
+   "kind": "agent.step",
+   "summary": "Agent step: get order, get tracking",
+   "data": {
+    "turn": 1,
+    "model": "claude-opus-5-5",
+    "tools": [
+     "get_order",
+     "get_tracking"
+    ],
+    "inputTokens": 4,
+    "outputTokens": 51,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 3434
+   },
+   "costUsd": 0.018206
+  },
+  {
+   "id": "d6d81513-82e3-49ee-8b80-943f4887c128",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:36:16.108Z",
+   "actor": "agent",
+   "kind": "tool.get_order",
+   "summary": "Read the order: 1 item (Ceramic ring dish, sage glaze), paid 2026-10-25",
+   "data": {
+    "tool": "get_order",
+    "found": true,
+    "orderId": "4DF014412V694000N"
+   }
+  },
+  {
+   "id": "53565514-85cf-4b51-bb65-a58a4bec0cf9",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:36:16.810Z",
+   "actor": "agent",
+   "kind": "tool.get_tracking",
+   "summary": "Read tracking: USPS \u2026749681, delivered",
+   "data": {
+    "tool": "get_tracking",
+    "count": 1,
+    "status": "DELIVERED"
+   }
+  },
+  {
+   "id": "d87a078d-df63-4028-8c29-53b983879ab2",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:36:24.476Z",
+   "actor": "agent",
+   "kind": "agent.step",
+   "summary": "Agent step: record decision",
+   "data": {
+    "turn": 2,
+    "model": "claude-opus-5-5",
+    "tools": [
+     "record_decision"
+    ],
+    "inputTokens": 2,
+    "outputTokens": 531,
+    "cacheReadTokens": 3434,
+    "cacheWriteTokens": 400
+   },
+   "costUsd": 0.013315
+  },
+  {
+   "id": "007592fb-8c47-43b9-8405-00afe73288e8",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:36:24.939Z",
+   "actor": "agent",
+   "kind": "decision",
+   "summary": "Decision: fight with evidence (win chance 65%, expected result: fight -$16.92, refund -$35.07). USPS tracking 9400111899972441749681 shows the package as DELIVERED, so this not-received chargeback can be won with proof of fulfillment. The recorded delivery time is only seconds after payment, which looks like a data problem and makes the evidence weaker.",
+   "data": {
+    "proposed": "fight",
+    "strategy": "fight",
+    "winProbability": 0.65,
+    "evidenceStrength": "medium",
+    "expectedValueUsd": {
+     "fight": -16.92,
+     "refund": -35.07
+    }
+   }
+  },
+  {
+   "id": "7d427210-97c5-4f99-8857-987f5fc3f5ae",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:36:34.721Z",
+   "actor": "agent",
+   "kind": "agent.step",
+   "summary": "Agent step: provide evidence",
+   "data": {
+    "turn": 3,
+    "model": "claude-opus-5-5",
+    "tools": [
+     "provide_evidence"
+    ],
+    "inputTokens": 2,
+    "outputTokens": 821,
+    "cacheReadTokens": 3834,
+    "cacheWriteTokens": 592
+   },
+   "costUsd": 0.020155
+  },
+  {
+   "id": "466d20c3-6d2f-4921-9cb1-db866533511b",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:36:37.072Z",
+   "actor": "paypal",
+   "kind": "action.executed",
+   "summary": "PayPal accepted the evidence submission (HTTP 200)",
+   "data": {
+    "tool": "provide_evidence",
+    "debugId": "f2739769e12a1",
+    "actionId": "e899100c-cfcb-44bd-81a1-1652c5ff4455",
+    "httpStatus": 200
+   }
+  },
+  {
+   "id": "b9cbddcc-301d-419f-b297-1922d1cbff96",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:36:37.521Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "Agent finished: fight with evidence; evidence submission: sent. Cost $0.0517.",
+   "data": {
+    "trigger": "webhook",
+    "strategy": "fight",
+    "updateTime": "2026-10-25T04:35:34.221Z"
+   },
+   "costUsd": 0.051676
+  },
+  {
+   "id": "3f7c157d-7c0b-4427-8ff2-5862687c51de",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:37:07.631Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-60X945983W072284S-9SU6879991981894S",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "a9d3f6ce-c03f-4201-aade-528cd6ca00a1",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:37:10.494Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "PayPal status under review (chargeback stage). No action is open to the seller right now.",
+   "data": {
+    "trigger": "webhook",
+    "updateTime": "2026-10-25T04:36:36.250Z"
+   }
+  },
+  {
+   "id": "97f534ec-24ad-4fbf-86ed-e3553f36e80a",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:55:53.821Z",
+   "actor": "seller",
+   "kind": "demo.require_evidence",
+   "summary": "Demo control: PayPal sandbox asked the seller for more evidence",
+   "data": {
+    "actionId": "5f4d011d-7ffd-4555-af6a-eff39816794d"
+   }
+  },
+  {
+   "id": "e082a961-be23-4923-a93f-4a29d570bbf7",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:07.895Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: waiting for seller response",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "WAITING_FOR_SELLER_RESPONSE",
+    "allowed": [
+     "provide_evidence",
+     "accept_claim"
+    ],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-73R3763303020580L-4FV00469AK752882S",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "971997c1-b1ac-42fc-9a46-024102beab9c",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:11.371Z",
+   "actor": "agent",
+   "kind": "agent.run.start",
+   "summary": "Agent started: CUSTOMER.DISPUTE.UPDATED; merchandise or service not received, 17.95 USD",
+   "data": {
+    "status": "WAITING_FOR_SELLER_RESPONSE",
+    "allowed": [
+     "provide_evidence",
+     "accept_claim"
+    ],
+    "trigger": "webhook",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "4a016d89-42d9-431e-8b85-291b78248360",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:15.252Z",
+   "actor": "agent",
+   "kind": "agent.step",
+   "summary": "Agent step: get order, get tracking, get dispute",
+   "data": {
+    "turn": 1,
+    "model": "claude-opus-5-5",
+    "tools": [
+     "get_order",
+     "get_tracking",
+     "get_dispute"
+    ],
+    "inputTokens": 4,
+    "outputTokens": 189,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 3620
+   },
+   "costUsd": 0.021896
+  },
+  {
+   "id": "98008646-88e8-47bc-a9e1-8d0a66098f18",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:17.077Z",
+   "actor": "agent",
+   "kind": "tool.get_order",
+   "summary": "Read the order: 1 item (Ceramic ring dish, sage glaze), paid 2026-10-25",
+   "data": {
+    "tool": "get_order",
+    "found": true,
+    "orderId": "4DF014412V694000N"
+   }
+  },
+  {
+   "id": "4f612c37-78c8-4f8e-b3d2-85bf5e5cc243",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:17.945Z",
+   "actor": "agent",
+   "kind": "tool.get_tracking",
+   "summary": "Read tracking: USPS \u2026749681, shipped",
+   "data": {
+    "tool": "get_tracking",
+    "count": 1,
+    "status": "SHIPPED"
+   }
+  },
+  {
+   "id": "7349c9ba-c692-48e2-a1f2-a7931fd02f66",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:19.658Z",
+   "actor": "agent",
+   "kind": "tool.get_dispute",
+   "summary": "Read the dispute: PayPal status waiting for seller response (chargeback stage).",
+   "data": {
+    "tool": "get_dispute",
+    "status": "WAITING_FOR_SELLER_RESPONSE"
+   }
+  },
+  {
+   "id": "e93e9390-bf7b-42a8-933e-e655c1d41f87",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:27.630Z",
+   "actor": "agent",
+   "kind": "agent.step",
+   "summary": "Agent step: record decision",
+   "data": {
+    "turn": 2,
+    "model": "claude-opus-5-5",
+    "tools": [
+     "record_decision"
+    ],
+    "inputTokens": 2,
+    "outputTokens": 585,
+    "cacheReadTokens": 3620,
+    "cacheWriteTokens": 840
+   },
+   "costUsd": 0.016632
+  },
+  {
+   "id": "5df11b74-663b-455e-ba5f-bf46520d1556",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:28.081Z",
+   "actor": "agent",
+   "kind": "decision",
+   "summary": "Decision: fight with evidence (win chance 30%, expected result: fight -$28.85, refund -$35.07). PayPal asked for evidence again, and USPS tracking 9400111899972441749681 now shows only SHIPPED, not DELIVERED, with no signature proof, so the case is weaker than the earlier decision assumed. Shipment proof still supports a response, but the odds are below even.",
+   "data": {
+    "proposed": "fight",
+    "strategy": "fight",
+    "winProbability": 0.3,
+    "evidenceStrength": "weak",
+    "expectedValueUsd": {
+     "fight": -28.85,
+     "refund": -35.07
+    }
+   }
+  },
+  {
+   "id": "4403c7bc-55c2-44d5-83ce-63f679ea0281",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:37.580Z",
+   "actor": "agent",
+   "kind": "agent.step",
+   "summary": "Agent step: provide evidence",
+   "data": {
+    "turn": 3,
+    "model": "claude-opus-5-5",
+    "tools": [
+     "provide_evidence"
+    ],
+    "inputTokens": 2,
+    "outputTokens": 853,
+    "cacheReadTokens": 4460,
+    "cacheWriteTokens": 646
+   },
+   "costUsd": 0.02119
+  },
+  {
+   "id": "ed040aef-b23b-4090-a963-f86d34e14dd4",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:39.896Z",
+   "actor": "paypal",
+   "kind": "action.executed",
+   "summary": "PayPal accepted the evidence submission (HTTP 200)",
+   "data": {
+    "tool": "provide_evidence",
+    "debugId": "f2843364d3500",
+    "actionId": "f2eea9d3-b61a-46b2-97d7-76d31484d365",
+    "httpStatus": 200
+   }
+  },
+  {
+   "id": "88c4f066-6b8a-4d03-81bb-542259650f35",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:57:40.342Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "Agent finished: fight with evidence; evidence submission: sent. Cost $0.0597.",
+   "data": {
+    "trigger": "webhook",
+    "strategy": "fight",
+    "updateTime": "2026-10-25T04:56:34.227Z"
+   },
+   "costUsd": 0.059718
+  },
+  {
+   "id": "58accffe-daba-4b27-98c0-df764e1ce8a2",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:58:07.960Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-48X11126LU253151C-03X82557EM479451K",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "c4adea0e-57e3-4364-9936-6d71c35e1827",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T04:58:10.825Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "PayPal status under review (chargeback stage). No action is open to the seller right now.",
+   "data": {
+    "trigger": "webhook",
+    "updateTime": "2026-10-25T04:57:39.082Z"
+   }
+  },
+  {
+   "id": "5f211bbb-692f-4070-829c-cdf2c45645bb",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T05:16:27.056Z",
+   "actor": "seller",
+   "kind": "demo.adjudicate",
+   "summary": "Demo control: PayPal sandbox asked to rule for the seller",
+   "data": {
+    "outcome": "SELLER_FAVOR",
+    "actionId": "29df58ff-cd07-4dc1-ba12-d8bf73158562"
+   }
+  },
+  {
+   "id": "6eae711c-507a-4661-aca1-739fee505630",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T05:18:38.329Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-9D6531042X159772H-0RT84328VL704925U",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "faa14d29-eeeb-410e-841a-0b7635fdd778",
+   "caseId": "PP-R-JKB-10194463",
+   "at": "2026-10-25T05:18:41.261Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "PayPal status under review (chargeback stage). No action is open to the seller right now.",
+   "data": {
+    "trigger": "webhook",
+    "waitKey": "UNDER_REVIEW||0|",
+    "updateTime": "2026-10-25T05:18:04.029Z"
+   }
+  }
+ ]
+}
