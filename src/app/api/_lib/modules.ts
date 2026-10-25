@@ -1,11 +1,9 @@
-// Late-bound access to W1 (PayPal) and W2 (agent) modules that may not be on this branch yet.
+// Late-bound access to W2's agent module, which may not be on this branch yet.
 //
 // The import goes through a webpack context over src/lib restricted by `webpackInclude`, so the build
 // succeeds whether or not the file exists: when it exists it is bundled normally, when it doesn't the
-// import rejects at runtime and we return null. Once all modules are on main this file can become
-// plain static imports.
-import type { DisputeSnapshot } from "@/lib/types";
-
+// import rejects at runtime and we return null. Once W2 is on main this file can become a
+// plain static import.
 export type AgentTrigger = { kind: "webhook" | "approval" | "manual"; eventType?: string };
 
 export type AgentModule = {
@@ -14,18 +12,7 @@ export type AgentModule = {
   deny?(actionId: string): Promise<unknown>;
 };
 
-export type DisputesModule = { getDispute(id: string): Promise<DisputeSnapshot> };
-
-export type TestDisputeModule = {
-  openTestDispute(opts: { scenario?: string }): Promise<{ disputeId?: string; captureId: string; orderId: string }>;
-};
-
-export type SimulatorsModule = {
-  requireEvidence(id: string): Promise<unknown>;
-  adjudicate(id: string, outcome: "SELLER_FAVOR" | "BUYER_FAVOR"): Promise<unknown>;
-};
-
-type Name = "agent/run" | "agent/approvals" | "agent/index" | "paypal/disputes" | "paypal/testDispute" | "paypal/simulators";
+type Name = "agent/run" | "agent/approvals" | "agent/index";
 
 const cache = new Map<Name, Promise<unknown>>();
 
@@ -34,7 +21,7 @@ async function load<T>(name: Name, required: (keyof T)[]): Promise<T | null> {
     cache.set(
       name,
       import(
-        /* webpackInclude: /(agent[\\/](run|approvals|index)|paypal[\\/](disputes|testDispute|simulators))\.ts$/ */
+        /* webpackInclude: /agent[\\/](run|approvals|index)\.ts$/ */
         /* webpackMode: "lazy-once" */
         `../../../lib/${name}`
       ).catch(() => null),
@@ -54,6 +41,3 @@ export async function loadApprovals(): Promise<Required<Pick<AgentModule, "execu
   }
   return null;
 }
-export const loadDisputes = () => load<DisputesModule>("paypal/disputes", ["getDispute"]);
-export const loadTestDispute = () => load<TestDisputeModule>("paypal/testDispute", ["openTestDispute"]);
-export const loadSimulators = () => load<SimulatorsModule>("paypal/simulators", ["requireEvidence", "adjudicate"]);

@@ -1,22 +1,20 @@
 import { z } from "zod";
 import { rateLimit, testCaptures } from "@/lib/db";
 import { clientKey, envInt, errMessage, json, jsonError, parseBody } from "../_lib/http";
-import { loadTestDispute } from "../_lib/modules";
+import { openTestDispute, TEST_SCENARIOS, type OpenTestDisputeResult, type TestScenario } from "@/lib/paypal/testDispute";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const DAY_S = 86_400;
-const Body = z.object({ scenario: z.string().regex(/^[a-z0-9_]{1,40}$/).optional() }).strict();
+const SCENARIOS = Object.keys(TEST_SCENARIOS) as [TestScenario, ...TestScenario[]];
+const Body = z.object({ scenario: z.enum(SCENARIOS).default("not_received") }).strict();
 
-// POST /api/test-dispute  body: { scenario? } → 202 { captureId, orderId, disputeId? }
+// POST /api/test-dispute  body: { scenario?: "not_received" | "not_as_described" } → 202 { captureId, orderId, disputeId? }
 // Creates a sandbox payment + chargeback; PayPal's CUSTOMER.DISPUTE.CREATED webhook (~3 min) opens the case.
 export async function POST(req: Request) {
   const body = await parseBody(req, Body);
   if (body instanceof Response) return body;
-
-  const mod = await loadTestDispute();
-  if (!mod) return jsonError(503, "unavailable", "Test disputes aren't available on this deployment yet.");
 
   const perIp = envInt("TEST_DISPUTES_PER_IP_PER_DAY", 3);
   const global = envInt("TEST_DISPUTES_PER_DAY", 40);
@@ -38,9 +36,10 @@ export async function POST(req: Request) {
     return jsonError(503, "unavailable", "Test disputes are unavailable right now. Try again shortly.");
   }
 
-  let created: Awaited<ReturnType<typeof mod.openTestDispute>>;
+  let created: OpenTestDisputeResult;
   try {
-    created = await mod.openTestDispute(body.scenario ? { scenario: body.scenario } : {});
+    // waitMs 0: don't poll for the dispute id; the webhook links the case by capture id.
+    created = await openTestDispute({ scenario: body.scenario, waitMs: 0 });
   } catch (e) {
     console.error(`[api/test-dispute] openTestDispute failed: ${errMessage(e)}`);
     return jsonError(502, "upstream_error", "PayPal's sandbox didn't accept the test dispute. Try again in a minute.");
@@ -51,7 +50,8 @@ export async function POST(req: Request) {
       captureId: created.captureId,
       orderId: created.orderId,
       ...(created.disputeId ? { disputeId: created.disputeId } : {}),
-      ...(body.scenario ? { scenario: body.scenario } : {}),
+      scenario: body.scenario,
+      order: created.order,
     });
   } catch (e) {
     // The dispute exists; it just won't carry the test badge / demo controls.
@@ -60,9 +60,11 @@ export async function POST(req: Request) {
   console.log(`[api/test-dispute] capture=${created.captureId} order=${created.orderId} dispute=${created.disputeId ?? "-"}`);
   return json(
     {
+      scenario: body.scenario,
       captureId: created.captureId,
       orderId: created.orderId,
       disputeId: created.disputeId ?? null,
+      amount: created.amount,
       message: "Sandbox chargeback filed. PayPal usually notifies us in about 3 minutes; the case then appears in the inbox.",
     },
     202,

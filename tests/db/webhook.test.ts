@@ -1,4 +1,5 @@
-// Webhook route with a recorded sandbox payload (PII scrubbed), mocked signature check and agent.
+// Webhook route with a recorded sandbox payload (PII scrubbed) through W1's real getDispute/toSnapshot;
+// paypalFetch, the signature check and the agent are mocked.
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRepo, setDbForTests, type Repo } from "@/lib/db";
@@ -20,7 +21,6 @@ vi.mock("@/lib/paypal/client", () => ({ paypalFetch: m.paypalFetch }));
 vi.mock("next/server", () => ({ after: (fn: () => Promise<void>) => m.afterTasks.push(fn) }));
 vi.mock("@/app/api/_lib/modules", () => ({
   loadAgent: async () => (m.agentLoaded ? { runAgent: m.runAgent } : null),
-  loadDisputes: async () => null, // exercise the fallback normalizer over the recorded GET payload
 }));
 
 const { POST } = await import("@/app/api/webhooks/paypal/route");
@@ -59,7 +59,7 @@ describe("POST /api/webhooks/paypal", () => {
         status: "WAITING_FOR_SELLER_RESPONSE",
         stage: "CHARGEBACK",
         sellerTransactionId: dispute.disputed_transactions[0].seller_transaction_id,
-        allowed: ["accept_claim", "provide_evidence"],
+        allowed: expect.arrayContaining(["accept_claim", "provide_evidence"]),
       },
     });
     const timeline = await db.audit.listByCase(DISPUTE_ID);
@@ -105,7 +105,7 @@ describe("POST /api/webhooks/paypal", () => {
   });
 
   it("returns 503 and forgets the event when PayPal can't be read, so the retry works", async () => {
-    m.paypalFetch.mockResolvedValueOnce({ status: 500, debugId: "test", json: {} });
+    m.paypalFetch.mockRejectedValueOnce(new Error("PayPal GET /v1/customer/disputes/x → 500 (debug_id test)")); // W1 throws on non-2xx
     expect((await post()).status).toBe(503);
     expect(m.afterTasks).toHaveLength(0);
     expect((await post()).status).toBe(200);

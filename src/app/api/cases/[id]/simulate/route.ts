@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { actions, audit, cases, rateLimit } from "@/lib/db";
 import type { DisputeLinkRel } from "@/lib/types";
-import { fetchDisputeSnapshot } from "../../../_lib/dispute";
 import { caseDto, clientKey, envInt, errMessage, json, jsonError, parseBody } from "../../../_lib/http";
-import { loadSimulators } from "../../../_lib/modules";
+import { getDispute } from "@/lib/paypal/disputes";
+import { PayPalError } from "@/lib/paypal/client";
+import { adjudicate, requireEvidence } from "@/lib/paypal/simulators";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,13 +32,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!rl) return jsonError(503, "unavailable", "Demo controls are unavailable right now.");
   if (!rl.allowed) return jsonError(429, "rate_limited", "Too many demo actions. Wait a bit and retry.", { resetAt: rl.resetAt });
 
-  const sims = await loadSimulators();
-  if (!sims) return jsonError(503, "unavailable", "Demo controls aren't available on this deployment yet.");
-
   // Refresh first: PayPal enables these links minutes after each step (see docs/experiments.md).
   let record = existing;
   try {
-    record = (await cases.upsertFromSnapshot(await fetchDisputeSnapshot(id))).record;
+    record = (await cases.upsertFromSnapshot(await getDispute(id))).record;
   } catch (e) {
     console.warn(`[api/cases/${id}/simulate] refresh failed: ${errMessage(e)}`);
   }
@@ -57,11 +55,17 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     requiresApproval: false,
     status: "executing",
   });
+  let result: { status: number; debugId?: string };
   try {
-    if (body.action === "adjudicate") await sims.adjudicate(id, body.outcome);
-    else await sims.requireEvidence(id);
+    result = body.action === "adjudicate" ? await adjudicate(id, body.outcome) : await requireEvidence(id);
   } catch (e) {
-    const failed = await actions.update(action.id, { status: "failed", result: { error: errMessage(e).slice(0, 300) } });
+    const failed = await actions.update(action.id, {
+      status: "failed",
+      result: {
+        ...(e instanceof PayPalError ? { httpStatus: e.status, ...(e.debugId ? { debugId: e.debugId } : {}) } : {}),
+        error: errMessage(e).slice(0, 300),
+      },
+    });
     await audit.append({
       caseId: id,
       actor: "seller",
@@ -74,7 +78,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       action: failed,
     });
   }
-  const done = await actions.update(action.id, { status: "executed" });
+  const done = await actions.update(action.id, {
+    status: "executed",
+    result: { httpStatus: result.status, ...(result.debugId ? { debugId: result.debugId } : {}) },
+  });
   await audit.append({
     caseId: id,
     actor: "seller",
