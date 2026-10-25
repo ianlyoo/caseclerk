@@ -233,6 +233,16 @@ export function repoContract(name: string, make: () => Promise<Repo>, uniq: () =
       expect(mine(await db.wire.listRecent({ since, limit: 200, includeUnverified: true }))).toHaveLength(4);
     });
 
+    it("caches case money once (first write wins)", async () => {
+      const id = `PP-R-M-${u}`;
+      const usd = (value: string) => ({ value, currency_code: "USD" });
+      const m = { gross: usd("389.00"), fee: usd("10.57"), net: usd("378.43"), kept: usd("378.43"), source: "paypal_fund_movements" as const, at: "2026-10-25T09:00:00.000Z", captureId: `CAP-${u}`, movements: [] };
+      expect(await db.caseMoney.get(id)).toBeNull();
+      expect(await db.caseMoney.put(id, m)).toEqual(m);
+      expect(await db.caseMoney.put(id, { ...m, kept: usd("0.00") })).toEqual(m);
+      expect(await db.caseMoney.get(id)).toEqual(m);
+    });
+
     it("stores the policy", async () => {
       const before = await db.policy.get();
       const p = { ...DEFAULT_POLICY, approvalAboveUsd: 75 + Math.floor(Math.random() * 10) };

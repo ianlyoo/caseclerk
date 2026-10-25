@@ -1,5 +1,6 @@
 // Repo interface shared by the in-memory and Postgres implementations. Owner: W4.
 // All timestamps are ISO strings. Implementations never log PII or message bodies.
+import type { CaseMoney } from "@/lib/paypal/money";
 import type {
   ActionStatus,
   AgentAction,
@@ -199,6 +200,13 @@ export type WireRepo = {
   linkRef(ref: string, caseId: string): Promise<void>;
 };
 
+/** Cached money for resolved cases (see src/lib/paypal/money.ts). First write wins: PayPal's numbers don't change once resolved. */
+export type CaseMoneyRepo = {
+  get(caseId: string): Promise<CaseMoney | null>;
+  /** Stores money unless the case already has some; returns what is stored. */
+  put(caseId: string, money: CaseMoney): Promise<CaseMoney>;
+};
+
 export type Repo = {
   kind: "memory" | "postgres";
   cases: CasesRepo;
@@ -211,4 +219,5 @@ export type Repo = {
   locks: LocksRepo;
   testCaptures: TestCapturesRepo;
   wire: WireRepo;
+  caseMoney: CaseMoneyRepo;
 };
