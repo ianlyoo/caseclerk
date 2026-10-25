@@ -50,3 +50,15 @@
 10. **Strip and photos.** The surname shows only when the day cell is ≥ 120 px (container query), never with an ellipsis. Kodak is now a clear Portra box (CC BY 3.0, Portra 160 shown). New photos are the ring dish (Cleveland Museum, CC0) and the spoon (PD).
 
 Checks: 404 PASS, 0 FAIL on a Mac production build of this branch; the Vercel preview was rate-limited. Shots at DPR 2 (2880×1620 and 3840×2160), phone at DPR 3. Real-case shots are `case-real-*`. The old `case-approve.mp4` showed the sample "You kept $392.00" and is removed.
+
+## Real approval on camera (item 1)
+- PP-R-UDP-10194489 ($405.00), action a5723516-3171-48a8-a051-b236a8e3dbe9. Approved once, on camera, through `/finals/a/case/PP-R-UDP-10194489` on a Mac production build that forwards to production. PayPal answered **200, debug f1926738baa71** at 02:53:30 PT. PayPal closed the case at 03:03:08 PT.
+- Before the click, a dry run with a locally fulfilled approve found that the slip read the status and debug id from the wrong field (they sit on `action.result`). Fixed before the real click.
+- The recorder allowed exactly one POST, to this action only, and aborted everything else. VPY is still awaiting_approval.
+- `case-approve-real.mp4`: 23 s at 30 fps, 2880×1620; stills `case-approve-real-before.png` and `-after.png` are true DPR 2.
+- Known flaws in the recording, not re-recordable:
+  - **Not true DPR 2.** Playwright's video frames are captured at CSS size, so the video is 1440×810 upscaled 2×. `real-tour.mp4` is reprocessed the same way; it previously filled only the top-left quarter.
+  - **Wrong in-flight wording.** For about 8 s the in-flight Wire line reads "PayPal refused the call ()". That came from an empty status; it now reads "Sent to PayPal; waiting for its answer".
+  - **Raw tracker name.** The tracker PUT row showed the raw tracker id; it is now named "tracker".
+  
+  The two code fixes come after the recording: 404 PASS, 0 FAIL on a Mac production build.
