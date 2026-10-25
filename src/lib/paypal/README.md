@@ -14,6 +14,7 @@ Server-only. Import from `@/lib/paypal` (barrel) or the single files. Sandbox on
 | `refunds.ts` | `refundCapture(captureId, amount?)` | Throws `RefundBlockedError` when any dispute on the capture isn't RESOLVED (refund + chargeback = double payout), or the capture isn't COMPLETED/PARTIALLY_REFUNDED. |
 | `transactions.ts` | `searchTransactions({transactionId} \| {dateRange})` | Throws `NotEnabledError` on 403/NOT_AUTHORIZED (Transaction Search not ticked on the app). Window max 31 days. |
 | `testDispute.ts` | `openTestDispute({scenario, items?, shippingFee?, reasonCode?, cardBrand?, shopName?})` | Scenarios `not_received`, `not_as_described`, `unauthorized`. Order from a handmade-goods shop (1–2 items + $5.95 shipping) → USPS tracking DELIVERED → chargeback. Returns `{disputeId, orderId, captureId, amount, order: OrderContext, debugIds}`. |
+| `money.ts` | `computeCaseMoney(snapshot, capture, at)`, `fetchCaseMoney(snapshot)`, `moneyMayBeStated`, `sellerFundMovements` | What the seller ended up with on a RESOLVED dispute: capture `seller_receivable_breakdown` (gross, fee, net) plus the dispute's RECEIVER `fund_movements` (credits − debits) = `kept`. Null whenever PayPal doesn't state it (no movements, no breakdown, capture refunded or not COMPLETED, currency mismatch, gross − fee ≠ net). Served as `money` on GET /api/cases/:id, cached in `case_money`. |
 | `webhook.ts` | `verifyWebhookSignature(headers, raw)` | Raw body spliced in unchanged. |
 | `consent.ts` | `consentUrl`, `consentRedirectUri` | Buyer consent for the inquiry simulator. |
 | `../evidence/pdf.ts` | `buildEvidencePdf({case, order, narrative, exhibits, seller?, amountCharged?})` | pdf-lib, US Letter, 1–3 pages, ~6 KB. Sample: `docs/samples/evidence-sample.pdf`. |
@@ -38,7 +39,7 @@ Also tried, 12 codes in all: Mastercard `4855` and Visa `30` → NOT_RECEIVED; M
 - **Evidence rewrites tracking (2026-10-25):** provide-evidence with `evidence_info.tracking_info` overwrites the capture's tracker as `SHIPPED`, and sets `shipment_date` to the submission day in Pacific time. A DELIVERED tracker reads SHIPPED from then on. In W4's production E2E (PP-R-JKB-10194463) this dropped the agent's win estimate from 65% to 30% on the second evidence round. Trackers without evidence stay DELIVERED. `provideEvidence` now reads the trackers first and puts back any status that went down (`updateTracking`, PUT); the result has `trackingRestored` / `trackingRestoreError`.
 - **Tracking:** `last_updated_time` comes back as epoch ms in a string; `getTracking` converts it to ISO.
 - **Refund guard blind spot:** a chargeback filed less than about a minute ago isn't listed by capture yet, so `refundCapture` can't see it.
-- **Transaction Search:** 403 NOT_AUTHORIZED until the feature is ticked on the REST app → `NotEnabledError`. Ticked 2026-10-25 ~13:05 KST, still 403 at 13:20 KST (PayPal says enabling can take up to a few hours to propagate).
+- **Transaction Search:** 403 NOT_AUTHORIZED until the feature is ticked on the REST app → `NotEnabledError`. Ticked 2026-10-25 ~13:05 KST; still 403 at 13:20 KST, working (200) by 19:47 KST. Data lags: `last_refreshed_datetime` was ~80 min behind. Dispute holds show as T1110 (hold, status P) and T1111 (hold cancelled, status D) referencing the capture.
 
 ## Tests
 

@@ -148,6 +148,8 @@ export type Capture = {
   createTime?: string;
   updateTime?: string;
   statusReason?: string;
+  /** seller_receivable_breakdown: what the seller got for this capture (gross − PayPal fee = net). */
+  sellerReceivable?: { gross?: Money; fee?: Money; net?: Money };
 };
 
 export async function getCapture(id: string): Promise<Capture> {
@@ -160,7 +162,9 @@ export async function getCapture(id: string): Promise<Capture> {
     update_time?: string;
     status_details?: { reason?: string };
     supplementary_data?: { related_ids?: { order_id?: string } };
+    seller_receivable_breakdown?: { gross_amount?: Money; paypal_fee?: Money; net_amount?: Money };
   }>(`/v2/payments/captures/${encodeURIComponent(id)}`);
+  const srb = json.seller_receivable_breakdown;
   return {
     id: json.id,
     status: json.status,
@@ -170,6 +174,7 @@ export async function getCapture(id: string): Promise<Capture> {
     createTime: json.create_time,
     updateTime: json.update_time,
     statusReason: json.status_details?.reason,
+    ...(srb ? { sellerReceivable: { gross: srb.gross_amount, fee: srb.paypal_fee, net: srb.net_amount } } : {}),
   };
 }
 

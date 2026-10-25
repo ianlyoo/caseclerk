@@ -33,6 +33,7 @@ if (url) {
       sql.query(`DELETE FROM case_locks WHERE case_id LIKE $1`, [like]),
       sql.query(`DELETE FROM test_captures WHERE capture_id LIKE $1`, [like]),
       sql.query(`DELETE FROM wire WHERE case_id LIKE $1 OR ref LIKE $1`, [like]),
+      sql.query(`DELETE FROM case_money WHERE case_id LIKE $1`, [like]),
     ]);
   });
 } else {
