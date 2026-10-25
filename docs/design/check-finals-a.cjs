@@ -522,14 +522,19 @@ const idsProbe = (page) =>
       judgeAnims(await animProbe(page), "policy switch");
       out((await page.locator("header nav a[href='/finals/a/policy'][aria-current=page]").count()) === 1, "Policy is in the nav and marked current");
       const sent = await page.evaluate(() => ({ text: (document.querySelector("[data-policy-sentence]") || {}).innerText || "", n: (document.querySelector("[data-consequence]") || {}).getAttribute?.("data-consequence") }));
-      out(/^Act on my own when the money is under/.test(sent.text) && sent.n === "4" && /With this policy, .{0,12}of your 9 open cases would wait for you/.test(sent.text.replace(/\s+/g, " ")), "policy reads as a sentence with editable values; 4 of 9 open cases would wait", sent.text.split("\n").slice(-2)[0]);
+      // Open cases: the 7 sample ones plus every unresolved test case production lists; real pending filings wait at their amount.
+      const tests = await Promise.all((await (await fetch(API.replace(/\/$/, "") + "?test=true&limit=50")).json()).cases.map(async (c) => (await fetch(API + c.id)).json()));
+      const openReal = tests.filter((j) => j.case.snapshot.status !== "RESOLVED" && j.case.status !== "resolved");
+      const filings = openReal.filter((j) => j.actions.some((a) => a.kind === "provide_evidence" && ["awaiting_approval", "approved", "executing"].includes(a.status))).map((j) => Number(j.case.snapshot.amount.value));
+      const nOpen = 7 + openReal.length, at = (line) => filings.filter((v) => v >= line).length;
+      out(/^Act on my own when the money is under/.test(sent.text) && sent.n === String(3 + at(250)) && new RegExp(`With this policy, .{0,12}of your ${nOpen} open cases would wait for you`).test(sent.text.replace(/\s+/g, " ")), `policy reads as a sentence with editable values; ${3 + at(250)} of ${nOpen} open cases would wait`, sent.text.split("\n").slice(-2)[0]);
       await page.locator("[data-policy-input=money]").fill("80");
       await page.waitForTimeout(1100);
       const n2 = await page.locator("[data-consequence]").getAttribute("data-consequence");
       await page.locator("[data-policy-input=evidence]").fill("500");
       await page.waitForTimeout(1100);
       const n3 = await page.locator("[data-consequence]").getAttribute("data-consequence");
-      out(n2 === "3" && n3 === "0", "editing the lines rolls the consequence: $80.00 money line -> 3, $500.00 evidence line -> 0", `${n2}, ${n3}`);
+      out(n2 === String(2 + at(250)) && n3 === String(at(500)), `editing the lines rolls the consequence: $80.00 money line -> ${2 + at(250)}, $500.00 evidence line -> ${at(500)}`, `${n2}, ${n3}`);
     }
     await ctx.close();
   }

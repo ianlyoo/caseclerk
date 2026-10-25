@@ -5,7 +5,8 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState, type ReactNode } from "react";
 import { CASES, EVIDENCE_GATE_USD, POLICY, usd } from "../../_shared/data";
 import { REAL, REAL_ID, REAL_WIRE } from "../../_shared/real";
-import { BASE, EASE_OUT, SAMPLE_HERO_HREF, Masthead, Num, Wire, countWord, realDay } from "../ui";
+import { BASE, EASE_OUT, SAMPLE_HERO_HREF, Masthead, Num, Wire, countWord, realDay, useRealCases } from "../ui";
+import { pendingAction, realState, type ApiCase } from "../_real/model";
 import s from "../a.module.css";
 
 const byId = (id: string) => CASES.find((c) => c.id === id)!;
@@ -99,12 +100,14 @@ const NEXT: Next[] = [
   sample("PP-R-JDM-10228390", "none"),
   sample("PP-R-CQF-10228844", "none"),
   sample("PP-R-WEX-10226653", "none"),
-  // The two open real sandbox cases: the $412.00 waits for evidence approval; PayPal is deciding the $17.95.
-  { label: "the real $412.00", amount: "412.00", kind: "evidence" },
-  { label: "the real $17.95", amount: "17.95", kind: "none" },
 ];
-const waits = (money: number, evidence: number) =>
-  NEXT.filter((n) => (n.kind === "evidence" && Number(n.amount) >= evidence) || (n.kind === "refund" && Number(n.amount) > money));
+/** The open real sandbox cases, from the same production list as the inbox: a pending filing is an evidence case; PayPal deciding is none. */
+const realNext = (real: ApiCase[]): Next[] =>
+  real
+    .filter((r) => realState(r) !== "resolved")
+    .map((r) => ({ label: `the real ${usd(r.case.snapshot.amount.value)}`, amount: r.case.snapshot.amount.value, kind: pendingAction(r)?.kind === "provide_evidence" ? "evidence" : "none" }));
+const waits = (next: Next[], money: number, evidence: number) =>
+  next.filter((n) => (n.kind === "evidence" && Number(n.amount) >= evidence) || (n.kind === "refund" && Number(n.amount) > money));
 
 /** A dollar value inside the sentence, edited in place. */
 function Dollars({ value, set, label, name }: { value: number; set: (n: number) => void; label: string; name: string }) {
@@ -132,8 +135,9 @@ function Dollars({ value, set, label, name }: { value: number; set: (n: number) 
 }
 
 function Sentence({ money, evidence, setMoney, setEvidence }: { money: number; evidence: number; setMoney: (n: number) => void; setEvidence: (n: number) => void }) {
-  const open = NEXT.length;
-  const w = waits(money, evidence);
+  const next = [...NEXT, ...realNext(useRealCases() ?? [])];
+  const open = next.length;
+  const w = waits(next, money, evidence);
   return (
     <div className={s.sentence} data-policy-sentence>
       <p className={s.sentenceText}>
