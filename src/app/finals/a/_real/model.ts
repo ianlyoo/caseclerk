@@ -158,8 +158,8 @@ const MONEY: Record<string, { kept: string; fee: string }> = {
   "PP-R-IHX-10194506": { kept: "380.38", fee: "10.62" },
   "PP-R-SGV-10194507": { kept: "386.23", fee: "10.77" },
 };
-/** The fallback for a resolved case with no verified money (PM ruling). */
-export const NO_DEBIT = "PayPal closed the chargeback with no debit to your account.";
+/** The fallback for a resolved case with no verified money (judge round 4 wording). */
+export const NO_DEBIT = "PayPal closed the chargeback. Seller money outcome not yet verified.";
 
 /** The verified net kept and PayPal's fee for a case PayPal closed, or null. */
 export function money(r: ApiCase): { kept: string; fee: string } | null {
@@ -193,8 +193,9 @@ export function headline(r: ApiCase): string {
   if (state === "resolved") {
     const o = r.case.snapshot.outcome ?? "";
     const m = money(r);
-    if (m) return `PayPal closed the ${thing} chargeback. You keep ${usd(m.kept)}.`;
-    if (o === "RESOLVED_WITH_PAYOUT") return `PayPal closed the ${thing} chargeback with no debit to your account.`;
+    // The kept figure sits right under the h1, so the sentence doesn't repeat it.
+    if (m) return `PayPal closed the ${thing} chargeback.`;
+    if (o === "RESOLVED_WITH_PAYOUT") return `PayPal closed the ${thing} chargeback. Seller money outcome not yet verified.`;
     if (o === "RESOLVED_SELLER_FAVOUR") return `PayPal ruled for you on the ${amt} ${thing}.`;
     if (o === "RESOLVED_BUYER_FAVOUR") return `PayPal ruled for the buyer on the ${amt} ${thing}.`;
     return `PayPal closed the ${amt} ${thing} case.`;
@@ -204,7 +205,8 @@ export function headline(r: ApiCase): string {
   if (state === "pending") return `${a} The evidence is ready, and it waits for your yes.`;
   const n = executed(r, "provide_evidence").length;
   if (n && r.audit.some((x) => x.kind === "action.approved")) return `${a} You approved the evidence, CaseClerk filed it, and PayPal is deciding.`;
-  return n ? `${a} CaseClerk filed the evidence ${TIMES[n] ?? `${n} times`}; PayPal is deciding.` : `${a} PayPal is reviewing it.`;
+  if (n > 1) return `${a} PayPal asked for more evidence, so CaseClerk filed ${TIMES[n] ?? `${n} times`}; PayPal is deciding.`;
+  return n ? `${a} CaseClerk filed the evidence; PayPal is deciding.` : `${a} PayPal is reviewing it.`;
 }
 
 /** The sandbox ruling request, if one was made: the honest end of a case PayPal hasn't decided. */
@@ -228,7 +230,7 @@ export function recommendation(r: ApiCase): [string, string?] | null {
   const ship = r.case.order?.shipping?.[0];
   const pct = Math.round(d.winProbability * 100);
   const verb = d.strategy === "fight" ? "fight with evidence" : d.strategy === "refund" ? "refund the buyer" : d.strategy;
-  const first = `The agent recommends you ${verb}, and puts the chance of winning at ${pct}%.`;
+  const first = `The agent recommends you ${verb}, and puts the chance of winning at ${pct}%.${d.strategy === "fight" ? ` Filing adds no cost; accepting gives up the ${usd(r.case.snapshot.amount.value)}.` : ""}`;
   if (ship?.status === "DELIVERED" && r.case.triage?.category === "not_as_described")
     return [first, `${ship.carrier ?? "The"} tracking proves the ${thingOf(r)} was delivered, not what condition it arrived in.`];
   if (ship?.status === "DELIVERED") return [first, `${ship.carrier ?? "The"} tracking proves the ${thingOf(r)} was delivered.`];
@@ -304,7 +306,7 @@ export function realRow(r: ApiCase, ptTime: (iso: string) => string): RealRow {
     state === "resolved"
       ? money(r)
         ? `Closed by PayPal; you keep ${usd(money(r)!.kept)}`
-        : `Closed by PayPal${({ RESOLVED_WITH_PAYOUT: " with no debit to your account", RESOLVED_SELLER_FAVOUR: ": it decided for the seller", RESOLVED_BUYER_FAVOUR: ": it decided for the buyer" } as Record<string, string>)[r.case.snapshot.outcome ?? ""] ?? ""}`
+        : `Closed by PayPal${({ RESOLVED_WITH_PAYOUT: "; seller money outcome not yet verified", RESOLVED_SELLER_FAVOUR: ": it decided for the seller", RESOLVED_BUYER_FAVOUR: ": it decided for the buyer" } as Record<string, string>)[r.case.snapshot.outcome ?? ""] ?? ""}`
       : state === "pending"
         ? "Waiting for you: the evidence is ready to file"
         : asked

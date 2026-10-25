@@ -80,13 +80,14 @@ export function useRealCases(): ApiCase[] | null {
 }
 
 /** Waiting for you: the sample approvals plus every real case with an action waiting for the seller. */
-function useWaiting(): number {
-  const real = useRealCases();
+function useWaiting(seed?: ApiCase[]): number {
+  // A page that already has the real cases from the server passes them in, so the first paint counts them too.
+  const real = useRealCases() ?? seed;
   return usePendingApprovals() + (real ?? []).filter((r) => realState(r) === "pending").length;
 }
 
-export function WaitingCount() {
-  const n = useWaiting();
+export function WaitingCount({ seed }: { seed?: ApiCase[] }) {
+  const n = useWaiting(seed);
   return <Num value={n} money={false} cause="approve" />;
 }
 export const countWord = (n: number, cap = false) => {
@@ -94,8 +95,8 @@ export const countWord = (n: number, cap = false) => {
   return cap ? w : w.toLowerCase();
 };
 
-export function Masthead({ here }: { here: "landing" | "inbox" | "case" | "deadlines" | "policy" }) {
-  const waiting = useWaiting();
+export function Masthead({ here, real }: { here: "landing" | "inbox" | "case" | "deadlines" | "policy"; real?: ApiCase[] }) {
+  const waiting = useWaiting(real);
   return (
     <header className={s.mast}>
       <Link href={BASE} className={s.word} aria-label="CaseClerk home">
@@ -106,7 +107,7 @@ export function Masthead({ here }: { here: "landing" | "inbox" | "case" | "deadl
           Disputes
         </Link>
         <Link href={HERO_HREF} aria-current={here === "case" ? "page" : undefined} data-count={waiting}>
-          Waiting for you <WaitingCount />
+          Waiting for you <WaitingCount seed={real} />
         </Link>
         <Link href={`${BASE}/deadlines`} aria-current={here === "deadlines" ? "page" : undefined}>
           Deadlines

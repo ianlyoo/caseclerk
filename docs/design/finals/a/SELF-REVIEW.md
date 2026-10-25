@@ -122,3 +122,24 @@ Known limit: the first 18.8 s of the video show the round-2 build, so its paper 
 - **The jump:** a card reads "10 min 12 s later: PayPal closed it. Same case … Approved 05:52:55 PT; PayPal's RESOLVED webhook arrived 06:03:07 PT." Then the same case's own resolved page follows, recorded read-only on the same hosted build, with the sandbox disclosure caption. SGV is not in the verified money map, so the page uses the ruled fallback: "PayPal closed the … chargeback with no debit to your account."
 - **Stills:** `case-approve-real-before.png`, `case-approve-real-after.png`, `case-approve-real-resolved.png`.
 - **Earlier attempt (A4, PP-R-EGZ-10194505):** approved once at 05:45:20 PT, 200, debug `ca501515c8c94`. Its video was lost when the recorder crashed after the answer. It is not used, and the recorder has since been fixed.
+
+## Judge round 4: Final A's items 1–5 and the fresh-reader fixes
+Checks: `check-results.txt`, 422 PASS, 0 FAIL, from a production build on the Mac. Item 6 (durable URL) is the PM's.
+
+1. **Resolved tail of the video.** The tail of `case-approve-real.mp4` was re-recorded as a read-only view, with action and test-dispute routes aborted and no clicks. It shows the card "10 min 12 s later: PayPal closed it. Same case, PP-R-SGV-10194507. You keep $386.23." with the sandbox disclosure on the card. Then SGV's own page shows "You keep $386.23" and "processed 06:03:07 PT". The floating toast is gone. End frame: `case-approve-real-resolved.png`. The approval part is still the round 4 prep take (one click, debug ca5015c79eef8). Its 4-frame cut came from the old build's receipt flip (item 3).
+2. **Inbox order.** "Waiting for you" is now the first group. The closed sandbox cases are folded into one collapsed row, "Closed by PayPal: N sandbox test disputes". The h1 waiting count, the nav badge and the group all read 3. The h1's open count equals the open rows. All of these are checked. Stills: `inbox-*`.
+3. **Receipt flip (05:52:57 → 05:52:55).** The filed time is locked to the first value seen, and the wire pin uses the response time. A mocked test runs in the check: the approve answer is delayed 1.5 s, later polls carry a `filing.at` 2 s earlier, and 90 samples of the receipt and pin show 1 distinct value.
+4. **Resolved h1 without the money.** It now reads "PayPal closed the Olympus OM-1n body chargeback." The checks match it exactly.
+5. **Fallback for unmapped money.** It now reads "PayPal closed the chargeback. Seller money outcome not yet verified." This also covers the inbox row.
+
+Fresh-reader items:
+1. **The approval rule.** The landing now states it: "Small cases it answers on its own, under your rules (link to Policy); over $250.00 to file, or $50.00 to refund or offer, it asks you first."
+2. **Why so many Olympus cases.** The inbox fold note and a landing line now say these are separate sandbox test disputes: the same camera listing, different buyers. The CTA reads "Another case is waiting: review the $412.00 one".
+3. **Counts.** The h1, the nav and the list agree. The deadline strip shows only cases listed in the inbox (samples are labelled "Sample case").
+4. **"Filed twice".** Now explained: "PayPal asked for more evidence, so CaseClerk filed twice."
+5. **Baseline.** Under the landing h1, above the fold: "Without an answer by the deadline, PayPal rules for the buyer: the seller would lose the $389.00 and the fee."
+
+Smaller items:
+- **Win chance.** The fight recommendation adds "Filing adds no cost; accepting gives up the $412.00."
+- **"12 minutes later".** The landing h1 now says "12 minutes after you approved the evidence".
+- **Not done:** the footer's model line has no source link.

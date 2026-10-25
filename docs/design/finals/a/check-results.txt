@@ -154,14 +154,17 @@ PASS  G9 text >= 13 px, Wire >= 14 px, inbox first screen 1440x810
 PASS  G9 h1 >= 46 px, inbox first screen 1440x810 (46 px)
 PASS  G9 contrast >= 4.5:1, inbox first screen 1440x810
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, inbox first screen 1440x810
-PASS  G13 inbox first screen: Wire with a PayPal event, a debug id >= 14 px, an amount with cents ({"event":true,"debug":1,"cents":true,"replay":false})
-PASS  G12 every debug id and event id on the inbox Wire exists in the production API for the real cases (26 debug ids, 47 event ids)
+PASS  G13 inbox first screen: Wire with a PayPal event, a debug id >= 14 px, an amount with cents ({"event":true,"debug":2,"cents":true,"replay":false})
+PASS  G12 every debug id and event id on the inbox Wire exists in the production API for the real cases (29 debug ids, 62 event ids)
 PASS  inbox row 1 is a real sandbox case, labelled Real sandbox case (Olympus OM-1n body)
+PASS  inbox: Waiting for you comes first, and the h1, the nav badge and its rows agree (3 / 3 / 3)
+PASS  inbox: the h1's open count equals the open rows listed (10 vs [["Waiting for you",3],["Answer due, soonest first",3],["With PayPal",4],["Closed this month",4]])
+PASS  inbox: the closed sandbox test disputes fold into one collapsed row (Closed by PayPal: 10 sandbox test disputes Show them)
 PASS  the JKB row shows its last PayPal call, debug f2843364d3500 (With PayPal Ceramic ring dish Real sandbox case PP-R-JKB-10194463 PayPal is deciding; sandbox ruling requested 22:16:27 )
 PASS  G12 no debug id is attached to two lines
 PASS  G11 every image has data-credit, is listed in CREDITS.md and <= 40 KB (11 images)
 PASS  G15 all 11 inbox rows open their own case (h1 names the buyer)
-PASS  own-case routing covers waiting for you, agent working and closed (working, approval, closed)
+PASS  own-case routing covers waiting for you, agent working and closed (approval, working, closed)
 PASS  G19 no strip amount is truncated at 1920x940
 PASS  G19 14-day strip has no overflow at 1920x940 ({"cells":14,"over":0,"cellOver":0})
 PASS  G19 every strip mark is bound to a case dueAt, amounts without cents at 1920x940 (5 marks)
@@ -214,10 +217,11 @@ PASS  G13 landing first screen: Replay of <id>, recorded <date>, a PayPal event,
 PASS  landing replay of NJA lands every line within 10 s, POST provide-evidence 200 with debug f8469524f503f, RESOLVED on top (6 lines)
 PASS  G12 every replayed id exists in NJA's production record (1 debug ids, 5 event ids)
 PASS  landing: the h1 comes before the 3-line intro
-PASS  landing h1 facts match the Wire: the CREATED clock, minutes from approval to RESOLVED (A $389.00 chargeback came in at 1:37 am PT. You approved the evidence at 1:40 am, and PayPal closed the case 12 minutes later. [01:37:10, 12 min])
+PASS  landing h1 facts match the Wire: the CREATED clock, minutes from approval to RESOLVED (A $389.00 chargeback came in at 1:37 am PT. PayPal closed it 12 minutes after you approved the evidence at 1:40 am. [01:37:10, 12 min])
 PASS  landing: the test-dispute note says it opens a real sandbox chargeback (Opens a real PayPal sandbox chargeback, and CaseClerk takes it from there.)
 PASS  landing: Open this $389.00 resolved case goes to the real case it replays (/finals/a/case/PP-R-NJA-10194486 Open this $389.00 resolved case)
-PASS  landing: the primary ink button Review the $412.00 case waiting for you goes to VPY, above the 810 px fold (/finals/a/case/PP-R-VPY-10194485 Review the $412.00 case waiting for you true)
+PASS  landing: the baseline (no answer, PayPal rules for the buyer) sits above the fold, next to the result
+PASS  landing: the primary ink button Another case is waiting: review the $412.00 one goes to VPY, above the 810 px fold (/finals/a/case/PP-R-VPY-10194485 Another case is waiting: review the $412.00 one true)
 PASS  landing: Open a test dispute is the secondary, outlined button
 PASS  landing: the case paragraph is about 3 lines (3 lines)
 PASS  landing replay ends on the seller's money, from PayPal's fund_movements (The seller keeps $378.43: the $389.00 sale less PayPal's $10.57 fee.)
@@ -344,9 +348,9 @@ PASS  G20 Wire blue hue 205-225, no teal on the Wire, real case PP-R-VPY-1019448
 PASS  real case PP-R-NJA-10194486 loads at 1440x810
 PASS  PP-R-NJA-10194486 renders the API's state (deciding|resolved) (resolved)
 PASS  PP-R-NJA-10194486: real-case label and What happened, newest first
-PASS  PP-R-NJA-10194486: every id on the page and the Wire is in its production API record; no sample lines (2 story ids, 4 debug, 5 events)
+PASS  PP-R-NJA-10194486: every id on the page and the Wire is in its production API record; no sample lines (2 story ids, 3 debug, 5 events)
 PASS  PP-R-NJA-10194486: times are Pacific, marked PT
-PASS  NJA: 2-line h1, the big figure is You keep $378.43 with the sale and fee beside it (PayPal closed the Olympus OM-1n body chargeback. You keep $378.43. | You keep $378.43)
+PASS  NJA: h1 without the money, the big figure is You keep $378.43 with the sale and fee beside it (PayPal closed the Olympus OM-1n body chargeback. | You keep $378.43)
 PASS  PP-R-NJA-10194486: sandbox-ruling disclosure, no payout jargon in prose, Closed by PayPal pinned (Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.)
 PASS  PP-R-NJA-10194486: no raw PayPal paths in the paper
 PASS  real case PP-R-JKB-10194463 loads at 1440x810
@@ -386,7 +390,7 @@ PASS  G9 text >= 13 px, Wire >= 14 px, deadlines whole page 1440
 PASS  G9 h1 >= 46 px, deadlines whole page 1440 (46 px)
 PASS  G9 contrast >= 4.5:1, deadlines whole page 1440
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, deadlines whole page 1440
-PASS  G15 all 25 links on Final A resolve 200 and stay inside /finals/a
+PASS  G15 all 28 links on Final A resolve 200 and stay inside /finals/a
 PASS  G5 one dark plane, /case/PP-R-RBN-10224961 whole page 1440
 PASS  G5 no backdrop-filter, blur, conic / radial / repeating gradients, /case/PP-R-RBN-10224961 whole page 1440
 PASS  G6 blue only inside [data-origin=paypal], /case/PP-R-RBN-10224961 whole page 1440
@@ -414,5 +418,6 @@ PASS  G8 shadows only on slip / sheet / mat / tooltip, <= 2 wells, /inbox whole 
 PASS  G9 text >= 13 px, Wire >= 14 px, /inbox whole page 1440
 PASS  G9 contrast >= 4.5:1, /inbox whole page 1440
 PASS  G20 Wire blue hue 205-225, no teal on the Wire, /inbox whole page 1440
+PASS  receipt clock: after a mocked 200 with no filing time and a later poll that has one, the receipt and the Wire pin never change (1 mocked, 0 aborted, 1 distinct: PayPal answered at 07:37:12 PT. | Filed with PayPalPOST provide-evidence 200 07:37:12 PTdebug mock00000000)
 PASS  end of run: no approve request was ever sent (0)
-417 PASS, 0 FAIL
+422 PASS, 0 FAIL

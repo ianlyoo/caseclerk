@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
-import { usd } from "../_shared/data";
+import { EVIDENCE_GATE_USD, POLICY, usd } from "../_shared/data";
 import { BASE, HERO_HREF, Masthead, SAMPLE_HERO_HREF, Wire, realDay, realTime, wireClock } from "./ui";
 import { keptLine, NO_DEBIT, REAL_HREF, SANDBOX_RULING, realState, replayLines, thingOf, type ApiCase } from "./_real/model";
 import s from "./a.module.css";
@@ -124,7 +124,7 @@ export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | nu
             A {amt} chargeback came in at {realTime(created?.at ?? lines[0].at)} PT.{" "}
             {approved && resolved ? (
               <>
-                You approved the evidence at {realTime(approved.at)}, and PayPal closed the case {mins(approved.at, resolved.at)} minutes later.
+                PayPal closed it {mins(approved.at, resolved.at)} minutes after you approved the evidence at {realTime(approved.at)}.
               </>
             ) : filing ? (
               <>CaseClerk filed the evidence at {realTime(filing.at)}; PayPal is deciding.</>
@@ -132,14 +132,19 @@ export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | nu
               <>CaseClerk is working on it.</>
             )}
           </h1>
-          <p className={s.lede}>CaseClerk answers PayPal disputes for small online sellers. It reads the case, gathers the order and the tracking, files the evidence, and asks you before any money moves.</p>
+          <p className={s.sandboxNote} style={{ margin: 0 }} data-baseline>
+            Without an answer by the deadline, PayPal rules for the buyer: the seller would lose the {amt} and the fee.
+          </p>
+          <p className={s.lede}>
+            CaseClerk answers PayPal disputes for small online sellers: it reads the case, gathers the order and the tracking, and files the evidence. Small cases it answers on its own, under <Link href={`${BASE}/policy`}>your rules</Link>; over {usd(EVIDENCE_GATE_USD)} to file, or {usd(POLICY.approvalAboveUsd)} to refund or offer, it asks you first.
+          </p>
           <p className={s.sandboxNote} style={{ margin: 0 }} data-sandbox-ruling>
             {SANDBOX_RULING}
           </p>
           <div className={s.landActions}>
             {pending && (
               <Link href={HERO_HREF} className={s.btn} data-review-waiting>
-                Review the {usd(hero!.case.snapshot.amount.value)} case waiting for you
+                Another case is waiting: review the {usd(hero!.case.snapshot.amount.value)} one
               </Link>
             )}
             <Link href={REAL_HREF} className={pending ? s.btnLink : s.btn} data-open-real>
@@ -162,6 +167,11 @@ export function LandingView({ r, hero }: { r: ApiCase | null; hero: ApiCase | nu
               )}{" "}
               {done && resolved ? <span data-replay-end>{keptLine(r, "The seller keeps") ?? NO_DEBIT}</span> : null}
             </p>
+            {pending && (
+              <p className={s.landFacts} data-same-listing>
+                The {amt} and {usd(hero!.case.snapshot.amount.value)} cases are separate test disputes we opened on PayPal&rsquo;s sandbox for this demo: the same camera listing, different buyers.
+              </p>
+            )}
           </div>
           <OpenTest />
           <p style={{ margin: 0, fontSize: 15 }}>

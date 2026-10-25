@@ -428,6 +428,19 @@ const idsProbe = (page) =>
         return { real: a && a.hasAttribute("data-real-row"), text: a ? a.innerText : "", jkb: jkb ? jkb.innerText : "" };
       });
       out(first.real && /Real sandbox case/.test(first.text), "inbox row 1 is a real sandbox case, labelled Real sandbox case", first.text.split("\n")[1]);
+      const counts = await page.evaluate(() => {
+        const W = ["none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+        const h1 = document.querySelector("h1").innerText;
+        const said = (h1.match(/ (\w+) waiting for your answer/) || [])[1];
+        const open = W.indexOf(((h1.match(/^(\w+) open disputes/) || [])[1] || "").toLowerCase());
+        const groups = [...document.querySelectorAll("[data-group]")].map((u) => [u.getAttribute("data-group"), u.querySelectorAll("[data-case-row]").length]);
+        const fold = document.querySelector("details[data-closed-fold]");
+        return { h1, waiting: W.indexOf((said || "").toLowerCase()), nav: Number(document.querySelector("header nav a[data-count]").getAttribute("data-count")), groups, open, fold: !!fold && !fold.open, foldText: fold ? fold.querySelector("summary").innerText : "" };
+      });
+      const inGroup = Object.fromEntries(counts.groups);
+      out(counts.groups[0] && counts.groups[0][0] === "Waiting for you" && counts.waiting === counts.nav && counts.nav === inGroup["Waiting for you"], "inbox: Waiting for you comes first, and the h1, the nav badge and its rows agree", `${counts.waiting} / ${counts.nav} / ${inGroup["Waiting for you"]}`);
+      out(counts.open === counts.groups.filter(([g]) => g !== "Closed this month").reduce((t, [, n]) => t + n, 0), "inbox: the h1's open count equals the open rows listed", `${counts.open} vs ${JSON.stringify(counts.groups)}`);
+      out(counts.fold && /^Closed by PayPal: \d+ sandbox test disputes/.test(counts.foldText), "inbox: the closed sandbox test disputes fold into one collapsed row", counts.foldText);
       out(/debug f2843364d3500/.test(first.jkb) && /Real sandbox case/.test(first.jkb), "the JKB row shows its last PayPal call, debug f2843364d3500", first.jkb.replace(/\n/g, " ").slice(0, 120));
       out(new Set(ids.debug).size === ids.debug.length, "G12 no debug id is attached to two lines");
       const imgs = await page.evaluate(() => [...document.querySelectorAll("img")].map((i) => ({ src: i.getAttribute("src"), credit: i.getAttribute("data-credit") })));
@@ -497,10 +510,11 @@ const idsProbe = (page) =>
     const res = nja.audit.find((a) => a.kind === "webhook.received" && /RESOLVED/.test(a.data && a.data.eventType));
     const minsLater = appr && res ? Math.round((Math.floor(Date.parse(res.at) / 1000) - Math.floor(Date.parse(appr.at) / 1000)) / 60) : -1;
     out(land.order, "landing: the h1 comes before the 3-line intro");
-    out(land.created && new RegExp(`came in at ${to12(land.created)} PT`).test(land.h1) && new RegExp(`${minsLater} minutes later`).test(land.h1), "landing h1 facts match the Wire: the CREATED clock, minutes from approval to RESOLVED", `${land.h1} [${land.created}, ${minsLater} min]`);
+    out(land.created && new RegExp(`came in at ${to12(land.created)} PT`).test(land.h1) && new RegExp(`${minsLater} minutes after you approved`).test(land.h1), "landing h1 facts match the Wire: the CREATED clock, minutes from approval to RESOLVED", `${land.h1} [${land.created}, ${minsLater} min]`);
     out(land.cta.trim() === "Opens a real PayPal sandbox chargeback, and CaseClerk takes it from there.", "landing: the test-dispute note says it opens a real sandbox chargeback", land.cta);
     out(land.open === "/finals/a/case/PP-R-NJA-10194486 Open this $389.00 resolved case", "landing: Open this $389.00 resolved case goes to the real case it replays", land.open);
-    out(land.review === "/finals/a/case/PP-R-VPY-10194485 Review the $412.00 case waiting for you" && land.primaryAbove, "landing: the primary ink button Review the $412.00 case waiting for you goes to VPY, above the 810 px fold", `${land.review} ${land.primaryAbove}`);
+    out(await page.evaluate(() => { const b = document.querySelector("[data-baseline]"); return !!b && /PayPal rules for the buyer: the seller would lose the \$389\.00 and the fee/.test(b.textContent) && b.getBoundingClientRect().bottom <= 810; }), "landing: the baseline (no answer, PayPal rules for the buyer) sits above the fold, next to the result");
+    out(land.review === "/finals/a/case/PP-R-VPY-10194485 Another case is waiting: review the $412.00 one" && land.primaryAbove, "landing: the primary ink button Another case is waiting: review the $412.00 one goes to VPY, above the 810 px fold", `${land.review} ${land.primaryAbove}`);
     out(land.testQuiet, "landing: Open a test dispute is the secondary, outlined button");
     out(land.factLines <= 4, "landing: the case paragraph is about 3 lines", `${land.factLines} lines`);
     out(land.end === "The seller keeps $378.43: the $389.00 sale less PayPal's $10.57 fee.", "landing replay ends on the seller's money, from PayPal's fund_movements", land.end);
@@ -663,7 +677,7 @@ const idsProbe = (page) =>
         out(r.btn.trim() === "File the evidence on the $412.00 case" && /Over your \$250\.00 evidence line, so it waits for you\./.test(r.body), "VPY: the real slip waits for you, button and margin sentence (not clicked: camera only)", r.btn.trim());
       }
       if (id === "PP-R-NJA-10194486") {
-        out(/debug id f8469524f503f/.test(r.body) && /^PayPal closed the Olympus OM-1n body chargeback\. You keep \$378\.43\.$/.test(r.h1) && r.figure === "You keep $378.43" && /\$389\.00 sale less PayPal\u2019s \$10\.57 fee · Closed Oct 25, 01:52:42 PT/.test(r.body), "NJA: 2-line h1, the big figure is You keep $378.43 with the sale and fee beside it", `${r.h1} | ${r.figure}`);
+        out(/debug id f8469524f503f/.test(r.body) && /^PayPal closed the Olympus OM-1n body chargeback\.$/.test(r.h1) && r.figure === "You keep $378.43" && /\$389\.00 sale less PayPal\u2019s \$10\.57 fee · Closed Oct 25, 01:52:42 PT/.test(r.body), "NJA: h1 without the money, the big figure is You keep $378.43 with the sale and fee beside it", `${r.h1} | ${r.figure}`);
       }
       if (id === "PP-R-RCJ-10194476") out(r.figure === "You keep $26.74", "RCJ: You keep $26.74 from its fund_movements", r.figure);
       if (r.state === "resolved") out(r.note === "Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own." && !/paid the buyer itself|RESOLVED_WITH_PAYOUT/.test(r.paper) && /^Closed by PayPal/.test(r.pin), `${id}: sandbox-ruling disclosure, no payout jargon in prose, Closed by PayPal pinned`, r.note);
@@ -696,6 +710,53 @@ const idsProbe = (page) =>
       await page.waitForTimeout(500);
       judgePage(await pageProbe(page, false), `${p.replace(P, "")} whole page 1440`);
     }
+    await ctx.close();
+  }
+
+  {
+    // The receipt clock after PayPal's 200 (judge r4 #3), fully mocked: every non-GET request is answered locally or aborted,
+    // never sent. The approve answer carries no filing time (as production's doesn't); the next poll does. The times shown
+    // must never change once they appear.
+    const ID = "PP-R-VPY-10194485";
+    const real = await (await fetch(API + ID)).json();
+    const act = real.actions.find((x) => x.status === "awaiting_approval");
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 810 } });
+    let mocked = 0, escaped = 0, answered = null;
+    const done = (at) => ({ ...act, status: "executed", result: { httpStatus: 200, debugId: "mock00000000" }, updatedAt: at, params: { ...act.params, filing: { ...(act.params.filing || {}) } } });
+    await ctx.route("**/*", async (r) => {
+      const req = r.request();
+      const u = req.url();
+      if (req.method() !== "GET" && req.method() !== "HEAD") {
+        if (act && u.endsWith(`/live/actions/${act.id}/approve`)) {
+          mocked++;
+          await new Promise((t) => setTimeout(t, 1500));
+          answered = new Date().toISOString();
+          return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ action: done(answered), message: "Done." }) });
+        }
+        escaped++;
+        return r.abort();
+      }
+      if (answered && u.includes(`/live/case/${ID}`)) {
+        const a2 = done(answered);
+        a2.params.filing.at = new Date(Date.parse(answered) - 2000).toISOString();
+        return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ...real, case: { ...real.case, status: "waiting_on_paypal" }, actions: real.actions.map((x) => (x.id === act.id ? a2 : x)) }) });
+      }
+      return r.continue();
+    });
+    const page = await ctx.newPage();
+    await page.goto(`${BASE}${P}/case/${ID}`, { waitUntil: "networkidle", timeout: 60000 });
+    let seen = [];
+    if (act && (await page.locator(`[data-real-approve="${act.id}"]`).count()) === 1) {
+      await page.locator(`[data-real-approve="${act.id}"]`).click();
+      await page.locator("[data-send-now]").click();
+      await page.locator("[data-filed]").waitFor({ timeout: 20000 });
+      for (let i = 0; i < 90; i++) {
+        seen.push(await page.evaluate(() => [document.querySelector("[data-filed-times]")?.textContent, document.querySelector("[data-wire-pin]")?.textContent].join(" | ")));
+        await page.waitForTimeout(100);
+      }
+    }
+    const distinct = [...new Set(seen)];
+    out(mocked === 1 && escaped === 0 && seen.length > 0 && distinct.length === 1, "receipt clock: after a mocked 200 with no filing time and a later poll that has one, the receipt and the Wire pin never change", `${mocked} mocked, ${escaped} aborted, ${distinct.length} distinct: ${distinct.join(" || ").slice(0, 200)}`);
     await ctx.close();
   }
 
