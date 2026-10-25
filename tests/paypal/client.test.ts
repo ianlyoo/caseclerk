@@ -53,6 +53,12 @@ describe("paypalFetch", () => {
     expect(m.calls).toHaveLength(1);
   });
 
+  it("does not retry a 400 that is a definitive refusal", async () => {
+    const { calls } = mockPayPal(() => ({ status: 400, json: { name: "INVALID_REQUEST", details: [{ issue: "ACTION_NOT_ALLOWED_IN_CURRENT_DISPUTE_STATE" }] } }));
+    await expect(paypalFetch("/v1/x", { method: "POST", body: "{}", retryOn400: true })).rejects.toMatchObject({ status: 400 });
+    expect(calls).toHaveLength(1);
+  });
+
   it("refreshes the token once on 401", async () => {
     let n = 0;
     const { calls } = mockPayPal(() => (++n === 1 ? { status: 401 } : { json: { ok: 1 } }));

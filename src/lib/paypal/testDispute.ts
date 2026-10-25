@@ -6,11 +6,12 @@ import { createPaidCardOrder, type OrderItemInput } from "./orders";
 import { CHARGEBACK_REASON_CODES, processChargeback } from "./simulators";
 import { addTracking, trackingUrl } from "./tracking";
 
-export type TestScenario = "not_received" | "not_as_described";
+export type TestScenario = "not_received" | "not_as_described" | "unauthorized";
 
 export const TEST_SCENARIOS: Record<TestScenario, { label: string; reason: string; reasonCode: string }> = {
   not_received: { label: "Item not received", reason: "MERCHANDISE_OR_SERVICE_NOT_RECEIVED", reasonCode: CHARGEBACK_REASON_CODES.not_received.reasonCode },
   not_as_described: { label: "Not as described", reason: "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED", reasonCode: CHARGEBACK_REASON_CODES.not_as_described.reasonCode },
+  unauthorized: { label: "Unauthorized payment", reason: "UNAUTHORISED", reasonCode: CHARGEBACK_REASON_CODES.unauthorized.reasonCode },
 };
 
 export const SHOP_NAME = "Juniper & Clay Studio";
