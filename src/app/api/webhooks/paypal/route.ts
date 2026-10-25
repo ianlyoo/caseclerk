@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import { runAgent } from "@/lib/agent/run";
-import { audit, cases, webhookEvents } from "@/lib/db";
+import { audit, cases, webhookEvents, wire } from "@/lib/db";
+import { recordWebhookEvent, withWire } from "@/lib/db/wire";
 import { getDispute } from "@/lib/paypal/disputes";
 import { verifyWebhookSignature } from "@/lib/paypal/webhook";
 import { errMessage } from "../../_lib/http";
@@ -32,8 +33,32 @@ export async function GET() {
   return Response.json({ ok: true, coldStart: invocations === 1, instanceAgeMs: Date.now() - bootedAt });
 }
 
+// Every delivery with a parseable body becomes one "event" row on the wire (id, type, verify
+// result, our answer); PayPal calls made while handling it are origin "webhook".
 export async function POST(req: Request) {
   invocations += 1;
+  const started = Date.now();
+  const at = new Date(started).toISOString();
+  const seen: Seen = {};
+  const res = await withWire({ origin: "webhook" }, (ctx) => handle(req, seen, (id) => (ctx.caseId = id)));
+  if (seen.event) {
+    await recordWebhookEvent({
+      at,
+      ...(seen.caseId ? { caseId: seen.caseId } : {}),
+      ...(seen.event.id ? { eventId: seen.event.id } : {}),
+      ...(seen.event.event_type ? { eventType: seen.event.event_type } : {}),
+      ...(seen.verify ? { verify: seen.verify } : {}),
+      status: res.status,
+      durationMs: Date.now() - started,
+      ...(seen.note ? { detail: { result: seen.note } } : {}),
+    }).catch((e: unknown) => console.error(`[paypal-webhook] wire event failed: ${errMessage(e)}`));
+  }
+  return res;
+}
+
+type Seen = { event?: WebhookEvent; verify?: string; caseId?: string; note?: string };
+
+async function handle(req: Request, seen: Seen, setCase: (id: string) => void): Promise<Response> {
   const started = Date.now();
   const raw = await req.text();
 
@@ -44,15 +69,21 @@ export async function POST(req: Request) {
     console.warn("[paypal-webhook] invalid JSON");
     return new Response("bad request", { status: 400 });
   }
+  seen.event = event;
+  const r = event.resource ?? {};
+  const disputeId = r.dispute_id ?? (event.resource_type === "dispute" ? r.id : undefined);
+  if (disputeId && event.event_type?.startsWith("CUSTOMER.DISPUTE.")) {
+    seen.caseId = disputeId;
+    setCase(disputeId);
+  }
 
   const verify = await verifyWebhookSignature(req.headers, raw).catch((e: unknown) => ({
     verified: false,
     status: "ERROR",
     reason: errMessage(e),
   }));
+  seen.verify = verify.status;
 
-  const r = event.resource ?? {};
-  const disputeId = r.dispute_id ?? (event.resource_type === "dispute" ? r.id : undefined);
   // IDs and states only: no names, emails, addresses or messages.
   const line =
     `[paypal-webhook] event=${event.event_type} event_id=${event.id} resource_type=${event.resource_type} ` +
@@ -74,12 +105,14 @@ export async function POST(req: Request) {
   }
   if (!event.event_type?.startsWith("CUSTOMER.DISPUTE.") || !disputeId) {
     console.log(`${line} -> 200 ignored`);
+    seen.note = "ignored";
     return Response.json({ received: true, ignored: true });
   }
 
   try {
     if (!(await webhookEvents.insertIfNew(event.id, { eventType: event.event_type, resourceId: disputeId }))) {
       console.log(`${line} -> 200 duplicate`);
+      seen.note = "duplicate";
       return Response.json({ received: true, duplicate: true });
     }
   } catch (e) {
@@ -94,6 +127,10 @@ export async function POST(req: Request) {
     const up = await cases.upsertFromSnapshot(snapshot);
     caseId = up.record.id;
     changed = up.changed;
+    // A test dispute's order/capture/chargeback calls were tagged with its capture id: attach them.
+    if (up.created && up.record.isTestDispute && snapshot.sellerTransactionId) {
+      await wire.linkRef(snapshot.sellerTransactionId, caseId).catch(() => undefined);
+    }
     await audit.append({
       caseId,
       actor: "paypal",
@@ -120,7 +157,7 @@ export async function POST(req: Request) {
     const eventType = event.event_type;
     after(async () => {
       try {
-        const out = await runAgent(caseId, { kind: "webhook", eventType });
+        const out = await withWire({ origin: "agent", caseId }, () => runAgent(caseId, { kind: "webhook", eventType }));
         console.log(`[paypal-webhook] agent case=${caseId} status=${out.status} cost=${out.costUsd.toFixed(4)}`);
       } catch (e) {
         console.error(`[paypal-webhook] runAgent failed case=${caseId}: ${errMessage(e)}`);
@@ -137,6 +174,7 @@ export async function POST(req: Request) {
     });
   }
 
+  seen.note = changed ? "processed" : "unchanged";
   console.log(`${line} case=${caseId} changed=${changed} -> 200 ms=${Date.now() - started}`);
   return Response.json({ received: true, caseId, changed });
 }

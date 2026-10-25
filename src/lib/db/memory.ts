@@ -2,8 +2,8 @@
 // State lives per server instance and is lost on cold start.
 import { randomUUID } from "node:crypto";
 import { DEFAULT_POLICY, type AgentAction, type AuditEntry, type CaseRecord, type SellerPolicy } from "@/lib/types";
-import type { Repo, SpendEntry, TestCapture } from "./repo";
-import { clampLimit, isNewerSnapshot, isOpenCase, LOCK_TTL_DEFAULT_S, round6, statusAfterSnapshot, utcDayStart } from "./shared";
+import type { Repo, SpendEntry, TestCapture, WireEntry } from "./repo";
+import { clampLimit, wireRecentLimit, isNewerSnapshot, isOpenCase, LOCK_TTL_DEFAULT_S, round6, statusAfterSnapshot, utcDayStart } from "./shared";
 
 const clone = <T>(v: T): T => structuredClone(v);
 
@@ -17,6 +17,7 @@ export function createMemoryRepo(): Repo {
   const windows = new Map<string, { count: number; resetAt: number }>();
   const locks = new Map<string, { holder: string; expiresAt: number }>();
   const captures = new Map<string, TestCapture>();
+  const wire: WireEntry[] = [];
 
   const now = () => new Date().toISOString();
 
@@ -229,7 +230,48 @@ export function createMemoryRepo(): Repo {
         return c ? clone(c) : null;
       },
     },
+
+    wire: {
+      async append(e) {
+        const defined = Object.fromEntries(Object.entries(e).filter(([, v]) => v !== undefined)) as typeof e;
+        const row: WireEntry = {
+          ...clone(defined),
+          ...(e.durationMs !== undefined ? { durationMs: Math.round(e.durationMs) } : {}),
+          id: randomUUID(),
+          at: e.at && !Number.isNaN(Date.parse(e.at)) ? new Date(e.at).toISOString() : now(),
+        };
+        wire.push(row);
+        return clone(row);
+      },
+      async listByCase(caseId, opts) {
+        const rows = inTimeOrder(wire.filter((w) => w.caseId === caseId));
+        return rows.slice(-clampLimit(opts?.limit, 500)).map(clone);
+      },
+      async listRecent(opts = {}) {
+        const since = opts.since && !Number.isNaN(Date.parse(opts.since)) ? new Date(opts.since).toISOString() : undefined;
+        const rows = inTimeOrder(since ? wire.filter((w) => w.at > since) : wire);
+        return rows.slice(-wireRecentLimit(opts.limit)).map(clone);
+      },
+      async tag(ids, patch) {
+        for (const w of wire) {
+          if (!ids.includes(w.id)) continue;
+          if (patch.ref) w.ref = patch.ref;
+          if (patch.caseId && !w.caseId) w.caseId = patch.caseId;
+        }
+      },
+      async linkRef(ref, caseId) {
+        for (const w of wire) if (w.ref === ref && !w.caseId) w.caseId = caseId;
+      },
+    },
   };
+}
+
+/** Stable time order: by `at`, then insertion order. */
+function inTimeOrder(rows: WireEntry[]): WireEntry[] {
+  return rows
+    .map((w, i) => ({ w, i }))
+    .sort((a, b) => a.w.at.localeCompare(b.w.at) || a.i - b.i)
+    .map(({ w }) => w);
 }
 
 function byCreated(a: { createdAt: string; id: string }, b: { createdAt: string; id: string }): number {
