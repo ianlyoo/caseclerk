@@ -125,6 +125,9 @@ describe("simulate", () => {
     expect((await db.actions.listByCase("PP-R-T"))[0]).toMatchObject({ kind: "adjudicate", status: "executed", result: { httpStatus: 200, debugId: "dbg1" } });
     expect((await db.audit.listByCase("PP-R-T")).map((a) => a.kind)).toEqual(["demo.adjudicate"]);
 
+    // Only real simulator calls count toward the 20/hour cap; "not allowed yet" checks don't.
+    expect((await db.rateLimit.hit(`simulate:ip:${(await import("@/app/api/_lib/http")).clientKey(req("/"))}`, 99, 3600)).count).toBe(2);
+
     m.requireEvidence.mockRejectedValueOnce(new Error("400"));
     const failed = await post("PP-R-T", { action: "require_evidence" });
     expect(failed.status).toBe(502);
