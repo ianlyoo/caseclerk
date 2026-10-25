@@ -1468,6 +1468,20 @@
   .mainSheet {
     padding-bottom: 380px;
   }
+  /* The first PayPal row has to clear the sheet on a phone, event id included. */
+  .mainSheet .h1 {
+    font-size: 25px;
+  }
+  .mainSheet .secHead {
+    gap: 2px;
+  }
+  /* One line on a phone: no orphan "you". */
+  .ctaBtn {
+    justify-content: center;
+    padding: 0 16px;
+    font-size: 16px;
+    white-space: nowrap;
+  }
   .caseGrid {
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;

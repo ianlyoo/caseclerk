@@ -204,7 +204,8 @@ async function pageChecks(browser) {
       out(bad7.length === 0, `${tag}: G7 PayPal rows are PayPal-only`, `${bad7.length} of ${lines.length}`);
       if (vp === 1440 && ["landing", "inbox", "case-pending", "case-resolved"].includes(name)) {
         const f = await page.evaluate(probeFirstScreen);
-        out(f.event && f.debug && f.cents && (name !== "landing" || f.replay), `${tag}: G13 first screen shows a webhook, a debug id >= 14 px and cents`, JSON.stringify(f));
+        // Round 3 took the event id out of the masthead; the inbox's first screen proves PayPal with debug ids instead.
+        out((f.event || name === "inbox") && f.debug && f.cents && (name !== "landing" || f.replay), `${tag}: G13 first screen shows a webhook (case pages, landing), a debug id >= 14 px and cents`, JSON.stringify(f));
       }
       if (["case-pending", "case-deciding", "case-resolved"].includes(name)) {
         const reg = await page.evaluate(() =>
@@ -228,7 +229,7 @@ async function pageChecks(browser) {
           const l = document.querySelector("header [data-origin=paypal]");
           return { text: l ? l.innerText.replace(/\s+/g, " ") : "", live: l ? l.hasAttribute("data-live") : false };
         });
-        out((vp === 390 ? /(PayPal sandbox, last webhook|Staged sample, real webhook) .+ ago$/.test(m.text) : /PayPal sandbox/.test(m.text) && /PP-R-[A-Z]{3}-\d{8}/.test(m.text) && /last real webhook/.test(m.text)) && (m.live || !/Live/.test(m.text)) && (name !== "case-sample" || /Staged sample/.test(m.text)), `${tag}: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner`, m.text.slice(0, 140));
+        out((vp === 390 ? /(PayPal sandbox, last webhook|Staged sample, real webhook) .+ ago$/.test(m.text) : /PayPal sandbox/.test(m.text) && !/PP-R-[A-Z]{3}-\d{8}|CUSTOMER\./.test(m.text) && (name === "case-sample" ? /last real webhook/ : /last webhook on this case/).test(m.text)) && (m.live || !/Live/.test(m.text)) && (name !== "case-sample" || /Staged sample/.test(m.text)), `${tag}: fix 5 masthead names the last real webhook; "Live" only with the live state; agrees with the sample banner`, m.text.slice(0, 140));
       }
       if (name === "case-pending" && vp === 1440) {
         const f = await page.evaluate(() => {
@@ -475,7 +476,7 @@ async function round2(browser) {
     const { ctx, page } = await open(browser, 1440, PAGES["case-resolved"]);
     const t = await page.evaluate(() => ({ h1: document.querySelector("h1").innerText, meta: document.querySelector("[class*=figMeta]").innerText, fig: document.querySelector("[class*=figure]").innerText }));
     out(/You keep \$378\.43: the \$389\.00 sale less PayPal's usual fee\. PayPal paid the buyer itself\.$/.test(t.h1) && /\$378\.43/.test(t.fig.replace(/\s+/g, "")), `r2 fix 6 the resolved headline states the seller's money from PayPal's fund movements`, t.h1);
-    out(/released all of it\. Its usual fee on the sale was \$10\.57; PayPal shows no chargeback fee and no debit\./.test(t.meta) && /^Sandbox ruling: our operator asked PayPal's sandbox to decide for the seller/m.test(t.meta), `r2 fix 6 the money line and the sandbox-ruling disclosure`, t.meta.replace(/\s+/g, " ").slice(-160));
+    out(/released all of it\. Its usual fee on the sale was \$10\.57; PayPal shows no chargeback fee and no debit\./.test(t.meta) && /^Sandbox only: we asked PayPal's sandbox to rule\. On a live account PayPal decides on its own\.$/m.test(t.meta) && !/RESOLVED_WITH_PAYOUT/.test(t.meta + t.h1), `r2 fix 6 the money line and the sandbox-ruling disclosure`, t.meta.replace(/\s+/g, " ").slice(-160));
     await ctx.close();
   }
   for (const vp of [390]) {
@@ -490,7 +491,7 @@ async function round2(browser) {
         return { over: over.slice(0, 3), wide: document.documentElement.scrollWidth, mast: live ? live.innerText.replace(/\s+/g, " ").trim() : "", btn: b ? [Math.round(b.left), Math.round(W - b.right)] : null };
       }, vp);
       out(o.over.length === 0 && o.wide <= vp, `r2 fix 5 ${p.split("/").pop()} @390: nothing runs off the right edge`, `${o.wide} px wide; ${o.over.join("; ")}`);
-      out(/^((Live on )?PayPal sandbox, last webhook|Staged sample, real webhook) (just now|\d+ (min|h \d+ min|days) ago)$/.test(o.mast), `r2 fix 5 @390 the masthead is one short line, no middot`, o.mast);
+      out(/^((Live on )?PayPal sandbox, last (real webhook|webhook on this case)|Staged sample, real webhook) (just now|\d+ (min|h \d+ min|days) ago)$/.test(o.mast), `r2 fix 5 @390 the masthead is one short line, no middot`, o.mast);
       if (o.btn) out(o.btn[0] >= 16 && o.btn[1] >= 16, `r2 fix 5 @390 the sheet's button keeps 16 px each side`, o.btn.join(" / "));
       await ctx.close();
     }
@@ -504,6 +505,86 @@ async function round2(browser) {
       return { l: m.left, r: innerWidth - c.right, rail: !!(rail && rail.checkVisibility()), w: c.right - m.left };
     });
     out(!o.rail && Math.abs(o.l - o.r) < 4, `r2 fix 7 @${vp}: no case-list rail; the reading column is centred`, `left ${Math.round(o.l)} right ${Math.round(o.r)} width ${Math.round(o.w)}`);
+    await ctx.close();
+  }
+}
+
+/** Round 3: scoped masthead, fund-movement fallback, inbox leaks, insider copy, phone CTA and sheet clearance. */
+const IMW = "PP-R-IMW-10194496"; // real, resolved (B3), fund movements verified by W1
+async function round3(browser) {
+  const NO_DEBIT = "PayPal closed the chargeback with no debit to your account.";
+  const RULING = "Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.";
+  for (const [p, scoped] of [[PAGES.landing, false], [PAGES.inbox, false], [PAGES["case-pending"], true], [`/finals/b/case/${IMW}`, true]]) {
+    const { ctx, page } = await open(browser, 1440, p);
+    const m = await page.evaluate(() => document.querySelector("header [data-origin=paypal]").innerText.replace(/\s+/g, " ").trim());
+    out(!/PP-R-|CUSTOMER\.|WH-/.test(m) && (scoped ? /last webhook on this case/ : /last real webhook/).test(m), `r3 fix 2 ${p.split("/").pop() || "b"}: masthead ${scoped ? "scoped to this case" : "global"}, no ids or enums`, m);
+    await ctx.close();
+  }
+  const read = () => ({ h1: document.querySelector("h1").innerText, meta: document.querySelector("[class*=figMeta]").innerText, fig: document.querySelector("[class*=figure]").innerText, prose: [...document.querySelectorAll("main ol[aria-label^='What happened'] li")].filter((li) => !li.querySelector("[data-wire-line]")).map((li) => li.innerText).join("\n") });
+  {
+    const { ctx, page } = await open(browser, 1440, `/finals/b/case/${IMW}`);
+    await page.waitForFunction(() => /You keep|PayPal closed/.test(document.querySelector("h1")?.innerText || ""), null, { timeout: 20000 }).catch(() => {});
+    const t = await page.evaluate(read);
+    out(t.h1.endsWith("You keep $382.33: the $393.00 sale less PayPal's usual fee. PayPal paid the buyer itself.") && /\$382\.33/.test(t.fig.replace(/\s+/g, "")) && /Its usual fee on the sale was \$10\.67/.test(t.meta), `r3 fix 3 IMW: verified fund movements, "You keep $382.33"`, t.h1);
+    out(t.meta.includes(RULING) && !/RESOLVED_WITH_PAYOUT/.test(t.h1 + t.meta + t.prose), `r3 fix 3 IMW: sandbox disclosure; PayPal's enum only in the Wire`, t.meta.replace(/\s+/g, " ").slice(-120));
+    out(!/\d\.\d{2} USD/.test(t.prose) && !/Nothing left to do/.test(t.prose), `r3 fix 5 IMW agent rows: "$393.00", "Case closed; nothing left to do."`, t.prose.split("\n").filter((l) => /\$|closed/i.test(l)).slice(0, 2).join(" | "));
+    await ctx.close();
+  }
+  {
+    // A resolved case missing from the verified map: IMW's payload served under a made-up id.
+    const Q = "PP-R-QQQ-00000001";
+    const { ctx, page } = await open(browser, 1440, `/finals/b/case/${Q}`, {}, (c) =>
+      c.route(`**/api/cases/${Q}`, async (r) => {
+        const j = await (await fetch(`${BASE}/api/cases/${IMW}`)).json();
+        r.fulfill({ json: JSON.parse(JSON.stringify(j).replaceAll(IMW, Q)) });
+      }),
+    );
+    await page.waitForFunction(() => /PayPal closed/.test(document.querySelector("h1")?.innerText || ""), null, { timeout: 20000 }).catch(() => {});
+    const t = await page.evaluate(read);
+    out(t.h1.endsWith(NO_DEBIT) && !/You kept/.test(t.fig) && t.meta.includes(RULING) && !/RESOLVED_WITH_PAYOUT/.test(t.h1 + t.meta), `r3 fix 3 a resolved case without verified fund movements: the judge's fallback line, no kept figure`, t.h1);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 1440, PAGES.inbox);
+    const t = await page.evaluate(() => ({ proofs: [...document.querySelectorAll("[class*=rowProof]")].map((e) => e.innerText), lasts: [...document.querySelectorAll("[class*=rowLast]")].map((e) => e.innerText), who: [...document.querySelectorAll("[class*=rowReal] [class*=rowWho]")].map((e) => e.innerText) }));
+    out(t.proofs.length > 0 && !t.proofs.some((x) => /adjudicate|require-evidence/.test(x)), `r3 fix 4 inbox: "Last PayPal call" is CaseClerk's, never the operator's adjudicate`, t.proofs.slice(0, 3).join(" | "));
+    out(!t.lasts.some((x) => /\b(once|twice|times)\b/.test(x)), `r3 fix 4 inbox: no "filed twice"`, t.lasts.filter((x) => /Filed/.test(x)).slice(0, 2).join(" | "));
+    out(t.who.length > 0 && t.who.every((x) => /^[A-Z][a-z ]+ (chargeback|inquiry)$/.test(x)), `r3 fix 4 inbox: real rows name the dispute reason, not "A buyer in the US"`, [...new Set(t.who)].join(" | "));
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 1440, PAGES.landing);
+    const t = await page.evaluate(() => document.querySelector("main").innerText);
+    out(!/\bonce\b/.test(t) && t.includes(RULING) && /Shared limit: three a day\./.test(t) && !/per visitor/.test(t), `r3 fix 5 landing: no "once", the sandbox disclosure, "Shared limit: three a day."`);
+    await ctx.close();
+  }
+  for (const p of [PAGES["case-pending"], PAGES["case-deciding"], PAGES["case-resolved"]]) {
+    const { ctx, page } = await open(browser, 1440, p);
+    // The evidence pack is the text PayPal received, verbatim; it is not CaseClerk's copy and stays as filed.
+    const t = await page.evaluate(() => { const m = document.querySelector("main").cloneNode(true); m.querySelectorAll("[aria-label='Evidence pack']").forEach((e) => e.remove()); return m.innerText; });
+    const bad = t.match(/.{0,40}(Every id here came from PayPal|\bonce\b|(^|[^$\d,.])\d[\d,]*\.\d{2} USD).{0,20}/m);
+    out(!bad, `r3 fix 5 ${p.split("/").pop()}: no "Every id here…", no "once", no bare "USD" amounts`, bad ? bad[0] : "");
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 390, PAGES.landing);
+    const o = await page.evaluate(() => {
+      const a = document.querySelector("a[class*=ctaBtn]");
+      const r = document.createRange();
+      r.selectNodeContents(a);
+      const lines = [...r.getClientRects()].reduce((m, x) => ((m[Math.round(x.top)] = (m[Math.round(x.top)] || 0) + x.width), m), {});
+      return Object.values(lines).map(Math.round);
+    });
+    out(o.length <= 2 && Math.min(...o) >= 0.5 * Math.max(...o), `r3 fix 5 landing @390: the primary CTA has no orphan word`, o.join(" / "));
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(browser, 390, PAGES["case-pending"]);
+    const o = await page.evaluate(() => {
+      const li = document.querySelector("main ol[aria-label^='What happened'] > li");
+      return { row: Math.round(li.getBoundingClientRect().bottom), sheet: Math.round(document.querySelector("[data-sheet]").getBoundingClientRect().top) };
+    });
+    out(o.row <= o.sheet, `r3 fix 5 case-pending @390: the top PayPal row, event id included, clears the sheet`, `row ends ${o.row}, sheet starts ${o.sheet}`);
     await ctx.close();
   }
 }
@@ -656,7 +737,7 @@ function durationOf(f) {
     if (process.argv.includes("--video-only")) return await video(browser);
     const only = (process.argv.find((x) => x.startsWith("--only=")) || "").slice(7);
     if (only) {
-      const fns = { realLoop, round2, honesty, failurePath, reader, links, pageChecks, approve: (b) => approvePath(b, 1440, false) };
+      const fns = { realLoop, round2, round3, honesty, failurePath, reader, links, pageChecks, approve: (b) => approvePath(b, 1440, false) };
       for (const n of only.split(",")) await fns[n](browser);
       return;
     }
@@ -664,6 +745,7 @@ function durationOf(f) {
     await honesty(browser);
     await realLoop(browser);
     await round2(browser);
+    await round3(browser);
     for (const vp of [1440, 1920, 1536, 390]) await approvePath(browser, vp, false);
     await approvePath(browser, 1440, true);
     await failurePath(browser);

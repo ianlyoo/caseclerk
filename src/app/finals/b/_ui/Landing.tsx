@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import type { CaseRecord } from "@/lib/types";
 import { clock, dayOf, usd } from "../_lib/data";
-import { DEFAULT_REAL, fromApi, REPLAY_REAL, SNAPSHOTS } from "../_lib/live";
+import { DEFAULT_REAL, fromApi, REPLAY_REAL, SANDBOX_RULING, SNAPSHOTS } from "../_lib/live";
 import { Masthead, useNow } from "./Masthead";
 import type { LiveRow } from "./store";
 import { PayPalRow, Timeline } from "./Timeline";
@@ -44,7 +44,7 @@ function Receipt() {
         <strong>
           <NumberFlow value={Number(real.amount)} format={{ style: "currency", currency: "USD" }} />
         </strong>
-        {n < 2 ? "disputed" : n < 3 ? "disputed, evidence filed once" : real.kept ? `closed by PayPal; the seller kept ${usd(real.kept)}` : "closed by PayPal"}
+        {n < 2 ? "disputed" : n < 3 ? "disputed, evidence filed" : real.kept ? `closed by PayPal; the seller kept ${usd(real.kept)}` : "closed by PayPal"}
       </p>
       <ol className={s.tl} aria-label="The three PayPal receipts, oldest first">
         {RECEIPT.slice(0, n).map((r) => (
@@ -59,6 +59,7 @@ function Receipt() {
           </motion.li>
         ))}
       </ol>
+      <p className={s.figSandbox}>{SANDBOX_RULING}</p>
       <details className={s.drawer}>
         <summary>
           All PayPal traffic on this case ({traffic.length} calls and webhooks)
@@ -152,7 +153,7 @@ function TestDispute() {
           <button type="button" className={s.ghostBtn} onClick={open} disabled={state === "opening"}>
             {state === "opening" ? "Asking PayPal…" : "Open a test dispute"}
           </button>
-          <p className={s.ctaNote}>A real sandbox payment and chargeback on PayPal, then the case appears here. Three a day per visitor.</p>
+          <p className={s.ctaNote}>A real sandbox payment and chargeback on PayPal, then the case appears here. Shared limit: three a day.</p>
           {error ? (
             <p className={s.testErr} role="alert">
               {error}
@@ -199,7 +200,7 @@ export function Landing() {
       <main className={s.land}>
         <section className={s.landL}>
           <h1 className={s.landH1}>
-            A buyer&apos;s bank charged back a ${Math.round(Number(real.amount))} Olympus camera. The seller said yes once; CaseClerk filed the evidence, and PayPal closed the case {minutes} minutes later.
+            A buyer&apos;s bank charged back a ${Math.round(Number(real.amount))} Olympus camera. The seller said yes; CaseClerk filed the evidence, and PayPal closed the case {minutes} minutes later.
           </h1>
           <p className={s.landWhat}>CaseClerk answers PayPal disputes for small sellers: it reads the case, the order and the tracking, files the evidence, and asks you before money moves.</p>
           <div className={s.cta}>

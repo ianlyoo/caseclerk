@@ -38,8 +38,8 @@ export const isRealId = (id: string) => /^PP-R-[A-Z]{3}-\d{8}$/.test(id);
 
 /**
  * Facts PayPal reported outside this payload: GET /v1/customer/disputes/{id} fund_movements and GET
- * /v2/payments/captures/{id}, read by W1 on Oct 25 (s3/finals/REAL-CASES.md, "Fund movements"). Only the money lines
- * of a resolved case come from here. PayPal states no chargeback fee on any of them, and the lines say so.
+ * /v2/payments/captures/{id}, read by W1 on Oct 25 (s3/finals/REAL-CASES.md, "Fund movements"), keyed by dispute id.
+ * Only the money lines of a resolved case come from here. A case missing from the map gets NO_DEBIT, nothing more.
  */
 type Money = { gross: string; fee: string; net: string; heldAt: string; releasedAt: string };
 const MONEY: Record<string, Money> = {
@@ -47,31 +47,42 @@ const MONEY: Record<string, Money> = {
   "PP-R-LTK-10194490": { gross: "398.00", fee: "10.80", net: "387.20", heldAt: "2026-10-25T09:40:04Z", releasedAt: "2026-10-25T09:55:04Z" },
   "PP-R-UDP-10194489": { gross: "405.00", fee: "10.98", net: "394.02", heldAt: "2026-10-25T09:40:04Z", releasedAt: "2026-10-25T09:58:34Z" },
   "PP-R-TZD-10194493": { gross: "402.00", fee: "10.90", net: "391.10", heldAt: "2026-10-25T10:15:34Z", releasedAt: "2026-10-25T10:30:34Z" },
+  "PP-R-AAJ-10194495": { gross: "396.00", fee: "10.75", net: "385.25", heldAt: "2026-10-25T10:59:34Z", releasedAt: "2026-10-25T11:29:46Z" },
+  "PP-R-IMW-10194496": { gross: "393.00", fee: "10.67", net: "382.33", heldAt: "2026-10-25T10:59:34Z", releasedAt: "2026-10-25T11:34:04Z" },
+  "PP-R-RCJ-10194476": { gross: "27.95", fee: "1.21", net: "26.74", heldAt: "2026-10-25T06:24:34Z", releasedAt: "2026-10-25T06:31:04Z" },
 };
-const KNOWN: Record<string, { kept: string; ending: string; money?: string }> = {
-  "PP-R-RCJ-10194476": {
-    kept: "26.74",
-    ending: "PayPal closed the chargeback and paid the buyer itself. The $26.74 it held from you was released, so you kept it.",
-  },
-  ...Object.fromEntries(
-    Object.entries(MONEY).map(([id, m]) => [
-      id,
-      {
-        kept: m.net,
-        ending: `You keep $${m.net}: the $${m.gross} sale less PayPal's usual fee. PayPal paid the buyer itself.`,
-        money: `PayPal held your $${m.net} while it decided, then released all of it. Its usual fee on the sale was $${m.fee}; PayPal shows no chargeback fee and no debit.`,
-      },
-    ]),
-  ),
-};
+const KNOWN: Record<string, { kept: string; ending: string; money?: string }> = Object.fromEntries(
+  Object.entries(MONEY).map(([id, m]) => [
+    id,
+    {
+      kept: m.net,
+      ending: `You keep $${m.net}: the $${m.gross} sale less PayPal's usual fee. PayPal paid the buyer itself.`,
+      money: `PayPal held your $${m.net} while it decided, then released all of it. Its usual fee on the sale was $${m.fee}; PayPal shows no chargeback fee and no debit.`,
+    },
+  ]),
+);
 
 /** Item photos for real cases, by case id (credited in public/finals/b/CREDITS.md). */
 const REAL_PHOTO: Record<string, string> = { "PP-R-JKB-10194463": "ring-dish", "PP-R-VPY-10194485": "om-1n", "PP-R-NJA-10194486": "om-1n" };
 
+/** The resolved line for a case PayPal closed with a payout whose fund movements are not in MONEY yet. */
+const NO_DEBIT = "PayPal closed the chargeback with no debit to your account.";
+
+const REASON: Record<string, string> = {
+  MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED: "Not as described",
+  MERCHANDISE_OR_SERVICE_NOT_RECEIVED: "Not received",
+  UNAUTHORISED: "Unauthorized",
+  CREDIT_NOT_PROCESSED: "Credit not processed",
+  DUPLICATE_TRANSACTION: "Duplicate charge",
+  INCORRECT_AMOUNT: "Incorrect amount",
+  PAYMENT_BY_OTHER_MEANS: "Paid another way",
+  CANCELED_RECURRING_BILLING: "Cancelled subscription",
+};
+
 const OUTCOME: Record<string, string> = {
   RESOLVED_SELLER_FAVOUR: "PayPal decided for you.",
   RESOLVED_BUYER_FAVOUR: "PayPal decided for the buyer.",
-  RESOLVED_WITH_PAYOUT: "PayPal closed the chargeback and paid the buyer itself.",
+  RESOLVED_WITH_PAYOUT: NO_DEBIT,
   CANCELED_BY_BUYER: "The buyer withdrew the claim.",
   ACCEPTED: "You accepted the claim.",
   DENIED: "PayPal denied the claim.",
@@ -167,17 +178,17 @@ export function rowsOf(j: ApiCase): Row[] {
     } else if (a.kind === "tool.get_dispute" && early) {
       out.push({ kind: "paypal", at: a.at, dir: "out", name: "get dispute", method: "GET", path: `/v1/customer/disputes/${id}`, say: a.summary });
     } else if (a.kind === "triage") {
-      out.push({ kind: "agent", at: a.at, say: `The agent read the case. ${a.summary.replace(/^Triage: [^.]*\.\s*/, "")}` });
+      out.push({ kind: "agent", at: a.at, say: plain(`The agent read the case. ${a.summary.replace(/^Triage: [^.]*\.\s*/, "")}`) });
     } else if (a.kind === "decision") {
       const m = a.summary.match(/win chance (\d+)%/);
       const fight = /fight/.test(a.summary);
       out.push({ kind: "agent", at: a.at, say: fight ? `Decided to fight with evidence, win chance ${m ? m[1] : "?"}%.` : a.summary.replace(/\s*\(.*$/, ".") });
     } else if (a.kind === "action.proposed" || a.kind === "approval.requested") {
-      out.push({ kind: "agent", at: a.at, say: a.summary });
+      out.push({ kind: "agent", at: a.at, say: plain(a.summary) });
     } else if (a.actor === "seller" && /approv|denied|declin/i.test(a.kind)) {
       out.push({ kind: "seller", at: a.at, say: a.summary });
     } else if (a.kind === "agent.run.done" && /closed the dispute/.test(a.summary)) {
-      out.push({ kind: "agent", at: a.at, say: a.summary });
+      out.push({ kind: "agent", at: a.at, say: plain(a.summary) });
     }
   }
   return out.sort((x, y) => Date.parse(x.at) - Date.parse(y.at));
@@ -185,10 +196,16 @@ export function rowsOf(j: ApiCase): Row[] {
 
 /**
  * Every resolved real case here was decided through the sandbox simulator: W1's demo script (outside CaseClerk) asked
- * PayPal's sandbox to decide for the seller (REAL-CASES.md). The resolved screen says so, in PayPal's terms.
+ * PayPal's sandbox to rule (REAL-CASES.md). The resolved screen and the landing say so. PayPal's enum stays in the Wire.
  */
-const sandboxRuling = (outcome?: string) =>
-  `Sandbox ruling: our operator asked PayPal's sandbox to decide for the seller, outside CaseClerk. PayPal recorded ${outcome ?? "the result"}, represented by PayPal. On a live account PayPal decides alone.`;
+export const SANDBOX_RULING = "Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.";
+const ruledBySandbox = (outcome?: string) => !!outcome && !["CANCELED_BY_BUYER", "ACCEPTED"].includes(outcome);
+
+/** Agent and audit lines in the seller's terms: "$393.00", not "393.00 USD"; no PayPal enums. */
+const plain = (t: string) =>
+  t
+    .replace(/(\d[\d,]*\.\d{2}) USD/g, "$$$1")
+    .replace(/^PayPal closed the dispute \([A-Z_]+\)\. Nothing left to do\.$/, "Case closed; nothing left to do.");
 
 const ITEM = (o?: OrderContext) => (o?.items?.[0] ? o.items[0].name : "order");
 
@@ -217,12 +234,12 @@ export function fromApi(j: ApiCase): Case {
   const filed = j.actions.filter((a) => a.kind === "provide_evidence" && a.status === "executed");
   const lastEvidence = pending?.kind === "provide_evidence" ? pending : filed[filed.length - 1];
   const rows = rowsOf(j);
-  const lastCall = [...rows].reverse().find((r) => r.kind === "paypal" && r.debugId);
+  // The last call CaseClerk made, not the operator's sandbox controls (adjudicate, require-evidence).
+  const lastCall = [...rows].reverse().find((r) => r.kind === "paypal" && r.debugId && !/^(adjudicate|require-evidence)$/.test(r.name));
   const cost = j.audit.reduce((n, a) => n + Number(a.costUsd ?? 0), 0);
   const item = ITEM(o);
   const known = KNOWN[c.id];
-  const outcome = c.snapshot.outcome ? OUTCOME[c.snapshot.outcome] ?? `PayPal closed the case (${c.snapshot.outcome}).` : "PayPal closed the case.";
-  const filedWord = filed.length === 1 ? "once" : filed.length === 2 ? "twice" : `${filed.length} times`;
+  const outcome = (c.snapshot.outcome && OUTCOME[c.snapshot.outcome]) || "PayPal closed the case.";
   const what = c.snapshot.stage === "CHARGEBACK" ? "charged back" : "disputed";
   // Brand names keep their capitals ("Olympus OM-1n"); a plain noun reads lower case ("ceramic ring dish").
   const noun = item.split(",")[0];
@@ -236,7 +253,7 @@ export function fromApi(j: ApiCase): Case {
     : waitsForYou
       ? `${lead} CaseClerk built the evidence; it waits for you.`
       : filed.length
-        ? `${lead} CaseClerk filed the evidence on PayPal ${filedWord}, and PayPal is deciding.`
+        ? `${lead} CaseClerk filed the evidence with PayPal, and PayPal is deciding.`
         : `${lead} PayPal is reviewing it; nothing is open to you yet.`;
   const resolvedAt = [...rows].reverse().find((r) => r.kind === "paypal" && r.name === "CUSTOMER.DISPUTE.RESOLVED")?.at ?? c.updatedAt;
   const d = c.decision;
@@ -267,7 +284,8 @@ export function fromApi(j: ApiCase): Case {
   return {
     id: c.id,
     real: true,
-    buyer: o?.buyerCountry ? `A buyer in the ${o.buyerCountry}` : "A buyer",
+    // The inbox subline: what the buyer claims, in the seller's words.
+    buyer: `${REASON[c.snapshot.reason] ?? "Disputed"} ${c.snapshot.stage === "INQUIRY" ? "inquiry" : "chargeback"}`,
     city: "",
     item: o?.items?.[0] ? `${o.items[0].name}${o.items[0].description ? `, ${o.items[0].description}` : ""}` : `PayPal case ${c.id}`,
     short: item.split(",")[0],
@@ -277,7 +295,7 @@ export function fromApi(j: ApiCase): Case {
     stage: c.snapshot.stage === "INQUIRY" ? "INQUIRY" : "CHARGEBACK",
     desk,
     openedAt: c.snapshot.createTime ?? c.createdAt,
-    last: resolved ? outcome.replace(/\.$/, "") : waitsForYou ? "Built the evidence; waiting for you to file it" : filed.length ? `Filed the evidence ${filedWord}; PayPal is deciding` : "With PayPal; nothing open to you yet",
+    last: resolved ? outcome.replace(/\.$/, "") : waitsForYou ? "Built the evidence; waiting for you to file it" : filed.length ? "Filed the evidence; PayPal is deciding" : "With PayPal; nothing open to you yet",
     lastAt: c.updatedAt,
     kept: resolved ? known?.kept : undefined,
     headline,
@@ -291,9 +309,9 @@ export function fromApi(j: ApiCase): Case {
         ]
       : undefined,
     approval,
-    ending: resolved ? { sentence: headline, kept: known?.kept ?? "", at: resolvedAt, money: known?.money, sandbox: known ? sandboxRuling(c.snapshot.outcome) : undefined } : undefined,
+    ending: resolved ? { sentence: headline, kept: known?.kept ?? "", at: resolvedAt, money: known?.money, sandbox: ruledBySandbox(c.snapshot.outcome) ? SANDBOX_RULING : undefined } : undefined,
     pack: packOf(j, lastEvidence),
-    packNote: pending ? "Built by the agent. Not filed until you approve." : lastEvidence ? `Filed with PayPal, ${filedWord}.` : undefined,
+    packNote: pending ? "Built by the agent. Not filed until you approve." : lastEvidence ? "Filed with PayPal." : undefined,
     costUsd: cost,
     proof: lastCall && lastCall.kind === "paypal" && lastCall.debugId ? { name: lastCall.name, status: lastCall.status ?? "", debugId: lastCall.debugId } : undefined,
   };

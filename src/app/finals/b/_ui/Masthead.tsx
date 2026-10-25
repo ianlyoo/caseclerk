@@ -29,7 +29,7 @@ export function useNow(every = 15_000): number | null {
   return now;
 }
 
-type Hook = { at: string; eventType: string; eventId: string; caseId?: string };
+export type Hook = { at: string; eventType: string; eventId: string; caseId?: string };
 
 /** The newest verified webhook in the snapshots, so the first render already says something true. */
 const SNAP_LAST: Hook = Object.values(SNAPSHOTS)
@@ -70,33 +70,37 @@ export function useLastWebhook(): Hook {
 }
 
 /**
- * The PayPal state: the last webhook PayPal really sent us, how long ago, and the case it belongs to. "Live" and the
- * breathing dot only when that webhook is under 15 minutes old. On a staged sample page it says so first.
+ * The PayPal state: how long ago PayPal really sent us a webhook. On a real case page it is that case's own last webhook
+ * (`scope`); elsewhere the newest across cases. "Live" and the breathing dot only when it is under 15 minutes old. No
+ * enums or case ids here: the case page and its Wire carry those. On a staged sample page it says so first.
  */
-export function LiveState({ sample = false }: { sample?: boolean }) {
-  const w = useLastWebhook();
+export function LiveState({ sample = false, scope }: { sample?: boolean; scope?: Hook }) {
+  const newest = useLastWebhook();
+  const w = scope ?? newest;
   const now = useNow();
   const live = now !== null && now - Date.parse(w.at) < 15 * 60_000;
   const at = `${dayOf(w.at)} ${clock(w.at)} PT`;
+  const when = now === null ? at : ago(w.at, now);
+  const what = scope ? "last webhook on this case" : "last real webhook";
   const caseId = w.caseId ?? DEFAULT_REAL;
   return (
-    <Link href={`${B}/case/${caseId}`} className={s.live} data-origin="paypal" data-live={live ? "" : undefined} title="Open the real case this webhook belongs to">
+    <Link href={`${B}/case/${caseId}`} className={s.live} data-origin="paypal" data-live={live ? "" : undefined} title={scope ? "PayPal's last webhook on this case" : "Open the real case this webhook belongs to"}>
       <span className={s.liveDot} data-live-dot={live ? "on" : "still"} data-cause="webhook" aria-hidden />
       <span className={s.liveWords}>
         <span className={s.liveHead}>{sample ? "Staged sample. Real PayPal sandbox traffic:" : live ? "Live on PayPal sandbox" : "PayPal sandbox"}</span>
         <span className={s.liveLine}>
-          last real webhook <code>{w.eventType}</code> {now === null ? at : ago(w.at, now)}, <code>{caseId}</code>
+          {what} {when}
         </span>
-        {/* Phones get one short line instead of the long one cut off mid-sentence. */}
+        {/* Phones get one short line instead of two. */}
         <span className={s.liveShort}>
-          {sample ? "Staged sample, real webhook" : live ? "Live on PayPal sandbox, last webhook" : "PayPal sandbox, last webhook"} {now === null ? at : ago(w.at, now)}
+          {sample ? "Staged sample, real webhook" : `${live ? "Live on PayPal sandbox" : "PayPal sandbox"}, ${what}`} {when}
         </span>
       </span>
     </Link>
   );
 }
 
-export function Masthead({ sample = false }: { sample?: boolean }) {
+export function Masthead({ sample = false, scope }: { sample?: boolean; scope?: Hook }) {
   const path = usePathname();
   const { waiting } = useDesk();
   const nav = [
@@ -122,7 +126,7 @@ export function Masthead({ sample = false }: { sample?: boolean }) {
           </Link>
         ))}
       </nav>
-      <LiveState sample={sample} />
+      <LiveState sample={sample} scope={scope} />
     </header>
   );
 }

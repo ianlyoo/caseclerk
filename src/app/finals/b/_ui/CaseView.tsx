@@ -273,10 +273,13 @@ function CaseBody({ c: polled, refresh }: { c: Case; refresh: () => void }) {
   const due = c.dueAt && isOpen(c) && !resolved;
   const urgent = due && hoursLeft(c.dueAt!) < 72;
   const decided = resolved && c.ending;
+  // The masthead speaks for this case: its newest verified webhook from PayPal.
+  const hook = c.real ? rows.filter((r) => r.kind === "paypal" && r.dir === "in" && r.eventId).sort((x, y) => Date.parse(y.at) - Date.parse(x.at))[0] : undefined;
+  const scope = hook && hook.kind === "paypal" ? { at: hook.at, eventType: hook.name, eventId: hook.eventId!, caseId: c.id } : undefined;
 
   return (
     <>
-      <Masthead sample={!c.real} />
+      <Masthead sample={!c.real} scope={scope} />
       <div className={s.desk}>
         <main className={`${s.main} ${approval && !resolved ? s.mainSheet : ""}`} id="case">
           <div className={s.caseGrid}>
@@ -286,7 +289,7 @@ function CaseBody({ c: polled, refresh }: { c: Case; refresh: () => void }) {
                 <span>Opened {dayOf(c.openedAt)}</span>
               </p>
               <p className={c.real ? s.tagReal : s.tagSample} data-origin={c.real ? "paypal" : undefined}>
-                {c.real ? "Real PayPal sandbox case. Every id here came from PayPal." : "Staged sample. Nothing here went to PayPal."}
+                {c.real ? "Real PayPal sandbox case" : "Staged sample. Nothing here went to PayPal."}
               </p>
               <Photo name={c.photo} size="mat" alt={c.item} />
               <Neighbours c={c} />
@@ -302,7 +305,7 @@ function CaseBody({ c: polled, refresh }: { c: Case; refresh: () => void }) {
                   transition={T({ duration: 0.32 })}
                   data-cause="resolve"
                 >
-                  {decided ? c.ending!.sentence : c.real && sent && c.desk === "approval" ? c.headline.replace(/CaseClerk built the evidence; it waits for you\.$/, "CaseClerk filed the evidence on PayPal once, and PayPal is deciding.") : c.headline}
+                  {decided ? c.ending!.sentence : c.real && sent && c.desk === "approval" ? c.headline.replace(/CaseClerk built the evidence; it waits for you\.$/, "CaseClerk filed the evidence with PayPal, and PayPal is deciding.") : c.headline}
                 </motion.h1>
               </AnimatePresence>
               <div className={s.figureRow}>
@@ -352,7 +355,7 @@ function CaseBody({ c: polled, refresh }: { c: Case; refresh: () => void }) {
                 <div className={s.secHead}>
                   <h2 className={s.h2}>What happened, newest first</h2>
                   <p className={s.secNote}>
-                    {c.real ? "Blue rows are PayPal's own traffic, with the ids PayPal returned. Times in PT." : "Dashed rows are staged: the shape of PayPal traffic, nothing sent. Times in PT."}
+                    {c.real ? "Blue rows are PayPal traffic. Times in PT." : "Dashed rows are staged: the shape of PayPal traffic, nothing sent. Times in PT."}
                   </p>
                 </div>
                 <Timeline rows={rows} real={c.real} pending={!!approval && !sent} />

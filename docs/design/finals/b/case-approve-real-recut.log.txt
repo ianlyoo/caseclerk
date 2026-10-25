@@ -1,0 +1,6 @@
+caption "Fast-forward 2.3× (real PayPal wait 5.8 s): PayPal is taking the evidence" at 885,477 527x38
+take: 1103 frames, 15.73 s; f00742 held 0.112 s in place of f00743-f00758
+END H1 A buyer's bank charged back the Olympus OM-1n body you sold. You keep $382.33: the $393.00 sale less PayPal's usual fee. PayPal paid the buyer itself.
+END META PayPal closed the case on Oct 25 at 04:37:09 PT, webhook event WH-37X69612F30440908-1JH52011XP306910D. The agent spent $0.05 on it. PayPal held your $382.33 while it decided, then released all of it. Its usual fee on the sale was $10.67; PayPal shows no chargeback fee and no debit. Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.
+END MAST PayPal sandbox last webhook on this case 53 min ago
+video /Users/youngin/company-work/g251-pm-104-host/ceremony/case-approve-real-b3-recut.mp4 24.9 s: take 15.7 s, card 3.6 s, PP-R-IMW-10194496 resolved 5.6 s (1 frames)

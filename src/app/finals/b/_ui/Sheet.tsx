@@ -90,7 +90,7 @@ export function Sheet({ a, phase, real, sent, error, onApprove, onUndo, onSendNo
                   )}
                 </motion.p>
               ) : (
-                <motion.div key="act" className={s.sdAct} initial={false} exit={{ opacity: 0 }} transition={T({ duration: 0.16 })}>
+                <motion.div key="act" className={s.sdAct} initial={false} exit={{ opacity: 0, transition: { duration: 0 } }}>
                   <p className={s.sdPolicy}>
                     {declined ? "You declined. Nothing was sent; the case stays open and the deadline still runs." : a.policy}
                   </p>

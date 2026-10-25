@@ -135,7 +135,7 @@ export function Timeline({ rows, real, limit, pending, fold = true }: { rows: Li
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0 } }}
-                transition={T({ duration: 0.32, ease: EASE })}
+                transition={T({ duration: 0.42, ease: EASE, opacity: { duration: 0.2, delay: 0.42 } })}
               >
                 <time className={s.tlTime} dateTime={newest.at}>
                   <span>{dayOf(newest.at)}</span>
@@ -166,10 +166,11 @@ export function Timeline({ rows, real, limit, pending, fold = true }: { rows: Li
               key={it.key}
               layout="position"
               className={`${s.tlRow} ${r.kind === "paypal" ? s.tlPP : ""}`}
-              initial={r.fresh ? { opacity: 0, y: -10 } : false}
+              // A row a poll adds shows only after its neighbours have moved, so no two rows ever share a line.
+              initial={r.fresh ? { opacity: 0, y: -10 } : { opacity: 0 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, transition: { duration: 0 } }}
-              transition={T({ duration: 0.42, ease: EASE })}
+              transition={T({ duration: 0.42, ease: EASE, opacity: r.fresh ? { duration: 0.42, ease: EASE } : { duration: 0.2, delay: 0.42 } })}
               data-cause={r.fresh ? (r.kind === "paypal" ? "paypal-call" : "agent-step") : undefined}
             >
               <time className={s.tlTime} dateTime={r.at}>
