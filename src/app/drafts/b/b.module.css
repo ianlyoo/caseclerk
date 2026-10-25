@@ -4,7 +4,7 @@
   --paper: #fbfaf6;
   --ink: #1c1b18;
   --ink2: #5f5c55;
-  --ink3: #96928a;
+  --ink3: #868279;
   --line: #e7e3d9;
   --green: #1f5b3c;
   --red: #a3311d;
@@ -113,7 +113,7 @@
 
 /* ---- the file grid ---- */
 .file {
-  padding-top: 3.2rem;
+  padding-top: 2.4rem;
 }
 
 .row,
@@ -161,7 +161,7 @@
   font-weight: 300;
   line-height: 1.12;
   letter-spacing: -0.02em;
-  margin: 0 0 1.1em;
+  margin: 0 0 0.8em;
   max-width: 19em;
 }
 
@@ -195,14 +195,14 @@
 /* facts: term in small type, value in reading type, hairline between */
 .facts {
   display: grid;
-  grid-template-columns: 7.5em 1fr;
-  margin: 0 0 2.4rem;
+  grid-template-columns: 7.5em minmax(0, 1fr);
+  margin: 0 0 2rem;
   border-top: 1px solid var(--line);
 }
 
 .facts dt,
 .facts dd {
-  padding: 0.55em 0;
+  padding: 0.42em 0;
   border-bottom: 1px solid var(--line);
   margin: 0;
 }
@@ -210,24 +210,25 @@
 .facts dt {
   font-size: 0.82em;
   color: var(--ink3);
-  padding-top: 0.85em;
+  padding-top: 0.7em;
 }
 
 .facts dd {
   color: var(--ink2);
+  overflow-wrap: anywhere;
 }
 
 .claim {
   font-style: italic;
-  font-size: 1.22em;
+  font-size: 1.12em;
   line-height: 1.5;
-  margin-bottom: 2.6rem;
+  margin-bottom: 2rem;
   color: var(--ink);
 }
 
 /* ---- the recommendation ---- */
 .recommend {
-  padding-block: 2.2rem 2.6rem;
+  padding-block: 1.8rem 2.6rem;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   margin-bottom: 3.6rem;
@@ -630,7 +631,7 @@
     font-size: 1.45em;
   }
   .facts {
-    grid-template-columns: 6.2em 1fr;
+    grid-template-columns: 6.2em minmax(0, 1fr);
   }
   .recommend {
     margin-left: 0;
