@@ -30,7 +30,8 @@ export function DecisionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem(KEY);
-      if (saved) setMap(JSON.parse(saved));
+      // A state a page forced from its URL before this ran wins over the saved one.
+      if (saved) setMap((m) => ({ ...JSON.parse(saved), ...m }));
     } catch {}
   }, []);
   const set = useCallback((id: string, e: Entry) => {
@@ -92,10 +93,11 @@ export function useDecision(id: string) {
   };
 }
 
-/** Cases still waiting for the seller. */
+/** Cases still waiting for the seller. A case leaves the count when PayPal answers, not when Approve is pressed. */
 export function usePendingApprovals(): number {
   const { get } = useStore();
-  return CASES.filter((c) => c.state === "approval" && get(c.id).phase === "pending").length;
+  const waiting: Phase[] = ["pending", "undo", "sending"];
+  return CASES.filter((c) => c.state === "approval" && waiting.includes(get(c.id).phase)).length;
 }
 
 /** The phase of a case, for rows that only display it. */
