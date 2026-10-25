@@ -277,7 +277,7 @@ export function CaseView({ id }: { id: string }) {
         <nav className={`${s.row} ${s.pager}`} aria-label="Other cases">
           <p className={s.margin}>
             <Link href={href(prev.id)} className={s.inlineLink}>
-              &larr; {prev.buyer}
+              Previous: {prev.buyer}
             </Link>
           </p>
           <p className={s.text}>
@@ -287,7 +287,7 @@ export function CaseView({ id }: { id: string }) {
           </p>
           <p className={s.right}>
             <Link href={href(next.id)} className={s.inlineLink}>
-              {next.buyer} &rarr;
+              Next: {next.buyer}
             </Link>
           </p>
         </nav>

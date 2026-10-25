@@ -1,5 +1,5 @@
 #!/bin/bash
-# Source checks for the slop tells (docs/design/TELLS.md). Run from the repo root: bash docs/design/check-tells.sh
+# Source checks for the slop tells (docs/design/TELLS.md). Run from the repo root: bash docs/design/check-tells.sh [deploy-url]
 D=src/app/drafts
 fail=0
 check() { # name, expected-count, actual-count, note
@@ -51,6 +51,18 @@ print(bad)')"
 check "extra: emoji"                                          0 "$(grep -rnP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' $D | wc -l)"
 check "extra: eyebrow numbering (01, 02 labels)"              0 "$(n '>0[1-9] ')"
 check "T12 distinct grids: A uses 3-pane desk, B a margin column" 2 "$(( $(grep -c 'grid-template-columns: 17.5em minmax(0, 1fr) 31em' $D/a/a.module.css) + $(grep -c 'grid-template-columns: var(--m) var(--t) var(--r)' $D/b/b.module.css | awk '{print ($1>0)}') ))"
-echo "border-radius uses (buttons and lane-bar ends only):"; grep -rn 'border-radius' $D --include='*.css' | sed 's/^/      /'
+check "R2 no link to the /board spike from the drafts"         0 "$(n '/board')"
+check "R2 no way back to Approve after sending"               0 "$(n 'Back to the proposal|Show the proposal again')"
+check "R2 per-step cost column gone (cost(st.costUsd))"       0 "$(n 'cost\(st\.costUsd\)|tlCost')"
+check "R2 A progress-meter lane bars and stats trio gone"     0 "$(n 'barHot|bar2|className=\{s\.totals\}')"
+check "R2 B reason code breaks only at underscores (<wbr>)"   1 "$(grep -c '<wbr' $D/b/CaseView.tsx)"
+check "R2 RESOLVED_WITH_PAYOUT reads 'PayPal covered it'"     1 "$(grep -c 'RESOLVED_WITH_PAYOUT: \"PayPal covered it\"' $D/_data.ts)"
+echo "border-radius uses (buttons and the live dot only):"; grep -rn 'border-radius' $D --include='*.css' | sed 's/^/      /'
 echo "1px boxes (border on all four sides):"; grep -rn 'border: 1px' $D --include='*.css' | sed 's/^/      /'
+# Browser checks (docs/design/check-ui.cjs): pass the deploy URL to run them on the Mac over ssh.
+# Approve click path, the fold at 1920x940 and 1536x752 @1.25, nav targets, calendar overflow, contrast, type size, phone.
+if [ -n "${1:-}" ]; then
+  echo "-- browser checks against $1"
+  ssh mac "bash -c 'T=\$(mktemp -d /tmp/ccui.XXXXXX); trap \"rm -rf \$T\" EXIT; cat > \$T/c.cjs; /opt/homebrew/bin/node \$T/c.cjs $1'" < docs/design/check-ui.cjs || fail=1
+fi
 exit $fail
