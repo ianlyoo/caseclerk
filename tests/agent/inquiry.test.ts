@@ -134,4 +134,27 @@ describe("stuck chargebacks stay quiet", () => {
     await runAgentWith(deps, ID, { kind: "webhook", eventType: "CUSTOMER.DISPUTE.UPDATED" }).catch(() => undefined);
     expect(llm.requests.length).toBeGreaterThan(1);
   });
+
+  it("after deciding to wait, UPDATED events with nothing new make no model call; a buyer message wakes it", async () => {
+    const snap = inquiry();
+    const waiting = { ...snap, status: "WAITING_FOR_BUYER_RESPONSE" as const, allowed: ["send_message" as const, "accept_claim" as const] };
+    const wait = { tools: [{ name: "record_decision", input: { strategy: "wait", win_probability: 0.5, evidence_strength: "medium", offer_percent: 0, rationale: "Buyer's turn." } }] };
+    const { deps, db, llm, state } = makeDeps({ snap: waiting, turns: [TRIAGE_TURN, wait, wait] });
+    db.seed(waiting);
+    await runAgentWith(deps, ID, { kind: "webhook", eventType: "CUSTOMER.DISPUTE.CREATED" });
+    const calls = llm.requests.length;
+
+    state.snap = { ...state.snap, updateTime: "2026-10-25T06:00:00.000Z" };
+    expect((await runAgentWith(deps, ID, { kind: "webhook", eventType: "CUSTOMER.DISPUTE.UPDATED" })).status).toBe("skipped");
+    expect(llm.requests).toHaveLength(calls);
+
+    state.snap = {
+      ...state.snap,
+      status: "WAITING_FOR_SELLER_RESPONSE",
+      messages: [...state.snap.messages, { postedBy: "BUYER", at: "2026-10-25T06:30:00.000Z", content: "Still nothing." }],
+      updateTime: "2026-10-25T06:30:00.000Z",
+    };
+    await runAgentWith(deps, ID, { kind: "webhook", eventType: "CUSTOMER.DISPUTE.UPDATED" });
+    expect(llm.requests.length).toBeGreaterThan(calls);
+  });
 });

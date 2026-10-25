@@ -99,16 +99,22 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
     return { status: "waiting", summary: "Awaiting approval", costUsd: 0 };
   }
   const actionable = snap.allowed.some((r) => ACTIONABLE_RELS.includes(r));
-  const waitKey = `${snap.status}|${[...snap.allowed].sort().join(",")}`;
+  // What would make the agent think again: status, links, new messages, a new evidence request.
+  const waitKey = `${snap.status}|${[...snap.allowed].sort().join(",")}|${snap.messages.length}|${(snap.requestedEvidence ?? []).join(",")}`;
+  const lastDone = [...history].reverse().find((e) => e.kind === "agent.run.done");
   if (!actionable && c.triage) {
     // e.g. reason-OTHER chargebacks PayPal leaves in UNDER_REVIEW: each UPDATED event changes only the
     // timestamp. Note the wait once per (status, links); after that stay silent and call no model.
-    const lastDone = [...history].reverse().find((e) => e.kind === "agent.run.done");
     if (lastDone?.data?.waitKey === waitKey && (c.status === "waiting_on_paypal" || c.status === "triaged")) {
       return { status: "skipped", summary: "Still waiting on PayPal; nothing actionable changed", costUsd: 0 };
     }
     await finish("waiting_on_paypal", `${statusLine(snap)} No action is open to the seller right now.`, 0, { waitKey });
     return { status: "waiting", summary: "Waiting on PayPal", costUsd: 0 };
+  }
+
+  // The agent decided to wait and nothing it looks at has changed since: no new model call.
+  if (actionable && trigger.kind === "webhook" && lastDone?.data?.strategy === "wait" && lastDone.data.waitKey === waitKey) {
+    return { status: "skipped", summary: "Still waiting; nothing the agent acts on changed", costUsd: 0 };
   }
 
   const ctx: Ctx = { deps, cfg, c, snap, policy: await deps.db.policy.get(), acted: [], costUsd: 0 };
@@ -146,7 +152,11 @@ async function runLocked(deps: AgentDeps, caseId: string, trigger: AgentTrigger)
     await decideAndAct(ctx, actions, trigger);
     const status = caseStatusAfterRun(ctx);
     // Writes move the dispute on; record the version we last saw so our own UPDATED echo is skipped.
-    await finish(status, runSummary(ctx), ctx.costUsd, { strategy: ctx.decision?.strategy, updateTime: ctx.snap.updateTime });
+    await finish(status, runSummary(ctx), ctx.costUsd, {
+      strategy: ctx.decision?.strategy,
+      updateTime: ctx.snap.updateTime,
+      ...(ctx.decision?.strategy === "wait" ? { waitKey } : {}),
+    });
     return { status: "done", summary: runSummary(ctx), costUsd: ctx.costUsd };
   } catch (e) {
     if (e instanceof SpendCapError) {
