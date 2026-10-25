@@ -22,5 +22,6 @@ export function consentUrl(clientId: string, redirectUri: string, state: string,
     state,
     fullPage: "true",
   });
-  return `${AUTH_BASE}/connect/?${q.toString()}`;
+  // PayPal's examples encode spaces in scope as %20, not +.
+  return `${AUTH_BASE}/connect/?${q.toString().replace(/\+/g, "%20")}`;
 }
