@@ -1,0 +1,90 @@
+{
+  "note": "Labels written by hand on 2026-10-25 before any model run. 'sandbox' cases are real sandbox disputes (snapshot fetched live, cached in sandbox-snapshots.json); 'synthetic' cases are realistic buyer texts on inquiry-stage disputes.",
+  "cases": [
+    { "id": "sb-xww", "kind": "sandbox", "disputeId": "PP-R-XWW-10194440", "label": "not_as_described" },
+    { "id": "sb-snx", "kind": "sandbox", "disputeId": "PP-R-SNX-10194442", "label": "not_received" },
+    { "id": "sb-ach", "kind": "sandbox", "disputeId": "PP-R-ACH-10194448", "label": "not_received" },
+    { "id": "sb-rts", "kind": "sandbox", "disputeId": "PP-R-RTS-10194447", "label": "other" },
+    { "id": "sb-adc", "kind": "sandbox", "disputeId": "PP-R-ADC-10194432", "label": "not_as_described" },
+    {
+      "id": "syn-inr-stalled",
+      "kind": "synthetic",
+      "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+      "amount": "34.50",
+      "text": "It's been three weeks and the tracking hasn't moved since it left your warehouse. I needed this for my daughter's birthday. Please help.",
+      "label": "not_received"
+    },
+    {
+      "id": "syn-snad-cracked",
+      "kind": "synthetic",
+      "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+      "amount": "22.00",
+      "text": "The mug arrived with a crack all the way across the handle. I can send photos. Not what I paid for.",
+      "label": "not_as_described"
+    },
+    {
+      "id": "syn-unauth-unknown",
+      "kind": "synthetic",
+      "reason": "UNAUTHORISED",
+      "amount": "61.99",
+      "text": "I don't recognize this charge. I have never ordered anything from this store.",
+      "label": "unauthorized"
+    },
+    {
+      "id": "syn-dup",
+      "kind": "synthetic",
+      "reason": "DUPLICATE_TRANSACTION",
+      "amount": "24.99",
+      "text": "I was charged twice for the same order, $24.99 two times on Oct 12. Please refund the extra one.",
+      "label": "duplicate_or_billing"
+    },
+    {
+      "id": "syn-credit-not-processed",
+      "kind": "synthetic",
+      "reason": "CREDIT_NOT_PROCESSED",
+      "amount": "89.00",
+      "text": "I sent the jacket back on Oct 2 with tracking and you told me the refund was on its way. Still nothing.",
+      "label": "duplicate_or_billing"
+    },
+    {
+      "id": "syn-snad-but-missing",
+      "kind": "synthetic",
+      "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+      "amount": "45.00",
+      "text": "The package never got here. Tracking says delivered but it's not at my door and the neighbours don't have it.",
+      "label": "not_received"
+    },
+    {
+      "id": "syn-other-canceled",
+      "kind": "synthetic",
+      "reason": "OTHER",
+      "amount": "30.00",
+      "text": "You canceled my order the day after I paid because it was out of stock, but the money is still gone from my account.",
+      "label": "duplicate_or_billing"
+    },
+    {
+      "id": "syn-counterfeit",
+      "kind": "synthetic",
+      "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+      "amount": "120.00",
+      "text": "These sneakers are obviously fake. The logo is stitched wrong and they came in a plain box with no tags.",
+      "label": "not_as_described"
+    },
+    {
+      "id": "syn-incorrect-amount",
+      "kind": "synthetic",
+      "reason": "INCORRECT_AMOUNT",
+      "amount": "28.00",
+      "text": "The listing said $18 but I was charged $28. I want the $10 difference back.",
+      "label": "duplicate_or_billing"
+    },
+    {
+      "id": "syn-unauth-family",
+      "kind": "synthetic",
+      "reason": "UNAUTHORISED",
+      "amount": "14.99",
+      "text": "My son used my card to buy this game without asking me. I did not authorize it.",
+      "label": "unauthorized"
+    }
+  ]
+}
