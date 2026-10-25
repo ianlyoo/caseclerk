@@ -802,6 +802,10 @@
   text-overflow: ellipsis;
   font-variant-numeric: tabular-nums;
 }
+.mark > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .mark.markRed {
   border-left-color: var(--red);
   color: var(--red);
