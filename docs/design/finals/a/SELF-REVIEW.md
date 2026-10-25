@@ -23,3 +23,28 @@
 - G9: inbox, deadlines and policy headlines were 44 px at 1440; they are now ≥ 46 px.
 - G19: Marta's $1,240 was cut off on the phone strip. The phone strip now shows six days, and a check asserts that no amount is truncated at any of the 5 sizes.
 - The shared POLICY offered up to 45 %; it is now the app's DEFAULT_POLICY (40 %).
+
+## Judge round 1: Final A must-fix list
+1. **Real ceremony.** The $412.00 real case PP-R-VPY-10194485 renders live from the production API with its real slip ("File the evidence on the $412.00 case", "Over your $250.00 evidence line, so it waits for you."). Approve posts through `/finals/a/live/actions/<id>/approve`, a same-origin forward to production's already-public approve route, so the proxy adds no new exposure. The slip runs the undo window, then shows PayPal's status and debug id, or "Nothing was sent" with the error. VPY is camera only: nothing here approves it. The real Approve button carries only `data-real-approve`, and both the checks and the shot script abort every approve request. The video recorded here is a tour: the landing replay, VPY waiting (hovered, never clicked), then NJA resolved. The approval on camera waits for the PM.
+2. **Real resolution.** PP-R-NJA-10194486 ($389.00): the PM approved it, CaseClerk filed it (provide-evidence 200, debug f8469524f503f), and PayPal sent the RESOLVED webhook WH-01G68820AD177843M-8SL79965VW8605524. The landing replays this run and ends on it. JKB's page ends honestly: "PayPal is deciding; sandbox ruling requested 22:16:27 PT". The sample's resolved state, behind `?controls=1`, now says "A staged ending", has no "You kept", and links to a real ruling. No future dates remain.
+3. **Controls.** The state bar renders only with `?controls=1`. The margin says "Sample case. Nothing on this page went to PayPal."
+4. **Sample honesty.**
+   - Sample Wire lines read `staged` in wire3, with no debug id and no suffix.
+   - The post-approve copy is the verdict's sentence.
+   - The Wire sorts by full timestamp, newest first, with date rows.
+5. **Wire.**
+   - Every real entry has a 14 px Hanken plain-English line in wire2.
+   - Event names break only at the dots and are never cut (checked).
+   - The inbox Wire is clamp(400px, 30%, 560px).
+   - The header has no relative time, so server and client match (checked against the raw HTML).
+6. **Landing.**
+   - The h1 now sits above the intro. Its facts come from the same lines the Wire shows: "came in at 1:37 am PT" is the CREATED clock, and "12 minutes later" runs from approval to RESOLVED, both checked.
+   - The CTA note is the verdict's.
+   - The PM moved the replay from JKB to NJA after the verdict, because NJA reached RESOLVED.
+7. **Real-case page.**
+   - Modelled on B's page: "Real PayPal sandbox case. Every id here came from PayPal.", a credited similar-item photo and "What happened, newest first". Times are PT, and UTC inside agent text is rewritten as PT.
+   - It covers three states, all from the API: pending (VPY), deciding (JKB), and resolved (NJA, RCJ).
+   - The inbox lists the 4 real cases first, labelled "Real sandbox case", each with its last PayPal call and debug id (JKB: f2843364d3500).
+8. **Slip.** No duplicate amount. A clean summary ("What PayPal receives: …"), plus the verdict's margin sentence and button.
+9. **Policy.** "Act on my own when the money is under [$50.00]. File evidence on my own when the case is under [$250.00]…", with a rolling line: "With this policy, 4 of your 9 open cases would wait for you". The 9 are 7 sample cases plus the open real VPY and JKB.
+10. **Strip and photos.** The surname shows only when the day cell is ≥ 120 px (container query), never with an ellipsis. Kodak is now a clear Portra box (CC BY 3.0, Portra 160 shown). New photos are the ring dish (Cleveland Museum, CC0) and the spoon (PD).
