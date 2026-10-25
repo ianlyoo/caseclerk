@@ -181,7 +181,7 @@ function Slip({ r, send, setSend, pull }: { r: ApiCase; send: Send; setSend: (s:
           <p className={s.slipNote}>{slipSummary(r, a)}</p>
           <div className={s.slipRow3}>
             {send.at === "idle" || send.at === "refused" ? (
-              <button className={s.btn} onClick={() => setSend({ at: "undo", until: Date.now() + UNDO_MS })} data-approve data-real-approve={a.id}>
+              <button className={s.btn} onClick={() => setSend({ at: "undo", until: Date.now() + UNDO_MS })} data-real-approve={a.id}>
                 {buttonFor(r, a)}
               </button>
             ) : send.at === "undo" ? (
