@@ -1,10 +1,17 @@
-REAL http://localhost:4102/api/actions/80ededdd-6ac8-4f45-bca1-aa21ac9909f2/approve
-MID sheet: Waiting for youReal PayPal sandbox case At stake File this evidence with PayPal? What PayP | timeline: Oct 25 04:28:37 PT  To PayPal provide-evidence sending
-ANSWER 200 after 5.4 s (response body omitted)
-LANDED PayPal answered provide-evidence 200 debug id f167343c32e7c
-TOP AT LANDED Oct 25 04:28:41 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/customer/disputes/PP-R-IMW-10194496/provide-evidence debug id f167343c32e7c
-BAR Evidence filed with PayPal 04:28:43 PT debug id f167343c32e7c $393.00 PayPal is deciding
-TOP ROWS Oct 25 04:28:41 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/customer/disputes/PP-R-IMW-10194496/provide-evidence debug id f167343c32e7c | Oct 25 04:28:43 PT To PayPal 3 routine calls: update tracker, get tracker debug id f2633787db352 Show | Oct 25 04:28:38 PT You approved the evidence submission
-H1 A buyer's bank charged back the Olympus OM-1n body you sold. CaseClerk filed the evidence on PayPal once, and PayPal is deciding.
-LATER H1 A buyer's bank charged back the Olympus OM-1n body you sold. You keep $378.43: the $389.00 sale less PayPal's usual fee. PayPal paid the buyer itself.
-video /Users/youngin/company-work/g251-pm-104-host/ceremony/case-approve-real-b3.mp4 22.3 s (wait for PayPal 5.8 s shown at 2.3x), 1527 frames
+MAST Live on PayPal sandbox last webhook on this case 2 min ago
+H1 BEFORE A buyer's bank charged back the Olympus OM-1n body you sold. CaseClerk built the evidence; it waits for you.
+CLICK 2026-10-25T12:46:16.438Z
+REAL http://localhost:4102/api/actions/fa9fbb9c-ba0c-4862-aca4-b2c4e7d9aeaa/approve
+ANSWER 200 after 3.3 s (response body omitted)
+LANDED PayPal answered provide-evidence 200 debug id ca50152e8c8f8
+TOP AT LANDED Oct 25 05:46:25 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/customer/disputes/PP-R-IHX-10194506/provide-evidence debug id ca50152e8c8f8
+BAR Evidence filed with PayPal 05:46:25 PT debug id ca50152e8c8f8 $391.00 PayPal is deciding
+TOP ROWS Oct 25 05:46:24 PT To PayPal provide-evidence 200 Filed the evidence POST /v1/customer/disputes/PP-R-IHX-10194506/provide-evidence debug id ca50152e8c8f8 | Oct 25 05:46:26 PT To PayPal 3 routine calls: update tracker, get tracker debug id ca50152f49b1f Show | Oct 25 05:46:22 PT You approved the evidence submission
+H1 AFTER A buyer's bank charged back the Olympus OM-1n body you sold. CaseClerk filed the evidence with PayPal, and PayPal is deciding.
+POSTS 1; wait for PayPal 3.3 s, shown at 1x
+take 16.7 s, 978 frames
+FILED 2026-10-25T12:46:24.119Z debug ca50152e8c8f8; RESOLVED webhook WH-0RX02168P8982734Y-9TT31773BN730571G at 2026-10-25T12:57:34.976Z; 11 min
+END H1 A buyer's bank charged back the Olympus OM-1n body you sold. PayPal closed the chargeback with no debit to your account.
+END META PayPal closed the case on Oct 25 at 05:57:34 PT, webhook event WH-0RX02168P8982734Y-9TT31773BN730571G. The agent spent $0.05 on it. Sandbox only: we asked PayPal's sandbox to rule. On a live account PayPal decides on its own.
+END MAST Live on PayPal sandbox last webhook on this case 1 min ago
+video case-approve-real-b4.mp4 25.9 s: take 16.7 s at 1x, card 3.6 s, PP-R-IHX-10194506 resolved 5.6 s
