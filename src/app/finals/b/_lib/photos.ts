@@ -8,4 +8,5 @@ export const PHOTOS: Record<string, Photo> = {
   "rollei-35": p("rollei-35", "John Nuttall, CC BY 2.0, Wikimedia Commons"),
   hasselblad: p("hasselblad", "Benjamin Balazs, CC0, Wikimedia Commons"),
   "nikon-fm2": p("nikon-fm2", "JorgeGT, public domain, Wikimedia Commons"),
+  "ring-dish": p("ring-dish", "Cleveland Museum of Art, CC0, Wikimedia Commons"),
 };

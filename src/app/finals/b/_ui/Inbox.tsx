@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import NumberFlow from "@number-flow/react";
-import { CASES, countdown, day, dayOf, dayOffset, hoursLeft, isOpen, POLICY, SAMPLE_NOW, sorted, usd, weekday, type Case } from "../_lib/data";
+import { clock, countdown, day, dayOf, dayOffset, hoursLeft, isOpen, POLICY, sorted, usd, weekday, type Case } from "../_lib/data";
 import { deskLine } from "./CaseList";
 import { Masthead } from "./Masthead";
 import { Photo } from "./Photo";
@@ -23,7 +23,15 @@ function Row({ c }: { c: Case }) {
       <Link href={`/finals/b/case/${c.id}`} className={`${s.row} ${c.real ? s.rowReal : ""}`}>
         <span className={s.rowDue}>
           {c.real ? (
-            <>With PayPal since {dayOf(c.lastAt, true)}</>
+            open ? (
+            <>
+              With PayPal since
+              <br />
+              {dayOf(c.lastAt)} {clock(c.lastAt)} PT
+            </>
+          ) : (
+            <>Closed {dayOf(c.lastAt)}</>
+          )
           ) : c.dueAt && open ? (
             <span className={urgent ? s.urgent : undefined}>
               {countdown(c.dueAt)} left
@@ -36,7 +44,7 @@ function Row({ c }: { c: Case }) {
             <>Closed {day(c.lastAt)}</>
           )}
         </span>
-        <span className={s.rowPhoto}>{open ? <Photo name={c.photo} size="row" alt={c.item} /> : null}</span>
+        <span className={s.rowPhoto}>{open || c.real ? <Photo name={c.photo} size="row" alt={c.item} /> : null}</span>
         <span className={s.rowMain}>
           <span className={s.rowItem}>{c.item}</span>
           <span className={s.rowWho}>
@@ -53,7 +61,7 @@ function Row({ c }: { c: Case }) {
         </span>
         <span className={s.rowAmt}>
           {!open && c.kept ? (c.settled ? `Kept ${usd(c.kept)}` : usd(c.kept)) : usd(c.amount)}
-          <span>{c.real ? "Real sandbox case" : !open && c.settled ? `Settled, ${usd(c.settled)} back` : "Sample case"}</span>
+          <span>{c.real ? "Real sandbox case" : !open && c.settled ? `Settled, ${usd(c.settled)} back` : "Staged sample"}</span>
         </span>
       </Link>
     </li>
@@ -83,9 +91,9 @@ function Strip({ open }: { open: Case[] }) {
 }
 
 export function Inbox() {
-  const { waiting, phase } = useDesk();
+  const { waiting, phase, real } = useDesk();
   const only = useSearchParams().get("show") === "waiting";
-  const list = sorted();
+  const list = sorted(real);
   const open = list.filter((c) => isOpen(c) && phase(c.id) !== "resolved");
   const stake = open.reduce((n, c) => n + Number(c.amount), 0);
   const closed = list.filter((c) => !open.includes(c));
@@ -101,10 +109,6 @@ export function Inbox() {
           </span>{" "}
           at stake, {word(waiting).toLowerCase()} waiting for your answer.
         </h1>
-        <p className={s.headSub}>
-          The first case is real: a chargeback CaseClerk handled on PayPal sandbox on {dayOf(CASES[0].openedAt, true)}, with PayPal&apos;s own ids. The other {CASES.length - 1} are sample cases written for this preview; their
-          clocks run from {day(SAMPLE_NOW)}, 10:40 am Pacific.
-        </p>
         {shown ? (
           <>
             <p className={s.rowGroup}>

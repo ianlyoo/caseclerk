@@ -1,17 +1,15 @@
-// Final B ("Darkroom paper") data. One real case (PP-R-JKB-10194463, recorded from production on Oct 25)
-// and ten sample cases written for the design. Sample content never carries PayPal ids: those exist only
-// on the real case, read from its audit trail.
+// Final B ("Darkroom paper") sample data: ten staged cases written for the design. Real cases come from the
+// production API (see live.ts). Sample content never carries PayPal ids or PayPal statuses.
 
 import type { EvidencePdfInput } from "@/lib/evidence/pdf";
 import type { CaseRecord, OrderContext } from "@/lib/types";
-import real from "./real-PP-R-JKB-10194463.json";
 
 export const TZ = "America/Los_Angeles";
 /** The sample clock. Sample countdowns are measured from here, not from the viewer's clock. */
 export const SAMPLE_NOW = "2026-10-25T10:40:00-07:00";
 
 export const SELLER = { name: "Northlight Camera Exchange", city: "Portland, Oregon" };
-export const POLICY = { approvalAboveUsd: 50, evidenceGateUsd: 250, maxOfferPercent: 45 };
+export const POLICY = { approvalAboveUsd: 50, evidenceGateUsd: 250, maxOfferPercent: 40 };
 
 export type Desk = "new" | "working" | "approval" | "paypal" | "won" | "settled";
 
@@ -45,6 +43,7 @@ export type Approval = {
   path: string;
   name: string; // provide-evidence
   sentLine: string; // after the 200
+  actionId?: string; // real cases: the action POST /api/actions/:id/approve executes
 };
 
 export type Ending = { sentence: string; kept: string; at: string };
@@ -80,118 +79,6 @@ export type Case = {
   costUsd?: number;
   proof?: { name: string; status: string; debugId: string }; // real cases: the last PayPal call, shown on the inbox row
 };
-
-// ---------------------------------------------------------------- the real case
-
-type RealJson = typeof real;
-type AuditRow = RealJson["audit"][number] & { data?: Record<string, unknown> };
-
-const REAL_ID = "PP-R-JKB-10194463";
-export const REAL = { id: REAL_ID, recordedAt: "2026-10-25T05:18:41Z" };
-
-function realRows(j: RealJson): Row[] {
-  const out: Row[] = [];
-  const id = j.case.id;
-  const debugFor = (kind: string, near: string) =>
-    j.actions.find((a) => a.kind === kind && Math.abs(Date.parse(a.updatedAt) - Date.parse(near)) < 5000)?.result;
-  for (const a of j.audit as AuditRow[]) {
-    const d = (a.data ?? {}) as Record<string, string | number | undefined>;
-    if (a.kind === "webhook.received") {
-      out.push({
-        kind: "paypal",
-        at: a.at,
-        dir: "in",
-        name: String(d.eventType),
-        status: "verified",
-        eventId: String(d.eventId),
-        say: a.summary.replace("Dispute opened: under review", "PayPal opened the chargeback, under review").replace("Dispute updated: ", "PayPal updated the case: "),
-      });
-    } else if (a.kind === "action.executed") {
-      out.push({
-        kind: "paypal",
-        at: a.at,
-        dir: "out",
-        name: "provide-evidence",
-        method: "POST",
-        path: `/v1/customer/disputes/${id}/provide-evidence`,
-        status: String(d.httpStatus),
-        debugId: String(d.debugId),
-        say: "CaseClerk filed the evidence and PayPal accepted it",
-      });
-    } else if (a.kind === "demo.require_evidence" || a.kind === "demo.adjudicate") {
-      const k = a.kind === "demo.adjudicate" ? "adjudicate" : "require_evidence";
-      const r = debugFor(k, a.at);
-      out.push({
-        kind: "paypal",
-        at: a.at,
-        dir: "out",
-        name: k === "adjudicate" ? "adjudicate" : "require-evidence",
-        method: "POST",
-        path: `/v1/customer/disputes/${id}/${k === "adjudicate" ? "adjudicate" : "require-evidence"}`,
-        status: r?.httpStatus ? String(r.httpStatus) : undefined,
-        debugId: r?.debugId,
-        say: k === "adjudicate" ? "Sandbox control: you asked PayPal to rule for the seller" : "Sandbox control: you asked PayPal to request more evidence",
-      });
-    } else if (a.kind === "tool.get_order") {
-      out.push({ kind: "paypal", at: a.at, dir: "out", name: "get order", method: "GET", path: `/v2/checkout/orders/${j.case.order.orderId}`, say: a.summary });
-    } else if (a.kind === "tool.get_tracking") {
-      out.push({ kind: "paypal", at: a.at, dir: "out", name: "get tracker", method: "GET", path: `/v1/shipping/trackers/${j.case.order.captureId}-${j.case.order.shipping[0].trackingNumber}`, say: a.summary.replace("…", "ending ") });
-    } else if (a.kind === "tool.get_dispute") {
-      out.push({ kind: "paypal", at: a.at, dir: "out", name: "get dispute", method: "GET", path: `/v1/customer/disputes/${id}`, say: a.summary });
-    } else if (a.kind === "triage") {
-      out.push({ kind: "agent", at: a.at, say: "The agent read the chargeback: item not received, no message from the buyer." });
-    } else if (a.kind === "decision") {
-      const m = a.summary.match(/win chance (\d+)%/);
-      out.push({ kind: "agent", at: a.at, say: `Decided to fight with evidence, win chance ${m ? m[1] : "?"}%.`, detail: a.summary.replace(/^Decision: fight with evidence \([^)]*\)\.\s*/, "") });
-    }
-  }
-  return out;
-}
-
-function realCase(): Case {
-  const j = real;
-  const c = j.case;
-  const lastEvidence = [...j.actions].reverse().find((a) => a.kind === "provide_evidence");
-  const params = lastEvidence?.params as { narrative: string; exhibits: { title: string; body: string }[] } | undefined;
-  const cost = (j.audit as AuditRow[]).filter((a) => a.kind === "agent.run.done").reduce((n, a) => n + Number((a as { costUsd?: number }).costUsd ?? 0), 0);
-  const rec = { ...(c as unknown as CaseRecord) };
-  return {
-    id: c.id,
-    real: true,
-    buyer: "A buyer in the US",
-    city: "",
-    proof: { name: "provide-evidence", status: "200", debugId: "f2843364d3500" },
-    item: `${c.order.items[0].name}, ${c.order.items[0].description}`,
-    short: "Ceramic ring dish",
-    amount: c.snapshot.amount.value,
-    reason: c.snapshot.reason,
-    stage: "CHARGEBACK",
-    desk: "paypal",
-    openedAt: c.snapshot.createTime,
-    last: "Filed the evidence twice; PayPal is deciding",
-    lastAt: "2026-10-25T05:18:38.000Z",
-    headline: `A buyer's bank charged back a $${c.snapshot.amount.value} ceramic ring dish. CaseClerk filed the evidence on PayPal twice, and the case is with PayPal.`,
-    recommendation: "Fight with the evidence. It is filed; PayPal is deciding.",
-    rationale: c.decision.rationale,
-    values: [
-      { name: "Fight with evidence", math: `${Math.round(c.decision.winProbability * 100)}% chance PayPal decides for you`, ev: c.decision.expectedValueUsd.fight.toFixed(2), chosen: true },
-      { name: "Refund now", math: "The $17.95 goes back, plus the fee", ev: c.decision.expectedValueUsd.refund.toFixed(2) },
-    ],
-    rows: realRows(j),
-    pack: params
-      ? {
-          case: rec,
-          order: c.order as unknown as OrderContext,
-          narrative: params.narrative,
-          exhibits: params.exhibits,
-          amountCharged: c.order.amountCharged,
-          generatedAt: new Date(lastEvidence!.createdAt),
-        }
-      : undefined,
-    packNote: "Filed with PayPal on Oct 25 at 04:57 UTC, second round.",
-    costUsd: cost,
-  };
-}
 
 // ---------------------------------------------------------------- sample cases
 
@@ -262,7 +149,7 @@ const hero: Case = {
   dueAt: "2026-11-02T23:59:00-08:00",
   last: "Built the evidence pack; waiting for you to file it",
   lastAt: "2026-10-25T09:57:14-07:00",
-  headline: "Daniel Okafor's bank charged back the $412.00 Olympus OM-1n. He says the shutter sticks and the lens is hazy.",
+  headline: "Daniel Okafor's bank charged back the Olympus OM-1n he bought from you. He says the shutter sticks and the lens is hazy.",
   rationale:
     "The test roll from October 7 shows every speed working before it shipped, and UPS has his signature. His video shows the slow speeds sticking now, which reads as wear in transit. Fighting keeps more on average than refunding, and the camera stays sold.",
   values: [
@@ -276,15 +163,14 @@ const hero: Case = {
     amount: "412.00",
     button: "File the evidence on $412.00",
     decline: "Decline, accept the claim instead",
-    receives:
-      "A 4-section evidence pack: the seller statement, the order, UPS delivery signed OKAFOR, the listing, the October 7 test roll and the message thread. Evidence type: proof of fulfillment, with the UPS tracking number.",
+    receives: "seller statement, order receipt, UPS delivery signed OKAFOR, listing photos, and the Oct 7 test roll.",
     policy: "Over your $250.00 evidence line, so it waits for you.",
     method: "POST",
     path: `/v1/customer/disputes/${HERO_ID}/provide-evidence`,
     name: "provide-evidence",
     sentLine: "Evidence filed with PayPal",
   },
-  ending: { sentence: "PayPal decided for you. You kept $392.00: the $412.00 less the $20.00 chargeback fee. The camera stays with Daniel.", kept: "392.00", at: "2026-11-04T14:20:00-08:00" },
+  ending: { sentence: "PayPal decided for you. You kept $392.00: the $412.00 less the $20.00 chargeback fee. The camera stays with Daniel.", kept: "392.00", at: "2026-10-25T10:47:30-07:00" },
   pack: { case: heroRecord, order: heroOrder, narrative: heroNarrative, exhibits: heroExhibits, amountCharged: heroOrder.amountCharged, seller: { name: SELLER.name }, generatedAt: new Date("2026-10-25T16:57:14Z") },
   packNote: "Built Oct 25 at 9:57 am. Not filed until you approve.",
   costUsd: 0.13,
@@ -341,7 +227,10 @@ function fromLite(l: Lite): Case {
   return { ...l, real: false, headline, rows };
 }
 
-export const CASES: Case[] = [realCase(), hero, ...lite.map(fromLite)];
+export const CASES: Case[] = [hero, ...lite.map(fromLite)];
+/** The samples the inbox lists. The staged Olympus sample stays reachable by its URL but is not listed: the real
+ * $412 Olympus case carries that story now. */
+export const LISTED: Case[] = CASES.slice(1);
 export const HERO = hero;
 
 export function getCase(id: string): Case | undefined {
@@ -350,10 +239,10 @@ export function getCase(id: string): Case | undefined {
 
 export const isOpen = (c: Case) => c.desk !== "won" && c.desk !== "settled";
 
-/** Real case first (it is the proof), then open by deadline, then with PayPal, then closed. */
-export function sorted(): Case[] {
-  const rank = (c: Case) => (c.real ? -1 : c.dueAt ? 0 : isOpen(c) ? 1 : 2);
-  return [...CASES].sort((a, b) => {
+/** Real cases first (they are the proof), then open by deadline, then with PayPal, then closed. */
+export function sorted(real: Case[] = []): Case[] {
+  const rank = (c: Case) => (c.real ? (c.desk === "approval" ? -3 : c.desk === "won" ? -1 : -2) : c.dueAt ? 0 : isOpen(c) ? 1 : 2);
+  return [...real, ...LISTED].sort((a, b) => {
     const r = rank(a) - rank(b);
     if (r) return r;
     if (a.dueAt && b.dueAt) return Date.parse(a.dueAt) - Date.parse(b.dueAt);
@@ -373,14 +262,12 @@ const f = (o: Intl.DateTimeFormatOptions, tz = TZ) => new Intl.DateTimeFormat("e
 const dDay = f({ month: "short", day: "numeric" });
 const dWeek = f({ weekday: "short" });
 const dClock = f({ hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
-const dClockUtc = f({ hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }, "UTC");
-const dDayUtc = f({ month: "short", day: "numeric" }, "UTC");
 
 export const day = (iso: string) => dDay.format(new Date(iso));
 export const weekday = (iso: string) => dWeek.format(new Date(iso));
-/** Sample cases are in the seller's time (Pacific); the real case is shown in UTC, as PayPal logs it. */
-export const clock = (iso: string, real = false) => (real ? dClockUtc : dClock).format(new Date(iso));
-export const dayOf = (iso: string, real = false) => (real ? dDayUtc : dDay).format(new Date(iso));
+/** Every time is in the seller's time, Pacific, marked "PT" where it stands alone. */
+export const clock = (iso: string, _real = false) => dClock.format(new Date(iso));
+export const dayOf = (iso: string, _real = false) => dDay.format(new Date(iso));
 
 export function hoursLeft(iso: string): number {
   return (Date.parse(iso) - Date.parse(SAMPLE_NOW)) / 3_600_000;
@@ -394,10 +281,4 @@ export function countdown(iso: string): string {
 export function dayOffset(iso: string): number {
   const ymd = (x: string) => f({ year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(x));
   return Math.round((Date.parse(ymd(iso)) - Date.parse(ymd(SAMPLE_NOW))) / 86_400_000);
-}
-
-/** The last real webhook PayPal sent us, for the masthead. */
-export function lastRealWebhook(rows: Row[] = CASES[0].rows) {
-  const w = [...rows].reverse().find((r) => r.kind === "paypal" && r.dir === "in");
-  return w && w.kind === "paypal" ? w : undefined;
 }

@@ -1,7 +1,8 @@
 "use client";
 // The decision sheet: the one dark surface. It rises when a case needs the seller, and only then.
-// Approve opens a 4 s undo window (the button fills with brass left to right); then the POST goes out,
-// the sheet holds until PayPal answers, and collapses to one line with the time PayPal took it.
+// Approve opens a 4 s undo window (the button fills, ink on paper, left to right); then the POST goes out, the
+// sheet holds until PayPal answers, shows that answer (status and debug id) inside the sheet for 1.5 s, and
+// collapses to one line with the time PayPal took it. On a staged sample the answer line says nothing was sent.
 import { AnimatePresence, motion } from "motion/react";
 import NumberFlow from "@number-flow/react";
 import { useEffect, useState } from "react";
@@ -12,12 +13,13 @@ import s from "../b.module.css";
 
 const SPRING = { type: "spring", stiffness: 420, damping: 41, mass: 1 } as const;
 export const UNDO_MS = 4000;
+export const LANDED_MS = 1500;
 
 type Props = {
   a: Approval;
   phase: Phase;
   real: boolean;
-  sentAt?: string;
+  sent?: { at: string; debugId?: string };
   error?: { name: string; debugId?: string };
   onApprove: () => void;
   onUndo: () => void;
@@ -25,11 +27,10 @@ type Props = {
   onRetry: () => void;
 };
 
-export function Sheet({ a, phase, real, sentAt, error, onApprove, onUndo, onSendNow, onRetry }: Props) {
+export function Sheet({ a, phase, real, sent, error, onApprove, onUndo, onSendNow, onRetry }: Props) {
   const T = useT();
-  const [more, setMore] = useState(false);
   const [declined, setDeclined] = useState(false);
-  const up = phase === "pending" || phase === "undo" || phase === "sending" || phase === "failed";
+  const up = phase === "pending" || phase === "undo" || phase === "sending" || phase === "landed" || phase === "failed";
   return (
     <AnimatePresence mode="wait" initial={true}>
       {up ? (
@@ -49,7 +50,8 @@ export function Sheet({ a, phase, real, sentAt, error, onApprove, onUndo, onSend
             <div className={s.sdTop}>
               <p className={s.sdLabel}>
                 <span>
-                  Waiting for you{real ? "" : <span className={s.sdSample}>Sample case</span>}
+                  Waiting for you
+                  {real ? <span className={s.sdSample}>Real PayPal sandbox case</span> : <span className={s.sdSample}>Staged sample: nothing goes to PayPal</span>}
                 </span>
                 <span className={s.sdAmtLabel}>At stake</span>
               </p>
@@ -58,66 +60,89 @@ export function Sheet({ a, phase, real, sentAt, error, onApprove, onUndo, onSend
                 <NumberFlow value={Number(a.amount)} format={{ style: "currency", currency: "USD" }} />
               </p>
             </div>
-            <div className={s.sdReceives}>
-              <p className={more ? s.sdNoteAll : s.sdNote}>
-                <span className={s.sdInline}>What PayPal receives: </span>
-                {a.receives}
-              </p>
-              <button type="button" className={s.sdText} onClick={() => setMore((m) => !m)} aria-expanded={more}>
-                {more ? "Show less" : "Show all"}
-              </button>
-            </div>
-            <div className={s.sdAct}>
-              <p className={s.sdPolicy}>
-                {declined ? "You declined. Nothing was sent; the case stays open and the deadline still runs." : a.policy}
-              </p>
-              {phase === "failed" ? (
-                <p className={s.sdFail} role="alert">
-                  Nothing was sent. PayPal answered {error?.name ?? "with an error"}
-                  {error?.debugId ? `, debug id ${error.debugId}` : ""}.{" "}
-                  <button type="button" className={s.sdText} onClick={onRetry}>
-                    Try again
-                  </button>
-                </p>
-              ) : null}
-              <div className={s.sdBtns}>
-                {phase === "pending" || phase === "failed" ? (
-                  <button type="button" className={s.sdText} onClick={() => setDeclined((d) => !d)}>
-                    {declined ? "Bring the recommendation back" : a.decline}
-                  </button>
-                ) : phase === "undo" ? (
-                  <>
-                    <button type="button" className={s.sdText} onClick={onUndo}>
-                      Undo
-                    </button>
-                    <button type="button" className={s.sdText} onClick={onSendNow}>
-                      Send now
-                    </button>
-                  </>
-                ) : null}
-                <button
-                  type="button"
-                  className={s.approve}
-                  onClick={phase === "pending" ? onApprove : undefined}
-                  disabled={declined || phase === "sending"}
-                  aria-disabled={phase !== "pending"}
-                  data-phase={phase}
+            <p className={s.sdNote}>
+              <span className={s.sdInline}>What PayPal receives: </span>
+              {a.receives}
+            </p>
+            <AnimatePresence mode="wait" initial={false}>
+              {phase === "landed" ? (
+                <motion.p
+                  key="landed"
+                  className={s.sdLanded}
+                  role="status"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={T({ duration: 0.32, ease: [0.2, 0.8, 0.2, 1] })}
+                  data-cause="paypal-call"
+                  data-wire-line
+                  data-origin="paypal"
+                  data-sample={real ? undefined : ""}
                 >
-                  <motion.span
-                    className={s.approveFill}
-                    aria-hidden
-                    initial={false}
-                    animate={{ scaleX: phase === "undo" || phase === "sending" ? 1 : 0 }}
-                    transition={phase === "undo" ? T({ duration: UNDO_MS / 1000, ease: "linear" }) : T({ duration: 0.16 })}
-                    data-cause="approve"
-                  />
-                  <span className={s.approveText}>
-                    {phase === "undo" ? "Sending in a moment" : phase === "sending" ? "Sending to PayPal" : a.button}
-                  </span>
-                  {phase === "sending" ? <span className={s.inflightDark} data-inflight data-cause="paypal-call" aria-hidden /> : null}
-                </button>
-              </div>
-            </div>
+                  <span className={s.sdLandedDir}>{real ? "PayPal answered" : "Staged"}</span>
+                  <code>{a.name}</code>
+                  {real ? (
+                    <>
+                      <code className={s.sdOk}>200</code>
+                      {sent?.debugId ? <code className={s.sdId}>debug id {sent.debugId}</code> : null}
+                    </>
+                  ) : (
+                    <span className={s.sdLandedNote}>on a real case PayPal answers 200 here, with a debug id</span>
+                  )}
+                </motion.p>
+              ) : (
+                <motion.div key="act" className={s.sdAct} initial={false} exit={{ opacity: 0 }} transition={T({ duration: 0.16 })}>
+                  <p className={s.sdPolicy}>
+                    {declined ? "You declined. Nothing was sent; the case stays open and the deadline still runs." : a.policy}
+                  </p>
+                  {phase === "failed" ? (
+                    <p className={s.sdFail} role="alert">
+                      Nothing was sent. PayPal answered {error?.name ?? "with an error"}
+                      {error?.debugId ? `, debug id ${error.debugId}` : ""}.{" "}
+                      <button type="button" className={s.sdText} onClick={onRetry}>
+                        Try again
+                      </button>
+                    </p>
+                  ) : null}
+                  <div className={s.sdBtns}>
+                    {phase === "pending" || phase === "failed" ? (
+                      <button type="button" className={s.sdText} onClick={() => setDeclined((d) => !d)}>
+                        {declined ? "Bring the recommendation back" : a.decline}
+                      </button>
+                    ) : phase === "undo" ? (
+                      <>
+                        <button type="button" className={s.sdText} onClick={onUndo}>
+                          Undo
+                        </button>
+                        <button type="button" className={s.sdText} onClick={onSendNow}>
+                          Send now
+                        </button>
+                      </>
+                    ) : null}
+                    <button
+                      type="button"
+                      className={s.approve}
+                      onClick={phase === "pending" ? onApprove : undefined}
+                      disabled={declined || phase === "sending"}
+                      aria-disabled={phase !== "pending"}
+                      data-phase={phase}
+                    >
+                      <motion.span
+                        className={s.approveFill}
+                        aria-hidden
+                        initial={false}
+                        animate={{ scaleX: phase === "undo" || phase === "sending" ? 1 : 0 }}
+                        transition={phase === "undo" ? T({ duration: UNDO_MS / 1000, ease: "linear" }) : T({ duration: 0.16 })}
+                        data-cause="approve"
+                      />
+                      <span className={s.approveText}>
+                        {phase === "undo" ? "Sending in a moment" : phase === "sending" ? (real ? "Sending to PayPal" : "Staging the call") : a.button}
+                      </span>
+                      {phase === "sending" ? <span className={s.inflightDark} data-inflight data-cause="paypal-call" aria-hidden /> : null}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.section>
       ) : phase === "sent" ? (
@@ -134,11 +159,12 @@ export function Sheet({ a, phase, real, sentAt, error, onApprove, onUndo, onSend
           data-cause="paypal-call"
         >
           <p className={s.sbLine} role="status">
-            {a.sentLine} <time>{sentAt ? clock(sentAt) : ""}</time>
-            {real ? null : <span className={s.sdSample}>Sample case</span>}
+            {real ? a.sentLine : "Staged: evidence filed"} <time>{sent ? `${clock(sent.at)} PT` : ""}</time>
+            {real ? sent?.debugId ? <code className={s.sdId}>debug id {sent.debugId}</code> : null : <span className={s.sdSample}>Staged sample: nothing went to PayPal</span>}
           </p>
           <p className={s.sbAmt}>
-            <CountUp to={Number(a.amount)} /> defended
+            {usd(a.amount)}
+            <span className={s.sbState}>PayPal is deciding</span>
           </p>
         </motion.section>
       ) : null}

@@ -1,6 +1,7 @@
 "use client";
-// The case timeline, newest first. PayPal traffic is a first-class row: what happened in words,
-// then method, endpoint, status and the ids PayPal gave us (real cases only).
+// The case timeline, newest first. PayPal traffic is a first-class row: what happened in words, then method,
+// endpoint, status and the ids PayPal gave us. Real rows carry the PayPal-blue rule; staged sample rows a dashed
+// one and the word "staged" where a status would be, because nothing in them went to PayPal.
 import { AnimatePresence, motion } from "motion/react";
 import { clock, dayOf } from "../_lib/data";
 import type { LiveRow } from "./store";
@@ -19,7 +20,9 @@ function PayPalRow({ r, real }: { r: Extract<LiveRow, { kind: "paypal" }>; real:
       <p className={s.ppHead}>
         <span className={s.ppDir}>{r.dir === "in" ? "From PayPal" : "To PayPal"}</span>
         <code className={s.ppName}>{r.name}</code>
-        {r.status ? (
+        {!real && !r.inflight ? (
+          <code className={s.ppStaged}>staged</code>
+        ) : r.status ? (
           <motion.code
             key={r.status}
             className={r.status === "200" || r.status === "verified" ? s.ppOk : s.ppStatus}
@@ -47,7 +50,7 @@ function PayPalRow({ r, real }: { r: Extract<LiveRow, { kind: "paypal" }>; real:
             {r.eventId ? <code className={s.ppId}>event {r.eventId}</code> : null}
           </>
         ) : !real && !r.inflight ? (
-          <span className={s.ppSample}>Sample case: no PayPal ids</span>
+          <span className={s.ppSample}>Staged sample: no PayPal ids</span>
         ) : null}
       </p>
       {r.inflight ? <span className={s.inflight} data-inflight data-cause="paypal-call" aria-hidden /> : null}
@@ -55,9 +58,15 @@ function PayPalRow({ r, real }: { r: Extract<LiveRow, { kind: "paypal" }>; real:
   );
 }
 
-export function Timeline({ rows, real, limit }: { rows: LiveRow[]; real: boolean; limit?: number }) {
+/**
+ * While the decision sheet is up (`pending`), the agent's rows after PayPal's latest webhook are hidden: the sheet
+ * is those rows (the recommendation and the pack), so the column opens on what PayPal last said.
+ */
+export function Timeline({ rows, real, limit, pending }: { rows: LiveRow[]; real: boolean; limit?: number; pending?: boolean }) {
   const T = useT();
-  const list = [...rows].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, limit);
+  const sorted = [...rows].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  const hook = pending ? sorted.find((r) => r.kind === "paypal" && r.dir === "in") : undefined;
+  const list = (hook ? sorted.filter((r) => r.kind !== "agent" || Date.parse(r.at) <= Date.parse(hook.at)) : sorted).slice(0, limit);
   return (
     <ol className={s.tl} aria-label="What happened, newest first">
       <AnimatePresence initial={false}>
@@ -74,8 +83,8 @@ export function Timeline({ rows, real, limit }: { rows: LiveRow[]; real: boolean
               data-cause={r.fresh ? (r.kind === "paypal" ? "paypal-call" : "agent-step") : undefined}
             >
               <time className={s.tlTime} dateTime={r.at}>
-                <span>{dayOf(r.at, real)}</span>
-                <span>{clock(r.at, real)}</span>
+                <span>{dayOf(r.at)}</span>
+                <span>{clock(r.at)} PT</span>
               </time>
               <div className={s.tlBody}>
                 {r.kind === "paypal" ? (

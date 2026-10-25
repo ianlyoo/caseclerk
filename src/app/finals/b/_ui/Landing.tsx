@@ -2,17 +2,18 @@
 import Link from "next/link";
 import NumberFlow from "@number-flow/react";
 import { useEffect, useRef, useState } from "react";
-import { CASES, REAL, type Row } from "../_lib/data";
+import { type Row } from "../_lib/data";
+import { DEFAULT_REAL, fromApi, REPLAY_REAL, SNAPSHOTS } from "../_lib/live";
 import { Masthead, useNow } from "./Masthead";
 import type { LiveRow } from "./store";
 import { Timeline } from "./Timeline";
 import s from "../b.module.css";
 
-const real = CASES[0];
+const real = fromApi(SNAPSHOTS[REPLAY_REAL]);
 const REPLAY_MS = 9000;
 
 /** The real run's PayPal traffic and decisions, in the order they happened. */
-const script: Row[] = real.rows.filter((r) => r.kind === "paypal" || r.kind === "agent");
+const script: Row[] = [...real.rows].filter((r) => r.kind === "paypal" || r.kind === "agent").sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 const span = Date.parse(script[script.length - 1].at) - Date.parse(script[0].at);
 const minutes = Math.round(span / 60_000);
 
@@ -31,9 +32,9 @@ function Replay() {
   return (
     <section className={s.landR} aria-label="Replay of a real case">
       <div className={s.replayHead}>
-        <p className={s.replayTitle}>Replay of {REAL.id}, recorded Oct 25, 2026</p>
+        <p className={s.replayTitle}>Replay of {real.id}, recorded Oct 25, 2026</p>
         <p className={s.replayNote}>
-          {minutes} minutes of a real PayPal sandbox chargeback, compressed to 9 seconds. Every id is PayPal&apos;s own. Times in UTC.
+          {minutes} minutes of a real PayPal sandbox chargeback, compressed to 9 seconds. Every id is PayPal&apos;s own. Times in PT.
         </p>
       </div>
       <p className={s.replayFig} data-cause="webhook">
@@ -43,7 +44,7 @@ function Replay() {
         {filed === 0 ? "disputed" : filed === 1 ? "disputed, evidence filed once" : `disputed, evidence filed ${filed} times`}
       </p>
       <Timeline rows={shown} real limit={6} />
-      <Link href={`/finals/b/case/${REAL.id}`} className={s.textBtn} style={{ justifySelf: "start" }}>
+      <Link href={`/finals/b/case/${real.id}`} className={s.textBtn} style={{ justifySelf: "start" }}>
         Open this case
       </Link>
     </section>
@@ -92,8 +93,13 @@ export function Landing() {
       <main className={s.land}>
         <section className={s.landL}>
           <h1 className={s.landH1}>
-            A buyer&apos;s bank charged back a $17.95 ceramic dish. CaseClerk filed the evidence on PayPal twice, on its own.
+            A buyer&apos;s bank charged back a $389 Olympus camera. The seller said yes once; CaseClerk filed the evidence and PayPal answered 200.
           </h1>
+          <p className={s.landNext}>
+            <Link href={`/finals/b/case/${DEFAULT_REAL}`} className={s.textBtn}>
+              The next one, $412, is waiting for your answer
+            </Link>
+          </p>
           <p className={s.landWhat}>CaseClerk answers PayPal disputes for small sellers: it reads the case, the order and the tracking, files the evidence, and asks you before money moves.</p>
           <TestDispute />
           <p className={s.landFoot}>Built on PayPal Disputes, Orders, Tracking and Webhooks (sandbox). Claude Haiku 5.5 triages; Opus 5.5 decides.</p>

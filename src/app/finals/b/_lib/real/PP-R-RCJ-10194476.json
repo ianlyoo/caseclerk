@@ -1,0 +1,225 @@
+{
+ "case": {
+  "id": "PP-R-RCJ-10194476",
+  "snapshot": {
+   "id": "PP-R-RCJ-10194476",
+   "stage": "CHARGEBACK",
+   "amount": {
+    "value": "27.95",
+    "currency_code": "USD"
+   },
+   "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+   "status": "RESOLVED",
+   "allowed": [],
+   "channel": "EXTERNAL",
+   "outcome": "RESOLVED_WITH_PAYOUT",
+   "messages": [],
+   "invoiceId": "JC-261025-D7R1B",
+   "createTime": "2026-10-25T06:21:32.847Z",
+   "updateTime": "2026-10-25T06:34:03.618Z",
+   "buyerTransactionId": "2706342152047125N",
+   "sellerTransactionId": "5X314671C5018893S"
+  },
+  "order": {
+   "items": [
+    {
+     "name": "Hand-carved walnut serving spoon",
+     "quantity": 1,
+     "unitAmount": {
+      "value": "22.00",
+      "currency_code": "USD"
+     },
+     "description": "Black walnut, oil finish, 11 in"
+    }
+   ],
+   "paidAt": "2026-10-25T06:21:29Z",
+   "orderId": "6Y277313TL9555020",
+   "shipping": [
+    {
+     "status": "DELIVERED",
+     "carrier": "USPS",
+     "trackingUrl": "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899698290082215",
+     "trackingNumber": "9400111899698290082215"
+    }
+   ],
+   "captureId": "5X314671C5018893S",
+   "buyerCountry": "US"
+  },
+  "triage": {
+   "at": "2026-10-25T06:24:41.849Z",
+   "model": "claude-haiku-5-5 (medium)",
+   "summary": "Buyer disputes a $27.95 charge under a not-as-described reason; no buyer message was included with the chargeback.",
+   "category": "not_as_described"
+  },
+  "status": "resolved",
+  "isTestDispute": true,
+  "createdAt": "2026-10-25T06:24:37.514Z",
+  "updatedAt": "2026-10-25T06:34:40.076Z"
+ },
+ "actions": [],
+ "audit": [
+  {
+   "id": "5b68f13d-5426-4a82-8bf7-8d21df4c8050",
+   "caseId": "PP-R-RCJ-10194476",
+   "at": "2026-10-25T06:24:38.203Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute opened: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "changed": true,
+    "created": true,
+    "eventId": "WH-4X035198EM048054T-040813534R2790401",
+    "eventType": "CUSTOMER.DISPUTE.CREATED"
+   }
+  },
+  {
+   "id": "4a2e9ea6-7e1d-41e4-be00-b9583995eeb5",
+   "caseId": "PP-R-RCJ-10194476",
+   "at": "2026-10-25T06:24:41.737Z",
+   "actor": "agent",
+   "kind": "agent.run.start",
+   "summary": "Agent started: CUSTOMER.DISPUTE.CREATED; merchandise or service not as described, 27.95 USD",
+   "data": {
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "trigger": "webhook",
+    "eventType": "CUSTOMER.DISPUTE.CREATED"
+   }
+  },
+  {
+   "id": "8fabacbf-ae80-4657-8c62-09211fac86d8",
+   "caseId": "PP-R-RCJ-10194476",
+   "at": "2026-10-25T06:24:43.961Z",
+   "actor": "agent",
+   "kind": "triage",
+   "summary": "Triage: not as described. Buyer disputes a $27.95 charge under a not-as-described reason; no buyer message was included with the chargeback.",
+   "data": {
+    "model": "claude-haiku-5-5 (medium)",
+    "category": "not_as_described"
+   },
+   "costUsd": 0.000109
+  },
+  {
+   "id": "691e66e7-7f4b-4f27-8d1a-e8b52571ae46",
+   "caseId": "PP-R-RCJ-10194476",
+   "at": "2026-10-25T06:24:44.415Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "PayPal status under review (chargeback stage). No action is open to the seller yet; the agent continues when PayPal updates the case.",
+   "data": {
+    "trigger": "webhook",
+    "waitKey": "UNDER_REVIEW|provide_supporting_info|0|",
+    "updateTime": "2026-10-25T06:24:17.026Z"
+   },
+   "costUsd": 0.000109
+  },
+  {
+   "id": "3596008f-caa4-435c-8f59-b6598e3e546a",
+   "caseId": "PP-R-RCJ-10194476",
+   "at": "2026-10-25T06:25:38.098Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: waiting for seller response",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "WAITING_FOR_SELLER_RESPONSE",
+    "allowed": [
+     "provide_evidence",
+     "accept_claim"
+    ],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-3GP120108W2227139-411187508C651145N",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "482b970c-59d4-406f-9da8-07c36dab7bc5",
+   "caseId": "PP-R-RCJ-10194476",
+   "at": "2026-10-25T06:26:07.659Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-47K20443GS488694K-1RW21363DD207445M",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "0d81c4af-12e2-42cf-a426-796649e53dc0",
+   "caseId": "PP-R-RCJ-10194476",
+   "at": "2026-10-25T06:32:08.518Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-1CC56286A37625154-0J425982N1965573T",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "ec29263e-ff6f-40c2-b74e-2c7f39935c71",
+   "caseId": "PP-R-RCJ-10194476",
+   "at": "2026-10-25T06:32:11.365Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "PayPal status under review (chargeback stage). No action is open to the seller right now.",
+   "data": {
+    "trigger": "webhook",
+    "waitKey": "UNDER_REVIEW||0|",
+    "runCostUsd": 0,
+    "updateTime": "2026-10-25T06:31:43.227Z"
+   }
+  },
+  {
+   "id": "e2408648-8b86-49d0-909e-1f5c0c31528b",
+   "caseId": "PP-R-RCJ-10194476",
+   "at": "2026-10-25T06:34:37.754Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute resolved: resolved",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "RESOLVED",
+    "allowed": [],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-26V93469T1874702X-69U593859W7826638",
+    "eventType": "CUSTOMER.DISPUTE.RESOLVED"
+   }
+  },
+  {
+   "id": "df7b1778-2464-4f76-ae95-5f064a8ead19",
+   "caseId": "PP-R-RCJ-10194476",
+   "at": "2026-10-25T06:34:40.295Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "PayPal closed the dispute (RESOLVED_WITH_PAYOUT). Nothing left to do.",
+   "data": {
+    "trigger": "webhook",
+    "runCostUsd": 0,
+    "updateTime": "2026-10-25T06:34:03.618Z"
+   }
+  }
+ ],
+ "wire": []
+}

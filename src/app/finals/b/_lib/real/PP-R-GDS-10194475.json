@@ -1,0 +1,254 @@
+{
+ "case": {
+  "id": "PP-R-GDS-10194475",
+  "snapshot": {
+   "id": "PP-R-GDS-10194475",
+   "stage": "CHARGEBACK",
+   "amount": {
+    "value": "49.95",
+    "currency_code": "USD"
+   },
+   "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+   "status": "UNDER_REVIEW",
+   "allowed": [],
+   "channel": "EXTERNAL",
+   "messages": [],
+   "invoiceId": "JC-261025-RTDKT",
+   "createTime": "2026-10-25T06:21:25.347Z",
+   "updateTime": "2026-10-25T06:46:44.103Z",
+   "buyerTransactionId": "3MH22836FU907642K",
+   "sellerTransactionId": "93760125UD176882R"
+  },
+  "order": {
+   "items": [
+    {
+     "name": "Beeswax taper candles (pair)",
+     "quantity": 1,
+     "unitAmount": {
+      "value": "16.00",
+      "currency_code": "USD"
+     },
+     "description": "Hand-dipped, 10 in, unscented"
+    },
+    {
+     "name": "Hand-thrown stoneware mug, speckled oat",
+     "quantity": 1,
+     "unitAmount": {
+      "value": "28.00",
+      "currency_code": "USD"
+     },
+     "description": "12 oz, wheel-thrown, food safe glaze"
+    }
+   ],
+   "paidAt": "2026-10-25T06:21:21Z",
+   "orderId": "0800465150094731W",
+   "shipping": [
+    {
+     "status": "DELIVERED",
+     "carrier": "USPS",
+     "trackingUrl": "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899085291716346",
+     "trackingNumber": "9400111899085291716346"
+    }
+   ],
+   "captureId": "93760125UD176882R",
+   "buyerCountry": "US"
+  },
+  "triage": {
+   "at": "2026-10-25T06:24:42.867Z",
+   "model": "claude-haiku-5-5 (medium)",
+   "summary": "Buyer's card issuer filed a chargeback claiming the $49.95 merchandise or service was never received; no buyer message was provided.",
+   "category": "not_received"
+  },
+  "status": "waiting_on_paypal",
+  "isTestDispute": true,
+  "createdAt": "2026-10-25T06:24:38.302Z",
+  "updatedAt": "2026-10-25T06:47:01.389Z"
+ },
+ "actions": [],
+ "audit": [
+  {
+   "id": "d8f14cd1-c92f-421a-a77d-a40cb172b232",
+   "caseId": "PP-R-GDS-10194475",
+   "at": "2026-10-25T06:24:39.036Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute opened: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "changed": true,
+    "created": true,
+    "eventId": "WH-11D25383CM6394050-51S66865GL1323944",
+    "eventType": "CUSTOMER.DISPUTE.CREATED"
+   }
+  },
+  {
+   "id": "01a45be8-f964-47e7-aa6c-73e7f3f952de",
+   "caseId": "PP-R-GDS-10194475",
+   "at": "2026-10-25T06:24:42.747Z",
+   "actor": "agent",
+   "kind": "agent.run.start",
+   "summary": "Agent started: CUSTOMER.DISPUTE.CREATED; merchandise or service not received, 49.95 USD",
+   "data": {
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "trigger": "webhook",
+    "eventType": "CUSTOMER.DISPUTE.CREATED"
+   }
+  },
+  {
+   "id": "5876e1fe-df1a-4b6b-b1c3-a59676e708fb",
+   "caseId": "PP-R-GDS-10194475",
+   "at": "2026-10-25T06:24:45.852Z",
+   "actor": "agent",
+   "kind": "triage",
+   "summary": "Triage: item not received. Buyer's card issuer filed a chargeback claiming the $49.95 merchandise or service was never received; no buyer message was provided.",
+   "data": {
+    "model": "claude-haiku-5-5 (medium)",
+    "category": "not_received"
+   },
+   "costUsd": 0.00011
+  },
+  {
+   "id": "8cb5ed6b-3040-4a02-81c0-3bc5af5fe97c",
+   "caseId": "PP-R-GDS-10194475",
+   "at": "2026-10-25T06:24:46.325Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "PayPal status under review (chargeback stage). No action is open to the seller yet; the agent continues when PayPal updates the case.",
+   "data": {
+    "trigger": "webhook",
+    "waitKey": "UNDER_REVIEW|provide_supporting_info|0|",
+    "updateTime": "2026-10-25T06:24:16.932Z"
+   },
+   "costUsd": 0.00011
+  },
+  {
+   "id": "7b518636-53df-477a-904b-e6ca0381a5d3",
+   "caseId": "PP-R-GDS-10194475",
+   "at": "2026-10-25T06:25:38.712Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-4YT26747L3929564L-1H5220854C110025J",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "81cd9612-22ba-400f-96f0-315ac8587dbb",
+   "caseId": "PP-R-GDS-10194475",
+   "at": "2026-10-25T06:26:08.237Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [
+     "provide_supporting_info"
+    ],
+    "changed": false,
+    "created": false,
+    "eventId": "WH-7BE25499H06782718-1ML36319WL174545C",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "4e2edd37-2ef6-4c03-9e81-fcc5c21aa851",
+   "caseId": "PP-R-GDS-10194475",
+   "at": "2026-10-25T06:46:58.233Z",
+   "actor": "paypal",
+   "kind": "webhook.received",
+   "summary": "Dispute updated: under review",
+   "data": {
+    "stage": "CHARGEBACK",
+    "status": "UNDER_REVIEW",
+    "allowed": [],
+    "changed": true,
+    "created": false,
+    "eventId": "WH-5G103510XL5389103-5BD89787WR957982M",
+    "eventType": "CUSTOMER.DISPUTE.UPDATED"
+   }
+  },
+  {
+   "id": "831d073b-9d51-4fc9-8d0d-aa1284082817",
+   "caseId": "PP-R-GDS-10194475",
+   "at": "2026-10-25T06:47:01.623Z",
+   "actor": "agent",
+   "kind": "agent.run.done",
+   "summary": "PayPal status under review (chargeback stage). No action is open to the seller right now.",
+   "data": {
+    "trigger": "webhook",
+    "waitKey": "UNDER_REVIEW||0|",
+    "runCostUsd": 0,
+    "updateTime": "2026-10-25T06:46:44.103Z"
+   }
+  }
+ ],
+ "wire": [
+  {
+   "id": "51f95b20-e5e2-499b-9f65-857ea771223f",
+   "at": "2026-10-25T06:46:54.200Z",
+   "kind": "event",
+   "origin": "webhook",
+   "caseId": "PP-R-GDS-10194475",
+   "status": 200,
+   "durationMs": 4147,
+   "eventId": "WH-5G103510XL5389103-5BD89787WR957982M",
+   "eventType": "CUSTOMER.DISPUTE.UPDATED",
+   "verify": "SUCCESS",
+   "detail": {
+    "result": "processed"
+   }
+  },
+  {
+   "id": "806e4166-a2a3-4194-99ac-baa581aa7ff9",
+   "at": "2026-10-25T06:46:54.935Z",
+   "kind": "call",
+   "origin": "webhook",
+   "caseId": "PP-R-GDS-10194475",
+   "method": "POST",
+   "path": "/v1/notifications/verify-webhook-signature",
+   "status": 200,
+   "debugId": "f6020607f024c",
+   "durationMs": 497
+  },
+  {
+   "id": "4bae88be-26ee-4960-945b-4011ecab089b",
+   "at": "2026-10-25T06:46:56.352Z",
+   "kind": "call",
+   "origin": "webhook",
+   "caseId": "PP-R-GDS-10194475",
+   "method": "GET",
+   "path": "/v1/customer/disputes/PP-R-GDS-10194475",
+   "status": 200,
+   "debugId": "f9639371032d8",
+   "durationMs": 1044
+  },
+  {
+   "id": "c00b0363-0025-49de-81b8-b887abc3aa6b",
+   "at": "2026-10-25T06:46:59.102Z",
+   "kind": "call",
+   "origin": "agent",
+   "caseId": "PP-R-GDS-10194475",
+   "method": "GET",
+   "path": "/v1/customer/disputes/PP-R-GDS-10194475",
+   "status": 200,
+   "debugId": "f131668d11ea7",
+   "durationMs": 1048
+  }
+ ]
+}

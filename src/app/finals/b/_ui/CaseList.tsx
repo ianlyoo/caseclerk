@@ -19,8 +19,8 @@ export function deskLine(c: Case, phase?: string): string {
 }
 
 export function CaseList({ current }: { current: string }) {
-  const { phase } = useDesk();
-  const list = sorted();
+  const { phase, real } = useDesk();
+  const list = sorted(real);
   return (
     <aside className={s.list} aria-label="Your disputes">
       <p className={s.listHead}>
@@ -42,7 +42,7 @@ export function CaseList({ current }: { current: string }) {
                     <span className={urgent ? s.urgent : undefined}>, {countdown(c.dueAt)} left</span>
                   ) : null}
                 </span>
-                <span className={s.listTag}>{c.real ? "Real sandbox case" : "Sample case"}</span>
+                <span className={s.listTag}>{c.real ? "Real sandbox case" : "Staged sample"}</span>
               </Link>
             </li>
           );

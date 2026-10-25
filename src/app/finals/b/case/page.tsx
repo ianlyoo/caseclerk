@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { HERO } from "../_lib/data";
+import { DEFAULT_REAL } from "../_lib/live";
 
 export default function CaseIndex() {
-  redirect(`/finals/b/case/${HERO.id}`);
+  redirect(`/finals/b/case/${DEFAULT_REAL}`);
 }

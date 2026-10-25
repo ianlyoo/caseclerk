@@ -1,4 +1,4 @@
-/* Final B, "Darkroom paper". Warm paper, ink, one dark surface: the decision sheet. Brass only on money moving. */
+/* Final B, "Darkroom paper". Warm paper, ink, one dark surface: the decision sheet. PayPal blue only on PayPal traffic. */
 
 .root {
   --paper: #f6f3ec;
@@ -12,10 +12,12 @@
   --sheet-ink: #f3eee2;
   --sheet-2: #bdb5a5;
   --sheet-hair: #3a352c;
-  --brass: #d9a441;
+  --fill: #d8d1c1; /* the Approve fill: ink on a darker paper */
+  --pp-dark: #6fb2ff; /* PayPal blue on the dark sheet */
   --brass-paper: #8a5a00;
   --live: #2c7449;
   --verm: #b23a1c;
+  --pp: #0059b8; /* PayPal blue: only on traffic at PayPal's boundary */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
   --object: 0 1px 0 #fff inset, 0 1px 1px rgba(22, 20, 15, 0.06), 0 12px 28px -12px rgba(22, 20, 15, 0.28);
@@ -141,6 +143,9 @@
   background: var(--live);
   flex: none;
 }
+.liveDot[data-live-dot="still"] {
+  background: var(--ink3);
+}
 .liveDot[data-live-dot="on"] {
   animation: breathe 2.4s var(--ease-inout) infinite alternate;
 }
@@ -159,6 +164,9 @@
 .liveHead {
   font-size: 14px;
   font-weight: 500;
+  color: var(--ink);
+}
+.live[data-live] .liveHead {
   color: var(--live);
 }
 .liveLine {
@@ -528,7 +536,7 @@
 .pp {
   position: relative;
   padding-left: 14px;
-  border-left: 2px solid var(--brass-paper);
+  border-left: 2px solid var(--pp);
   display: grid;
   gap: 2px;
 }
@@ -573,8 +581,15 @@
   word-break: break-all;
 }
 .ppId {
-  color: var(--ink);
+  color: var(--pp);
   white-space: nowrap;
+}
+.pp[data-sample] {
+  border-left: 2px dashed var(--ink3);
+}
+.ppStaged {
+  font-size: 15px !important;
+  color: var(--ink3);
 }
 .ppSample {
   color: var(--ink3);
@@ -595,7 +610,7 @@
   bottom: 0;
   left: 0;
   width: 30%;
-  background: var(--brass-paper);
+  background: var(--pp);
   animation: run 1.4s var(--ease-inout) infinite;
 }
 @keyframes run {
@@ -668,7 +683,7 @@
   font-size: 52px;
   line-height: 1;
   font-weight: 500;
-  color: var(--brass);
+  color: var(--raised);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
@@ -683,18 +698,41 @@
   align-items: flex-end;
   gap: 24px;
 }
-.sdNote,
-.sdNoteAll {
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--sheet-ink);
-  max-width: 76ch;
-}
 .sdNote {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  border-top: 1px solid var(--sheet-hair);
+  padding-top: 10px;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--sheet-ink);
+}
+.sdLanded {
+  border-top: 1px solid var(--sheet-hair);
+  padding: 12px 0 0 14px;
+  min-height: 68px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  align-content: center;
+  gap: 4px 16px;
+  font-size: 17px;
+  box-shadow: inset 2px 0 0 var(--pp-dark);
+}
+.sdLanded[data-sample] {
+  box-shadow: none;
+  border-left: 2px dashed var(--sheet-2);
+}
+.sdLanded code {
+  font-size: 17px;
+}
+.sdLandedDir,
+.sdLandedNote {
+  color: var(--sheet-2);
+}
+.sdOk {
+  color: #7fd6a0;
+}
+.sdId {
+  color: var(--pp-dark);
 }
 .sdText {
   font-size: 15px;
@@ -757,7 +795,7 @@
 .approveFill {
   position: absolute;
   inset: 0;
-  background: var(--brass);
+  background: var(--fill);
   transform-origin: left center;
   transform: scaleX(0);
 }
@@ -793,11 +831,19 @@
 .sbLine time {
   font-family: var(--f-mono), monospace;
   font-size: 16px;
-  color: var(--brass);
+  color: var(--raised);
+}
+.sbLine code {
+  font-size: 15px;
+}
+.sbState {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--sheet-2);
 }
 .sbAmt {
   font-size: 22px;
-  color: var(--brass);
+  color: var(--raised);
   font-weight: 500;
   display: flex;
   gap: 8px;
@@ -1018,14 +1064,14 @@
 
 .inbox {
   padding: 40px 48px 96px;
-  max-width: 1240px;
+  max-width: 1680px;
 }
 .headline {
   font-family: var(--f-serif), Georgia, serif;
   font-size: clamp(36px, 1.25vw + 26px, 50px);
   line-height: 1.15;
   letter-spacing: -0.015em;
-  max-width: 24ch;
+  max-width: 34ch;
 }
 .headSub {
   margin-top: 14px;
@@ -1266,7 +1312,8 @@
 
 /* ---------------------------------------------------------------- narrow screens */
 
-@media (max-width: 1180px) {
+/* Below 1680 px the case list rail goes; the margin pager (previous / next) carries the navigation. */
+@media (max-width: 1679px) {
   .root {
     --list: 0px;
   }
@@ -1280,6 +1327,8 @@
   .list {
     display: none;
   }
+}
+@media (max-width: 1180px) {
   .land {
     grid-template-columns: 1fr;
   }
@@ -1364,7 +1413,7 @@
   .sdLabel .sdAmtLabel {
     display: none;
   }
-  .sdReceives {
+  .sdNote {
     display: none;
   }
   .sdPolicy {
@@ -1457,4 +1506,13 @@
 .rowProof code {
   font-size: 14px;
   color: var(--ink);
+}
+
+.loading {
+  padding: 64px 48px;
+  color: var(--ink2);
+  max-width: 60ch;
+}
+.landNext {
+  margin-top: 18px;
 }
