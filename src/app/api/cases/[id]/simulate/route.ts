@@ -27,10 +27,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!existing) return jsonError(404, "not_found", `No case ${id}.`);
   if (!existing.isTestDispute) return jsonError(403, "forbidden", "Demo controls work only on test disputes.");
 
-  const limit = envInt("SIMULATE_PER_IP_PER_HOUR", 20);
-  const rl = await rateLimit.hit(`simulate:ip:${clientKey(req)}`, limit, 3600).catch(() => null);
-  if (!rl) return jsonError(503, "unavailable", "Demo controls are unavailable right now.");
-  if (!rl.allowed) return jsonError(429, "rate_limited", "Too many demo actions. Wait a bit and retry.", { resetAt: rl.resetAt });
+  // Two budgets per IP: checks (refresh + "not allowed yet") are cheap and may be retried while
+  // PayPal unlocks the link; simulator calls are what we really cap.
+  const ip = clientKey(req);
+  const checks = await rateLimit.hit(`simulate-check:ip:${ip}`, envInt("SIMULATE_CHECKS_PER_IP_PER_HOUR", 120), 3600).catch(() => null);
+  if (!checks) return jsonError(503, "unavailable", "Demo controls are unavailable right now.");
+  if (!checks.allowed) return jsonError(429, "rate_limited", "Too many demo requests. Wait a bit and retry.", { resetAt: checks.resetAt });
 
   // Refresh first: PayPal enables these links minutes after each step (see docs/experiments.md).
   let record = existing;
@@ -45,6 +47,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       allowed: record.snapshot.allowed,
     });
   }
+
+  const rl = await rateLimit.hit(`simulate:ip:${ip}`, envInt("SIMULATE_PER_IP_PER_HOUR", 20), 3600).catch(() => null);
+  if (!rl) return jsonError(503, "unavailable", "Demo controls are unavailable right now.");
+  if (!rl.allowed) return jsonError(429, "rate_limited", "Too many demo actions. Wait a bit and retry.", { resetAt: rl.resetAt });
 
   const params = body.action === "adjudicate" ? { outcome: body.outcome } : {};
   const action = await actions.insert({

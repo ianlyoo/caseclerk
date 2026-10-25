@@ -1,9 +1,9 @@
 import { after } from "next/server";
+import { runAgent } from "@/lib/agent/run";
 import { audit, cases, webhookEvents } from "@/lib/db";
 import { getDispute } from "@/lib/paypal/disputes";
 import { verifyWebhookSignature } from "@/lib/paypal/webhook";
 import { errMessage } from "../../_lib/http";
-import { loadAgent } from "../../_lib/modules";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -119,13 +119,9 @@ export async function POST(req: Request) {
   if (changed) {
     const eventType = event.event_type;
     after(async () => {
-      const agent = await loadAgent();
-      if (!agent) {
-        console.warn(`[paypal-webhook] agent module not deployed; case=${caseId} not run`);
-        return;
-      }
       try {
-        await agent.runAgent(caseId, { kind: "webhook", eventType });
+        const out = await runAgent(caseId, { kind: "webhook", eventType });
+        console.log(`[paypal-webhook] agent case=${caseId} status=${out.status} cost=${out.costUsd.toFixed(4)}`);
       } catch (e) {
         console.error(`[paypal-webhook] runAgent failed case=${caseId}: ${errMessage(e)}`);
         await audit

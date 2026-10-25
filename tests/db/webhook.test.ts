@@ -13,15 +13,12 @@ const m = vi.hoisted(() => ({
   paypalFetch: vi.fn(),
   runAgent: vi.fn(),
   afterTasks: [] as (() => Promise<void>)[],
-  agentLoaded: true,
 }));
 
 vi.mock("@/lib/paypal/webhook", () => ({ verifyWebhookSignature: m.verify }));
 vi.mock("@/lib/paypal/client", () => ({ paypalFetch: m.paypalFetch }));
 vi.mock("next/server", () => ({ after: (fn: () => Promise<void>) => m.afterTasks.push(fn) }));
-vi.mock("@/app/api/_lib/modules", () => ({
-  loadAgent: async () => (m.agentLoaded ? { runAgent: m.runAgent } : null),
-}));
+vi.mock("@/lib/agent/run", () => ({ runAgent: m.runAgent }));
 
 const { POST } = await import("@/app/api/webhooks/paypal/route");
 
@@ -37,9 +34,8 @@ beforeEach(() => {
   db = createMemoryRepo();
   setDbForTests(db);
   m.afterTasks.length = 0;
-  m.agentLoaded = true;
   m.verify.mockReset().mockResolvedValue({ verified: true, status: "SUCCESS" });
-  m.runAgent.mockReset().mockResolvedValue(undefined);
+  m.runAgent.mockReset().mockResolvedValue({ status: "done", summary: "ok", costUsd: 0.05 });
   m.paypalFetch.mockReset().mockImplementation(async () => ({ status: 200, json: dispute }));
 });
 
@@ -126,10 +122,4 @@ describe("POST /api/webhooks/paypal", () => {
     expect(kinds).toEqual(["webhook.received", "agent.error"]);
   });
 
-  it("still stores the case when the agent module isn't deployed", async () => {
-    m.agentLoaded = false;
-    expect((await post()).status).toBe(200);
-    await flushAfter();
-    expect(await db.cases.get(DISPUTE_ID)).not.toBeNull();
-  });
 });
