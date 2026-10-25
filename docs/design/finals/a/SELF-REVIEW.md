@@ -52,13 +52,20 @@
 Checks: 404 PASS, 0 FAIL on a Mac production build of this branch; the Vercel preview was rate-limited. Shots at DPR 2 (2880×1620 and 3840×2160), phone at DPR 3. Real-case shots are `case-real-*`. The old `case-approve.mp4` showed the sample "You kept $392.00" and is removed.
 
 ## Real approval on camera (item 1)
-- PP-R-UDP-10194489 ($405.00), action a5723516-3171-48a8-a051-b236a8e3dbe9. Approved once, on camera, through `/finals/a/case/PP-R-UDP-10194489` on a Mac production build that forwards to production. PayPal answered **200, debug f1926738baa71** at 02:53:30 PT. PayPal closed the case at 03:03:08 PT.
-- Before the click, a dry run with a locally fulfilled approve found that the slip read the status and debug id from the wrong field (they sit on `action.result`). Fixed before the real click.
-- The recorder allowed exactly one POST, to this action only, and aborted everything else. VPY is still awaiting_approval.
-- `case-approve-real.mp4`: 23 s at 30 fps, 2880×1620; stills `case-approve-real-before.png` and `-after.png` are true DPR 2.
-- Known flaws in the recording, not re-recordable:
-  - **Not true DPR 2.** Playwright's video frames are captured at CSS size, so the video is 1440×810 upscaled 2×. `real-tour.mp4` is reprocessed the same way; it previously filled only the top-left quarter.
-  - **Wrong in-flight wording.** For about 8 s the in-flight Wire line reads "PayPal refused the call ()". That came from an empty status; it now reads "Sent to PayPal; waiting for its answer".
-  - **Raw tracker name.** The tracker PUT row showed the raw tracker id; it is now named "tracker".
-  
-  The two code fixes come after the recording: 404 PASS, 0 FAIL on a Mac production build.
+- **Take 2, shipped.** PP-R-TZD-10194493 ($402.00), action c3ca42c2-a0dd-49dc-9992-044b3f5c00ee.
+  - Approved once, on camera, through `/finals/a/case/PP-R-TZD-10194493` on a Mac production build that forwards to production.
+  - PayPal answered **200, debug f182178f16410**. The filing went out at 03:25:02 PT.
+  - The wait from POST to answer was 10.8 s, under 12 s, so it plays at real speed with no speed-up.
+- `case-approve-real.mp4`: 24.5 s at 30 fps, recorded at 1440×810 and upscaled 2× to 2880×1620, because Playwright video doesn't follow DPR. The before and after stills are true DPR 2.
+- While sending, the slip and the Wire both read "Sending to PayPal… N s", counting real seconds.
+- Refusal wording:
+  - 409: "Already answered, so nothing new went to PayPal."
+  - PayPal failure: "PayPal didn't accept the filing." plus its debug id.
+  - Unreachable: "CaseClerk couldn't reach PayPal, so nothing was filed."
+  - Dropped connection: says the page will show whether the filing went.
+  - Messages are never interpolated empty.
+- The dry run on the same case ran both paths locally: an approve aborted after 8 s, then one fulfilled locally. Nothing left the browser.
+- **Take 1, superseded.** PP-R-UDP-10194489 ($405.00), PayPal 200, debug f1926738baa71. Its video showed "PayPal refused the call ()" during the in-flight stretch, so it was replaced.
+- The recorder allows exactly one POST, to the named action only, and refuses VPY outright. VPY is still awaiting_approval.
+- The inbox's real rows are now dynamic: every test case from production's `/api/cases?test=true`, newest first. G12 checks the inbox ids against that same list.
+- Checks: 404 PASS, 0 FAIL on a Mac production build.
