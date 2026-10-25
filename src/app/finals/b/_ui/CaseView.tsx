@@ -268,7 +268,7 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
       <Masthead sample={!c.real} />
       <div className={s.desk}>
         <CaseList current={c.id} />
-        <main className={`${s.main} ${approval && !sent ? s.mainSheet : ""}`} id="case">
+        <main className={`${s.main} ${approval && !resolved ? s.mainSheet : ""}`} id="case">
           <div className={s.caseGrid}>
             <aside className={s.margin}>
               <p className={s.caseId}>
@@ -292,7 +292,7 @@ function CaseBody({ c, refresh }: { c: Case; refresh: () => void }) {
                   transition={T({ duration: 0.32 })}
                   data-cause="resolve"
                 >
-                  {decided ? c.ending!.sentence : c.headline}
+                  {decided ? c.ending!.sentence : c.real && sent && c.desk === "approval" ? c.headline.replace(/CaseClerk built the evidence; it waits for you\.$/, "CaseClerk filed the evidence on PayPal once, and PayPal is deciding.") : c.headline}
                 </motion.h1>
               </AnimatePresence>
               <div className={s.figureRow}>
