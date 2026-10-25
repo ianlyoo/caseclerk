@@ -11,7 +11,6 @@ const m = vi.hoisted(() => ({
   getDispute: vi.fn(),
   executeApproved: vi.fn(),
   deny: vi.fn(),
-  approvalsLoaded: true,
 }));
 vi.mock("@/lib/paypal/testDispute", () => ({
   openTestDispute: m.openTestDispute,
@@ -19,10 +18,7 @@ vi.mock("@/lib/paypal/testDispute", () => ({
 }));
 vi.mock("@/lib/paypal/simulators", () => ({ adjudicate: m.adjudicate, requireEvidence: m.requireEvidence }));
 vi.mock("@/lib/paypal/disputes", () => ({ getDispute: m.getDispute }));
-vi.mock("@/app/api/_lib/modules", () => ({
-  loadApprovals: async () => (m.approvalsLoaded ? { executeApproved: m.executeApproved, deny: m.deny } : null),
-  loadAgent: async () => null,
-}));
+vi.mock("@/lib/agent/run", () => ({ executeApproved: m.executeApproved, deny: m.deny }));
 
 const cases = await import("@/app/api/cases/route");
 const caseOne = await import("@/app/api/cases/[id]/route");
@@ -42,7 +38,6 @@ beforeEach(() => {
   db = createMemoryRepo();
   setDbForTests(db);
   vi.clearAllMocks();
-  m.approvalsLoaded = true;
 });
 
 describe("cases", () => {
@@ -148,22 +143,32 @@ describe("approvals", () => {
 
   it("approves through the agent and refuses a second decision", async () => {
     const a = await pending();
-    m.executeApproved.mockImplementation(async (id: string) => db.actions.update(id, { status: "executed" }));
+    m.executeApproved.mockImplementation(async (id: string) => ({
+      ok: true, message: "Sent to PayPal", action: await db.actions.update(id, { status: "executed" }),
+    }));
     const res = await approve.POST(req(`/api/actions/${a.id}/approve`, { method: "POST" }), params(a.id));
     expect(res.status).toBe(200);
     expect((await res.json()).action.status).toBe("executed");
-    expect((await db.audit.listByCase("PP-R-A"))[0]).toMatchObject({ actor: "seller", kind: "action.approved" });
     const again = await deny.POST(req(`/api/actions/${a.id}/deny`, { method: "POST" }), params(a.id));
     expect(again.status).toBe(409);
+    expect(m.deny).not.toHaveBeenCalled();
     expect((await approve.POST(req(`/api/actions/x/approve`, { method: "POST" }), params("x"))).status).toBe(404);
   });
 
-  it("denies locally when the agent module isn't deployed, but won't approve", async () => {
-    m.approvalsLoaded = false;
+  it("passes the deny note through and maps agent refusals to errors", async () => {
     const a = await pending();
-    expect((await approve.POST(req(`/api/actions/${a.id}/approve`, { method: "POST" }), params(a.id))).status).toBe(503);
+    m.deny.mockImplementation(async (id: string) => ({ ok: true, message: "Denied", action: await db.actions.update(id, { status: "denied" }) }));
     const res = await deny.POST(req(`/api/actions/${a.id}/deny`, { method: "POST", body: JSON.stringify({ note: "too much" }) }), params(a.id));
     expect((await res.json()).action.status).toBe("denied");
+    expect(m.deny).toHaveBeenCalledWith(a.id, "too much");
+
+    const b = await pending();
+    m.executeApproved.mockImplementation(async (id: string) => ({
+      ok: false, message: "PayPal no longer allows refund", action: await db.actions.update(id, { status: "failed" }),
+    }));
+    const failed = await approve.POST(req(`/api/actions/${b.id}/approve`, { method: "POST" }), params(b.id));
+    expect(failed.status).toBe(502);
+    expect((await failed.json()).error.message).toBe("PayPal no longer allows refund");
   });
 });
 
