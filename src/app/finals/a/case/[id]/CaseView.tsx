@@ -25,6 +25,8 @@ export function CaseView({ id, state }: { id: string; state?: string }) {
   useEffect(() => {
     if (urlEntry) dec.force(urlEntry);
     setApplied(true);
+    // Applied once: a reload then shows what the seller did since, never the forced state again.
+    if (state) window.history.replaceState(null, "", window.location.pathname);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const e: Entry = !applied && urlEntry ? urlEntry : dec;

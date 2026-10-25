@@ -38,9 +38,8 @@ async function open(browser, v, path, extra = {}) {
 
 const navCount = (page) =>
   page.evaluate(() => {
-    const a = [...document.querySelectorAll("header nav a")].find((x) => /Waiting for you/.test(x.textContent));
-    const m = a && a.textContent.match(/(\d+)/);
-    return m ? Number(m[1]) : -1;
+    const a = document.querySelector("header nav a[data-count]");
+    return a ? Number(a.getAttribute("data-count")) : -1;
   });
 
 // ---- In-page probes ----
@@ -108,8 +107,8 @@ const pageProbe = (page, firstOnly) =>
       const cs = getComputedStyle(el);
       const box = el.getBoundingClientRect();
       const bg = rgb(cs.backgroundColor);
-      if (bg.length >= 3 && (bg.length === 3 || bg[3] > 0.9) && lum(bg) < 0.1 && box.width * box.height > area * 0.04 && !el.closest("[data-wire]") && vis(el)) r.dark.push(el.tagName + "." + el.className);
-      if (cs.backdropFilter !== "none" || /blur/.test(cs.filter) || /conic-gradient|radial-gradient|repeating-/.test(cs.backgroundImage)) r.fx.push(el.tagName);
+      if (bg.length >= 3 && (bg.length === 3 || bg[3] > 0.9) && lum(bg) < 0.1 && box.width * box.height > area * 0.04 && !el.closest("[data-wire]") && !el.closest("button") && vis(el)) r.dark.push(el.tagName + "." + el.className);
+      if ((cs.backdropFilter && cs.backdropFilter !== "none") || /blur/.test(cs.filter) || /conic-gradient|radial-gradient|repeating-/.test(cs.backgroundImage)) r.fx.push(el.tagName);
       for (const c of [cs.color, cs.backgroundColor, cs.borderLeftColor, cs.borderTopColor]) if (BLUE.includes(c) && !el.closest("[data-origin=paypal]") && vis(el) && (c !== cs.borderLeftColor || cs.borderLeftWidth !== "0px") && (c !== cs.borderTopColor || cs.borderTopWidth !== "0px")) r.blue.push(`${el.tagName}.${String(el.className).slice(0, 30)} ${c}`);
       if (cs.boxShadow !== "none" && vis(el) && !/(^|_)(slip|sheet|mat|tooltip)(_|$|\s)/.test(String(el.className))) r.shadow.push(String(el.className).slice(0, 40));
       if (cs.backgroundColor === "rgb(236, 231, 219)" && vis(el) && !el.hasAttribute("data-well")) r.shadow.push("well colour outside [data-well]: " + el.tagName);
@@ -144,7 +143,7 @@ const pageProbe = (page, firstOnly) =>
     }
     const h1 = document.querySelector("h1");
     r.h1 = h1 ? parseFloat(getComputedStyle(h1).fontSize) : 0;
-    const fig = document.querySelector("[class*='figure'] , number-flow-react");
+    const fig = document.querySelector("[class*='figureRow'] number-flow-react");
     r.money = fig ? parseFloat(getComputedStyle(fig).fontSize) : 0;
     return r;
   }, firstOnly);
@@ -272,6 +271,7 @@ const idsProbe = (page) =>
     }
     if (v === V1440) {
       judgePage(await pageProbe(page, true), "case after the 200 at 1440");
+      out(!/state=/.test(page.url()), "the forced ?state= leaves the address bar once applied", page.url().split("/").pop());
       await page.reload({ waitUntil: "networkidle" });
       await page.waitForTimeout(600);
       out((await page.locator("[data-approve]").count()) === 0, "after a reload, still no Approve (no path back)");

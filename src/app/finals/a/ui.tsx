@@ -46,6 +46,7 @@ export const countWord = (n: number, cap = false) => {
 };
 
 export function Masthead({ here }: { here: "landing" | "inbox" | "case" | "deadlines" }) {
+  const waiting = usePendingApprovals();
   return (
     <header className={s.mast}>
       <Link href={BASE} className={s.word} aria-label="CaseClerk home">
@@ -55,7 +56,7 @@ export function Masthead({ here }: { here: "landing" | "inbox" | "case" | "deadl
         <Link href={`${BASE}/inbox`} aria-current={here === "inbox" ? "page" : undefined}>
           Disputes
         </Link>
-        <Link href={HERO_HREF} aria-current={here === "case" ? "page" : undefined}>
+        <Link href={HERO_HREF} aria-current={here === "case" ? "page" : undefined} data-count={waiting}>
           Waiting for you <WaitingCount />
         </Link>
         <Link href={`${BASE}/deadlines`} aria-current={here === "deadlines" ? "page" : undefined}>
