@@ -1,0 +1,19 @@
+PASS  no uppercase transforms
+PASS  no positive letter-spacing
+PASS  no heavy weights (>= 600 or bold)
+PASS  only Newsreader, Hanken Grotesk, JetBrains Mono
+PASS  no gradients
+PASS  no middots or bullets as separators
+PASS  no arrows in copy
+PASS  no shimmer, typewriter, confetti, glow
+PASS  no overshooting easings
+PASS  no bounce springs (bounce/overshoot)
+PASS  no blue or teal hex besides the two PayPal tokens
+PASS  PayPal blue only as --pp / --pp-dark
+PASS  no brass or gold
+PASS  no emoji
+PASS  no AI cliches in copy
+PASS  no backdrop blur
+PASS  box-shadow only on objects
+
+0 FAIL
