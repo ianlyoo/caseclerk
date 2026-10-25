@@ -180,9 +180,11 @@ export type NewWireEntry = Omit<WireEntry, "id" | "at"> & { at?: string };
 
 export type WireRepo = {
   append(e: NewWireEntry): Promise<WireEntry>;
-  /** Oldest first (time order); the latest `limit` rows (default 500). */
+  /** Fills in a row written before its outcome was known (a webhook delivery, at receipt). */
+  update(id: string, patch: Pick<NewWireEntry, "caseId" | "status" | "verify" | "durationMs" | "detail">): Promise<void>;
+  /** Oldest first: by `at`, ties broken by insertion order. The latest `limit` rows (default 500). */
   listByCase(caseId: string, opts?: { limit?: number }): Promise<WireEntry[]>;
-  /** The latest `limit` rows (default 50, max 200) across cases, after `since` if given; returned oldest first. */
+  /** The latest `limit` rows (default 50, max 200) across cases, after `since` if given; returned oldest first (same order as listByCase). */
   listRecent(opts?: { since?: string; limit?: number }): Promise<WireEntry[]>;
   /** Sets `ref` (and the case, if known) on rows written before the case existed. */
   tag(ids: string[], patch: { ref?: string; caseId?: string }): Promise<void>;

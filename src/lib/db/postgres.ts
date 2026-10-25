@@ -396,6 +396,22 @@ export function createPostgresRepo(url: string, query?: Query): Repo {
         );
         return toWire(rows[0]);
       },
+      async update(id, patch) {
+        if (!isUuid(id)) return;
+        await q(
+          `UPDATE wire SET case_id = COALESCE(case_id, $2), status = COALESCE($3, status), verify = COALESCE($4, verify),
+                           duration_ms = COALESCE($5, duration_ms), detail = COALESCE($6::jsonb, detail)
+           WHERE id = $1`,
+          [
+            id,
+            patch.caseId ?? null,
+            patch.status ?? null,
+            patch.verify ?? null,
+            patch.durationMs === undefined ? null : Math.round(patch.durationMs),
+            json(patch.detail),
+          ],
+        );
+      },
       async listByCase(caseId, opts) {
         const rows = await q(
           `SELECT * FROM (SELECT * FROM wire WHERE case_id = $1 ORDER BY at DESC, seq DESC LIMIT $2) t ORDER BY at, seq`,

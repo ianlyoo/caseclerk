@@ -196,6 +196,22 @@ export function repoContract(name: string, make: () => Promise<Repo>, uniq: () =
       expect((await db.wire.listRecent({ since: "not a date" })).length).toBeGreaterThan(0);
     });
 
+    it("breaks wire timestamp ties by insertion order and fills in rows later", async () => {
+      const id = `PP-R-WT-${u}`;
+      const at = new Date(Date.now() - 1000).toISOString();
+      const ev = await db.wire.append({ kind: "event", origin: "webhook", caseId: id, eventId: `WH-T-${u}`, at });
+      const ids = [ev.id];
+      for (let i = 0; i < 4; i++) ids.push((await db.wire.append({ kind: "call", origin: "webhook", caseId: id, path: `/p${i}`, status: 200, at })).id);
+      await db.wire.update(ev.id, { status: 200, verify: "SUCCESS", durationMs: 41.6, detail: { result: "processed" } });
+
+      for (let run = 0; run < 3; run++) {
+        expect((await db.wire.listByCase(id)).map((w) => w.id)).toEqual(ids);
+        const recent = (await db.wire.listRecent({ since: new Date(Date.parse(at) - 1).toISOString(), limit: 200 })).filter((w) => w.caseId === id);
+        expect(recent.map((w) => w.id)).toEqual(ids);
+      }
+      expect((await db.wire.listByCase(id))[0]).toMatchObject({ kind: "event", status: 200, verify: "SUCCESS", durationMs: 42, detail: { result: "processed" } });
+    });
+
     it("stores the policy", async () => {
       const before = await db.policy.get();
       const p = { ...DEFAULT_POLICY, approvalAboveUsd: 75 + Math.floor(Math.random() * 10) };

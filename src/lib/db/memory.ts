@@ -243,6 +243,12 @@ export function createMemoryRepo(): Repo {
         wire.push(row);
         return clone(row);
       },
+      async update(id, patch) {
+        const w = wire.find((r) => r.id === id);
+        if (!w) return;
+        const defined = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined)) as typeof patch;
+        Object.assign(w, clone(defined), defined.durationMs !== undefined ? { durationMs: Math.round(defined.durationMs) } : {});
+      },
       async listByCase(caseId, opts) {
         const rows = inTimeOrder(wire.filter((w) => w.caseId === caseId));
         return rows.slice(-clampLimit(opts?.limit, 500)).map(clone);
@@ -266,7 +272,7 @@ export function createMemoryRepo(): Repo {
   };
 }
 
-/** Stable time order: by `at`, then insertion order. */
+/** Time order: by `at`, ties broken by insertion order (the array index; Postgres uses seq). */
 function inTimeOrder(rows: WireEntry[]): WireEntry[] {
   return rows
     .map((w, i) => ({ w, i }))

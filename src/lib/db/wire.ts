@@ -10,7 +10,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { setPayPalCallObserver, type PayPalCall } from "@/lib/paypal/client";
 import { actions, wire } from "./index";
-import type { NewWireEntry, WireOrigin } from "./repo";
+import type { NewWireEntry, WireEntry, WireOrigin } from "./repo";
 
 export type WireContext = { origin: WireOrigin; caseId?: string; /** ids of the call rows written so far */ rowIds: string[] };
 
@@ -77,9 +77,12 @@ async function attachFiling(caseId: string, c: PayPalCall, form: FormData): Prom
   await actions.update(target.id, { params: { ...target.params, filing } }, { ifStatus: ["executing"] });
 }
 
-/** One webhook delivery: event id, type, verify result and the status we answered with. */
-export async function recordWebhookEvent(e: Omit<NewWireEntry, "kind" | "origin">): Promise<void> {
-  await wire.append({ ...e, kind: "event", origin: "webhook" });
+/**
+ * One webhook delivery, written at receipt (so it sorts before the calls made while handling it);
+ * finish it with wire.update(id, { status, verify, durationMs, detail }).
+ */
+export async function recordWebhookEvent(e: Omit<NewWireEntry, "kind" | "origin">): Promise<WireEntry> {
+  return wire.append({ ...e, kind: "event", origin: "webhook" });
 }
 
 setPayPalCallObserver(recordPayPalCall);
