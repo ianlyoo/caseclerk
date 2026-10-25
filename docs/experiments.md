@@ -114,3 +114,33 @@ Run 2026-10-25 04:12 UTC by W2 (`eval/triage.ts`). 15 disputes labelled by hand 
 | claude-haiku-5-5 | medium | 15/15 | $0.0016 | — |
 
 **Pick: `claude-haiku-5-5` effort `medium` (15/15).** Set in `src/lib/agent/config.ts` (`triageModel`, `triageEffort`). Eval cost $0.0016.
+
+## E2E on production
+
+Run 2026-10-25 by W4, on https://caseclerk.vercel.app (production `6dcea65`: W1 + W2 + W4 merged, Neon Postgres, `ANTHROPIC_API_KEY` set). Times UTC; offsets from the `POST /api/test-dispute` call at 04:31:32. The PayPal webhook delivering to production is `69V852090F650803P` → `https://caseclerk.vercel.app/api/webhooks/paypal` (registered by W1). Every event below came through it with `verify=SUCCESS`.
+
+**Result: everything on our side worked end to end. The dispute didn't reach RESOLVED** within 50 min of adjudicate (sandbox side, see below). Case `PP-R-JKB-10194463` (scenario `not_received`, $17.95, capture `4LL39547DW370724C`), `isTestDispute: true`, order context copied from the test capture.
+
+| UTC | Offset | Step | Result |
+|---|---|---|---|
+| 04:31:32 | 0 | `POST /api/test-dispute {"scenario":"not_received"}` | 202 in 8.4 s, dispute id returned at once |
+| 04:35:07 | +216 s | webhook CREATED → case stored → audit `webhook.received` | PayPal `UNDER_REVIEW`, links `provide_supporting_info` |
+| 04:35:11–13 | +219–222 s | agent run 1 in `after()`: triage (Haiku 5.5) | "item not received"; no seller action open yet; $0.0001 |
+| 04:36:07 | +276 s | webhook UPDATED | `WAITING_FOR_SELLER_RESPONSE`, links `provide_evidence, accept_claim` |
+| 04:36:11–37 | +279–306 s | agent run 2: `get_order`, `get_tracking` (USPS, delivered) → decision **fight** (win 65%) → provide-evidence | **200** (debug f2739769e12a1); run cost $0.0517 |
+| 04:37:07 | +336 s | webhook UPDATED | `UNDER_REVIEW`; agent: nothing to do |
+| 04:55:24 | +1432 s | `require_evidence` + `adjudicate` links appear (read-only poll) | **18.8 min** after evidence (spike: ~3.5 min) |
+| 04:55:53 | +1462 s | `POST /api/cases/:id/simulate {"action":"require_evidence"}` | 200 (debug ca4fea1a69b06) |
+| 04:57:07–40 | +1536–1568 s | webhook UPDATED → agent run 3: order, tracking (now **SHIPPED**), dispute → **fight** (win 30%) → provide-evidence | **200** (debug f2843364d3500); run cost $0.0597 |
+| 04:58:07 | +1596 s | webhook UPDATED | `UNDER_REVIEW` |
+| 05:16:04 | +2672 s | `adjudicate` link back | **18.4 min** after evidence 2 |
+| 05:16:21 | +2689 s | `simulate {"action":"adjudicate","outcome":"SELLER_FAVOR"}` | 200 (debug f1407090def3a) |
+| 05:18:38 | +2826 s | webhook UPDATED | `UNDER_REVIEW`, no links |
+| 06:06:55 | +5723 s | last check | still `UNDER_REVIEW`, `update_time` 05:18:04; **not RESOLVED** after 50 min (spike: 4–8 min) |
+
+- **Wall time:** test dispute → case in inbox 3.6 min; → first evidence accepted 5.1 min; → adjudicate sent 44.8 min (most of it waiting for sandbox links); RESOLVED not reached.
+- **LLM cost of the run (spend table, `case_id` = this case):** $0.1115 total = Haiku 5.5 triage ×1 $0.0001 + Opus 5.5 ×6 calls $0.1114; 3 agent runs counted. No other LLM spend by W4.
+- **Sandbox timings differ from the spike:** links after evidence took ~18–19 min (not ~3.5), and adjudicate hadn't resolved after 50 min (not 4–8). For the demo, pre-create disputes or record the settle step; don't promise judges a live resolution inside a few minutes.
+- **Tracking flipped from DELIVERED to SHIPPED** in PayPal between runs 2 and 3 (`GET /v1/shipping/trackers?transaction_id=…` now returns `SHIPPED`, though `openTestDispute` added `DELIVERED`). So run 3's win chance dropped from 65% to 30%. The order context stored on the case still says DELIVERED.
+- **Audit cost double-count risk:** `agent.run.done` repeats the sum of its `agent.step` costs in `costUsd`. A timeline that sums `costUsd` over all entries shows 2× the real cost; the spend table is correct.
+- Demo controls: polling "not allowed yet" (409) used up the 20/hour simulate cap. Fixed on `s3-w4-data` (9611986): checks have their own 120/hour budget, and only real simulator calls count toward 20/hour.
