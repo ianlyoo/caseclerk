@@ -2,6 +2,8 @@
 //   ./run.sh flow.mjs check                     token + scopes only (does the app have disputes scopes?)
 //   ./run.sh flow.mjs chargeback [amount]       (b) card order → capture → process-chargeback → poll list until it appears
 //   ./run.sh flow.mjs create <buyer_txn_id> [amount]   (a) buyer-side simulator (needs PAYPAL_SANDBOX_BUYER_EMAIL)
+//   ./run.sh flow.mjs buyer-order [amount]     PayPal-wallet order for the sandbox buyer to approve in a browser (prints id + approve URL)
+//   ./run.sh flow.mjs inquiry <orderId> [buyer_txn_id]   (a) after buyer approval: capture → create dispute as the buyer → poll for it
 //   ./run.sh flow.mjs settle <dispute_id>       message/offer if allowed → require-evidence → provide-evidence → adjudicate SELLER_FAVOR
 //   ./run.sh flow.mjs webhook <preview base url>   register the dispute webhook; prints PAYPAL_WEBHOOK_ID
 import { api, accessToken, log, show } from "./lib.mjs";
@@ -14,6 +16,7 @@ const D = "/v1/customer/disputes";
 const node = (...a) => execFileSync(process.execPath, a, { stdio: "inherit", cwd: import.meta.dirname });
 /** Runs one action; true only if the API call succeeded (sandbox actions sometimes 400 right after a link appears). */
 const act = (...a) => { try { node(...a); return true; } catch { console.log(`  ${a[0]} ${a[1]} failed; will retry on the next poll`); return false; } };
+const PREVIEW = "https://caseclerk-git-spike-ianlyoo0412-4658s-projects.vercel.app";
 const links = (d) => (d?.links ?? []).map((l) => l.rel);
 
 async function getDispute(id) {
@@ -82,6 +85,70 @@ switch (cmd) {
       await sleep(20_000);
     }
     console.log("dispute not listed after 15 min");
+    process.exit(1);
+  }
+  case "buyer-order": {
+    const amount = args[0] ?? "24.00";
+    const o = await api("POST", "/v2/checkout/orders", {
+      step: "flow.order(paypal)",
+      headers: { "PayPal-Request-Id": `spike-wallet-${Date.now()}` },
+      json: {
+        intent: "CAPTURE",
+        purchase_units: [{
+          reference_id: `spike-${Date.now()}`,
+          description: "Hand-thrown stoneware mug set",
+          amount: { currency_code: "USD", value: amount, breakdown: { item_total: { currency_code: "USD", value: amount } } },
+          items: [{ name: "Hand-thrown stoneware mug set (2 × 12 oz, speckled oat)", sku: "MUG-OAT-2", quantity: "1", category: "PHYSICAL_GOODS", unit_amount: { currency_code: "USD", value: amount } }],
+        }],
+        payment_source: { paypal: { experience_context: {
+          brand_name: "CaseClerk Test Store", shipping_preference: "GET_FROM_FILE", user_action: "PAY_NOW",
+          return_url: `${PREVIEW}/board?paypal=return`, cancel_url: `${PREVIEW}/board?paypal=cancel`,
+        } } },
+      },
+    });
+    if (!o.ok) { show(o.data); process.exit(1); }
+    // With payment_source.paypal the buyer link is rel "payer-action" (rel "approve" without payment_source).
+    const approve = o.data.links?.find((l) => l.rel === "payer-action" || l.rel === "approve")?.href;
+    console.log(`order=${o.data.id} status=${o.data.status} created=${new Date().toISOString()}`);
+    console.log(`approve=${approve}`);
+    break;
+  }
+  case "inquiry": {
+    // Route (a), end to end after the sandbox buyer approved <orderId> in the browser (and gave consent).
+    const [orderId, buyerTxn] = args;
+    let o = (await api("GET", `/v2/checkout/orders/${orderId}`, { step: "flow.inquiry.order" })).data;
+    console.log(`order=${orderId} status=${o?.status}`);
+    if (o?.status === "APPROVED") {
+      const c = await api("POST", `/v2/checkout/orders/${orderId}/capture`, { step: "flow.inquiry.capture", headers: { "PayPal-Request-Id": `spike-cap-${orderId}` }, json: {} });
+      if (!c.ok) { show(c.data); process.exit(1); }
+      o = c.data;
+    }
+    const pu = o?.purchase_units?.[0];
+    const cap = pu?.payments?.captures?.[0];
+    if (!cap) { console.log("no capture: the buyer has not approved yet (status CREATED/PAYER_ACTION_REQUIRED) or the order expired"); process.exit(1); }
+    const amount = cap.amount?.value ?? pu?.amount?.value ?? "24.00";
+    console.log(`capture=${cap.id} (${cap.status}) amount=${amount} payer=${o.payer?.email_address ?? o.payer?.payer_id ?? "?"}`);
+    // The buyer-side id isn't exposed to the seller API (needs the buyer's Activity page or Transaction Search).
+    // Try the given buyer id first, else the capture id (same payment, seller side).
+    const ids = [...new Set([buyerTxn, cap.id].filter(Boolean))];
+    for (const txn of ids) {
+      console.log(`create dispute (a) with buyer_transaction_id=${txn}`);
+      if (!act("disputes.mjs", "create", txn, amount)) continue;
+      const t0 = Date.now();
+      for (let i = 0; i < 45; i++) {
+        const l = await api("GET", `${D}?disputed_transaction_id=${cap.id}`, { step: "flow.inquiry.list" });
+        const item = l.data?.items?.find((d) => d.dispute_life_cycle_stage !== "CHARGEBACK") ?? l.data?.items?.[0];
+        if (item) {
+          console.log(`ROUTE_A_OK dispute ${item.dispute_id} visible after ${Math.round((Date.now() - t0) / 1000)} s: ${item.reason} ${item.status} ${item.dispute_life_cycle_stage}`);
+          log({ step: "flow.inquiry.visible", order_id: orderId, capture_id: cap.id, buyer_txn: txn, dispute_id: item.dispute_id, after_s: (Date.now() - t0) / 1000 });
+          node("disputes.mjs", "get", item.dispute_id);
+          process.exit(0);
+        }
+        await sleep(20_000);
+      }
+      console.log("create returned 2xx but the dispute is not listed after 15 min"); process.exit(1);
+    }
+    console.log(`ROUTE_A_FAILED for ${ids.join(", ")}. If the capture id was rejected, read the buyer's Transaction ID (sandbox buyer → Activity → this payment) and rerun: flow.mjs inquiry ${orderId} <buyer_txn_id>`);
     process.exit(1);
   }
   case "create": {
