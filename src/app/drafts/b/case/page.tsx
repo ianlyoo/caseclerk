@@ -113,9 +113,9 @@ export default function DraftBCase() {
                 ))}
               </tbody>
             </table>
-            <p className={s.label}>With the offer, PayPal sends Daniel this note</p>
-            <p className={s.letter}>{HERO.approval.note}</p>
             <Decide />
+            <p className={s.label}>The note PayPal sends Daniel with the offer</p>
+            <p className={s.letter}>{HERO.approval.note}</p>
           </div>
         </section>
 
