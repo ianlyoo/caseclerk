@@ -45,10 +45,10 @@ export type Approval = {
   kind: "provide_evidence" | "make_offer" | "accept_claim";
   amount: string; // the dispute amount at stake (evidence) or the money that moves (refund, offer)
   head: string; // slip head sentence: "File the evidence on the $412.00 case."
-  button: string; // names the action and the amount: "File the evidence on $412.00"
+  button: string; // names the action and the amount: "File the evidence on the $412.00 case"
   decline: string; // the decline text link
   why: string; // the policy line it crosses
-  note: string; // what PayPal receives, verbatim
+  note: string; // what PayPal receives, in one or two lines (the whole letter is CaseDetail.letter)
   call: Omit<WireLine, "at" | "origin">; // the PayPal call made on approval (no debug id: sample)
   done: string; // the slip after PayPal's 200: "Evidence filed with PayPal."
   then: Step[]; // what follows the 200 up to PayPal's ruling, offsets in seconds from the 200
@@ -118,10 +118,10 @@ const daniel: CaseDetail = {
     kind: "provide_evidence",
     amount: "412.00",
     head: "File the evidence on the $412.00 case.",
-    button: "File the evidence on $412.00",
+    button: "File the evidence on the $412.00 case",
     decline: "Don't file; accept the chargeback",
-    why: "Filing evidence on cases over $250.00 waits for you.",
-    note: DANIEL_LETTER,
+    why: "Over your $250.00 evidence line, so it waits for you.",
+    note: "What PayPal receives: your letter and five exhibits: the order, UPS delivery signed OKAFOR, the listing as published, the Oct 7 test roll and the timeline.",
     call: { dir: "out", name: "Provide evidence", status: "200", path: `POST ${D(HERO_ID)}/provide-evidence` },
     done: "Evidence filed with PayPal.",
     then: [
@@ -190,7 +190,7 @@ const grace: CaseDetail = {
     head: "Refund Grace $74.95.",
     button: "Refund $74.95",
     decline: "Don't refund; fight it",
-    why: "Refunds above $50.00 wait for you.",
+    why: "Over your $50.00 line, so it waits for you.",
     note: "Hi Grace, sorry, the film looks lost with USPS. We've refunded the full $74.95; if the parcel turns up, keep it.",
     call: { dir: "out", name: "Accept claim", status: "200", path: `POST ${D(graceRow.id)}/accept-claim` },
     done: "Refund sent through PayPal.",

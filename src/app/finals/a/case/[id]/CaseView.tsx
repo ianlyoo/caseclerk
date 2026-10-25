@@ -17,7 +17,7 @@ const first = (name: string) => name.split(" ")[0];
 const thing = (item: string) => item.split(",")[0];
 
 /** The case page, driven by the shared store; ?state= can force a state on load. */
-export function CaseView({ id, state }: { id: string; state?: string }) {
+export function CaseView({ id, state, controls }: { id: string; state?: string; controls?: boolean }) {
   const d = caseDetail(id)!;
   const dec = useDecision(id);
   const urlEntry = d.approval ? entryFor(state) : undefined;
@@ -26,7 +26,7 @@ export function CaseView({ id, state }: { id: string; state?: string }) {
     if (urlEntry) dec.force(urlEntry);
     setApplied(true);
     // Applied once: a reload then shows what the seller did since, never the forced state again.
-    if (state) window.history.replaceState(null, "", window.location.pathname);
+    if (state) window.history.replaceState(null, "", window.location.pathname + (controls ? "?controls=1" : ""));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const e: Entry = !applied && urlEntry ? urlEntry : dec;
@@ -57,7 +57,7 @@ export function CaseView({ id, state }: { id: string; state?: string }) {
           <Words d={d} />
           <Did d={d} after={after} setHover={setHover} hover={hover} />
         </article>
-        <Bar d={d} phase={phase} resolve={dec.resolve} reset={dec.reset} />
+        {controls && <Bar d={d} phase={phase} resolve={dec.resolve} reset={dec.reset} />}
       </div>
       <Wire sections={sections} phoneLabel={d.sample ? "Sample case" : undefined} />
     </div>
@@ -81,7 +81,7 @@ function Header({ d, phase, resolvedAt }: { d: CaseDetail; phase?: string; resol
           <br />
           Opened {day(d.c.openedAt)}
           <br />
-          <span className={s.sample}>Sample case</span>
+          <span className={s.sample}>Sample case. Nothing on this page went to PayPal.</span>
         </p>
         {photo && (
           <div className={s.mat}>
@@ -173,7 +173,7 @@ function SlipRow({ d, e, dec }: { d: CaseDetail; e: Entry; dec: Dec }) {
         {live ? (
           <>
             <span className={s.green}>Waiting for you</span>
-            <p className={s.policy}>{a.why} Nothing reaches PayPal until you decide.</p>
+            <p className={s.policy}>{a.why}</p>
           </>
         ) : e.phase === "declined" ? (
           "You declined"
@@ -237,9 +237,8 @@ function Slip({ d, e, dec }: { d: CaseDetail; e: Entry; dec: Dec }) {
     >
       <div className={s.slipRow1}>
         <h2 className={s.slipHead}>{a.head}</h2>
-        <p className={s.slipAmt}>{usd(a.amount)}</p>
       </div>
-      <p className={s.slipNote}>{a.note}</p>
+      <p className={s.slipNote}>{open && d.letter ? d.letter : a.note}</p>
       <button className={`${s.link} ${s.showAll}`} onClick={() => setOpen((o) => !o)}>
         {open ? "Show less" : a.kind === "provide_evidence" ? "Show the whole letter" : "Show all"}
       </button>
@@ -311,8 +310,7 @@ function AfterSlip({ d, e, dec }: { d: CaseDetail; e: Entry; dec: Dec }) {
         {a.done} <span className={s.mono}>{wireClock(ok)}</span>.
       </p>
       <p className={s.filedSub}>
-        PayPal answered 200 to <span className={s.mono}>{a.call.path.replace("POST ", "")}</span>. Sample case: a staged
-        response, so no debug id.{" "}
+        Staged: on a real case this posts to <span className={s.mono}>{a.call.path.replace("POST ", "").replace(d.c.id, "{id}")}</span> and PayPal answers with a debug id.{" "}
         {e.phase === "resolved" ? `PayPal ruled ${day(e.resolvedAt!)}.` : "PayPal and the card issuer usually decide within 30 days."}
       </p>
     </motion.div>
@@ -465,7 +463,7 @@ function afterSteps(d: CaseDetail, e: Entry, thenShown: boolean): Step[] {
   if (e.phase === "undo" || e.phase === "sending")
     out.push({ at: e.approvedAt!, actor: "system", title: e.phase === "undo" ? "Going to PayPal in a few seconds" : "Sending to PayPal", pending: true, wire: e.phase === "sending" ? a.call : undefined });
   if (e.okAt) {
-    out.push({ at: e.okAt, actor: "tool", title: a.kind === "provide_evidence" ? "Filed the evidence with PayPal" : "Sent the refund through PayPal", detail: "PayPal answered 200 (sample response).", wire: a.call });
+    out.push({ at: e.okAt, actor: "tool", title: a.kind === "provide_evidence" ? "Filed the evidence with PayPal" : "Sent the refund through PayPal", detail: "Staged; nothing went to PayPal.", wire: a.call });
     if (thenShown) out.push(...thenSteps(a, e.okAt));
   }
   if (e.phase === "resolved")

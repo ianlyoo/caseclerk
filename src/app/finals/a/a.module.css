@@ -42,7 +42,7 @@
   box-sizing: border-box;
 }
 .wInbox {
-  --wire-w: 28%;
+  --wire-w: clamp(400px, 30%, 560px);
 }
 .wLanding {
   --wire-w: 42%;
@@ -197,9 +197,27 @@
 .lDir {
   color: var(--wire3);
 }
-.lName {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.line > span.lName {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: normal;
+}
+.lPlain {
+  grid-column: 3 / span 2;
+  margin-top: 2px;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--wire2);
+}
+.line > span.lPlain {
+  white-space: normal;
+}
+.wireDate {
+  padding: 10px 16px 2px 16px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--wire3);
 }
 .lStatus {
   text-align: right;
@@ -1206,4 +1224,74 @@
   .btn {
     transition-duration: 100ms;
   }
+}
+
+/* ---- Real sandbox case ---- */
+.realMark {
+  margin: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+  color: var(--kept);
+}
+.matFig {
+  margin: 0;
+}
+.credit {
+  margin-top: 8px;
+  max-width: 176px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink3);
+}
+.ppId {
+  color: var(--pp);
+}
+.story {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.storyRow {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--hair);
+}
+.storyBody {
+  padding-left: 16px;
+  border-left: 2px solid var(--hair);
+  min-width: 0;
+}
+.storyPP {
+  border-left-color: var(--ink);
+}
+.storyHead,
+.storyPlain,
+.storyId {
+  margin: 0;
+}
+.storyWho {
+  font-size: 14px;
+  color: var(--ink3);
+}
+.storyStatus {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--kept);
+}
+.storyPlain {
+  margin-top: 4px;
+  font-size: 17px;
+}
+.storyId {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--ink2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rowReal {
+  color: var(--kept);
 }

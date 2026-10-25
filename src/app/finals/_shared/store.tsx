@@ -59,7 +59,7 @@ export function entryFor(state: string | undefined): Entry | undefined {
   const later = (s: number) => new Date(Date.parse(t) + s * 1000).toISOString();
   if (state === "pending") return { phase: "pending" };
   if (state === "approved") return { phase: "filed", approvedAt: later(20), okAt: later(26) };
-  if (state === "resolved") return { phase: "resolved", approvedAt: later(20), okAt: later(26), resolvedAt: "2026-10-28T14:12:09-07:00" };
+  if (state === "resolved") return { phase: "resolved", approvedAt: later(20), okAt: later(26), resolvedAt: later(26 + 31 * 60 + 43) };
   return undefined;
 }
 

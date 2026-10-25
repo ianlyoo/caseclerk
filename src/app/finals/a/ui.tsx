@@ -80,32 +80,15 @@ export const wireClock = (iso: string) => wClock.format(new Date(iso));
 export const realDay = (iso: string) => wDay.format(new Date(iso));
 export const realTime = (iso: string) => wTime.format(new Date(iso)).replace(" AM", " am").replace(" PM", " pm");
 
-/** "5 h 12 min ago", measured on the real clock, ticking. Server render shows the date. */
-export function useRealAgo(iso: string): { text: string; fresh: boolean } {
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => {
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  if (now === null) return { text: `${realDay(iso)}, ${realTime(iso)}`, fresh: false };
-  const sec = Math.max(0, Math.round((now - Date.parse(iso)) / 1000));
-  const fresh = sec < 24 * 3600;
-  if (!fresh) return { text: `${realDay(iso)}, ${realTime(iso)}`, fresh };
-  if (sec < 60) return { text: `${sec} s ago`, fresh };
-  const m = Math.floor(sec / 60);
-  if (m < 60) return { text: `${m} min ago`, fresh };
-  return { text: `${Math.floor(m / 60)} h ${m % 60} min ago`, fresh };
-}
-
-/** The header of every Wire: the last real webhook PayPal sent us, verified, ticking. */
+/** The header of every Wire: what the plane is. No relative time, so server and client render the same text. */
 function WireHead() {
-  const { text, fresh } = useRealAgo(REAL_LAST.at);
+  const [fresh, setFresh] = useState(false);
+  useEffect(() => setFresh(Date.now() - Date.parse(REAL_LAST.at) < 24 * 3600 * 1000), []);
   return (
     <div className={s.wireHead} data-origin="paypal">
       <b>PayPal sandbox</b>
       <span className={`${s.dot} ${fresh ? s.dotLive : ""}`} data-live-dot data-cause="webhook" aria-hidden />
-      <span className={s.wireAgo}>last webhook verified {text}</span>
+      <span className={s.wireAgo}>webhooks verified with PayPal, times PT</span>
     </div>
   );
 }
@@ -125,11 +108,57 @@ function shortName(l: WireLine): string {
   return `${m?.[1] ?? ""} ${l.path.split("/").at(-1)}`.trim();
 }
 
+const OUTCOME_WORDS: Record<string, string> = {
+  RESOLVED_SELLER_FAVOUR: "PayPal decided for the seller",
+  RESOLVED_BUYER_FAVOUR: "PayPal decided for the buyer",
+  RESOLVED_WITH_PAYOUT: "PayPal closed it and paid the buyer itself",
+};
+
+/** One sentence per real PayPal entry, about the boundary only: what PayPal did, or what we asked of it. */
+export function plainOf(l: WireLine): string {
+  if (l.dir === "in") {
+    if (l.name.endsWith(".CREATED")) return "PayPal opened the chargeback";
+    if (l.name.endsWith(".RESOLVED")) return OUTCOME_WORDS[l.status] ?? "PayPal closed the case";
+    if (l.status === "WAITING_FOR_SELLER_RESPONSE") return "PayPal asked for evidence";
+    if (l.status === "UNDER_REVIEW") return "PayPal is reviewing the case";
+    return "PayPal updated the case";
+  }
+  const ok = /^2\d\d$/.test(l.status);
+  const path = l.path.replace(/^(GET|POST) /, "");
+  if (!ok) return `PayPal refused the call (${l.status})`;
+  if (path.endsWith("/provide-evidence")) return "CaseClerk filed the evidence and PayPal accepted it";
+  if (path.endsWith("/accept-claim")) return "CaseClerk accepted the claim and PayPal refunded the buyer";
+  if (path.endsWith("/make-offer")) return "CaseClerk sent the offer and PayPal accepted it";
+  if (path.endsWith("/send-message")) return "CaseClerk messaged the buyer through PayPal";
+  if (path.endsWith("/require-evidence")) return "Sandbox control: PayPal was asked to request more evidence";
+  if (path.endsWith("/adjudicate")) return "Sandbox control: PayPal was asked to rule for the seller";
+  if (path.includes("verify-webhook-signature")) return "CaseClerk checked PayPal's signature on a webhook";
+  if (path.startsWith("/v2/checkout/orders")) return "CaseClerk read the order from PayPal";
+  if (path.startsWith("/v1/shipping/trackers")) return "CaseClerk read the tracking from PayPal";
+  if (path.startsWith("/v1/customer/disputes")) return "CaseClerk read the case from PayPal";
+  return "CaseClerk called PayPal";
+}
+
+/** Event names break only at the dots, so CUSTOMER.DISPUTE.UPDATED is never cut. */
+function dotted(name: string): ReactNode {
+  const parts = name.split(".");
+  return parts.map((p, i) => (
+    <span key={i}>
+      {p}
+      {i < parts.length - 1 && (
+        <>
+          .<wbr />
+        </>
+      )}
+    </span>
+  ));
+}
+
 function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
   const reduce = useReducedMotion();
   const real = l.origin === "paypal";
   const path = l.dir === "in" ? (l.status.startsWith("RESOLVED") ? "outcome" : "status") : l.path.replace(/^(GET|POST) /, "");
-  const status = l.inflight ? "sending" : l.dir === "in" ? "verified" : l.status;
+  const status = l.inflight ? "sending" : !real ? "staged" : l.dir === "in" ? "verified" : l.status;
   const second = l.dir === "in" ? l.status : path;
   const cut = Math.min(18, Math.floor(second.length / 2));
   return (
@@ -144,11 +173,11 @@ function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
       data-origin={real ? "paypal" : undefined}
       data-sample={real ? undefined : ""}
       data-cause={l.dir === "in" ? "webhook" : "paypal-call"}
-      title={l.eventId ? `Event ${l.eventId}` : l.debugId ? l.path : undefined}
+      title={l.eventId ? `Event ${l.eventId}` : real ? l.path : undefined}
     >
       <span className={s.lTime}>{wireClock(l.at)}</span>
       <span className={s.lDir}>{l.dir}</span>
-      <span className={s.lName}>{shortName(l)}</span>
+      <span className={s.lName}>{l.dir === "in" ? dotted(l.name) : shortName(l)}</span>
       <motion.span
         key={status}
         className={s.lStatus}
@@ -159,18 +188,20 @@ function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
       >
         {status}
       </motion.span>
-      <span className={s.lPath}>
-        {/* Truncated in the middle: the head shrinks with an ellipsis, the tail always shows. */}
-        {/* A real call's name already says the endpoint; its row gives the debug id room (full path in the title). */}
-        {!l.debugId && (
+      {real ? (
+        <>
+          <span className={s.lPlain}>{plainOf(l)}</span>
+          {l.debugId && <span className={`${s.lPath} ${s.lDebug}`}>debug {l.debugId}</span>}
+        </>
+      ) : (
+        <span className={s.lPath}>
+          {/* Truncated in the middle: the head shrinks with an ellipsis, the tail always shows. */}
           <span className={s.lPathText}>
             <span className={s.lHead}>{second.slice(0, second.length - cut)}</span>
             <span className={s.lTail}>{second.slice(second.length - cut)}</span>
           </span>
-        )}
-        {l.debugId && <span className={s.lDebug}>debug {l.debugId}</span>}
-        {!real && l.dir === "out" && !l.inflight && l.status === "200" && <span className={s.lDebug}>sample</span>}
-      </span>
+        </span>
+      )}
       {l.inflight && <span className={s.inflight} data-inflight data-cause="paypal-call" aria-hidden />}
     </motion.li>
   );
@@ -181,13 +212,14 @@ export function Wire({ sections, phoneLabel }: { sections: WireSection[]; phoneL
   const seen = useRef<Set<string> | null>(null);
   if (seen.current === null) seen.current = new Set(sections.flatMap((x) => x.lines.map((l) => l.key)));
   const [open, setOpen] = useState(false);
-  const { text } = useRealAgo(REAL_LAST.at);
   return (
     <>
       <button className={s.wireBar} data-wire data-origin="paypal" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <span className={s.dot} aria-hidden />
         <span className={s.wireBarText}>
-          {phoneLabel ?? "PayPal sandbox"}, last webhook {text}. {open ? "Close" : "Show"}
+          {phoneLabel ? `${phoneLabel}. ` : ""}
+          {open ? "Hide" : "Show"} the PayPal traffic
+
         </span>
       </button>
       <aside className={`${s.wire} ${open ? s.wireOpen : ""}`} data-wire aria-label="PayPal traffic">
@@ -199,9 +231,19 @@ export function Wire({ sections, phoneLabel }: { sections: WireSection[]; phoneL
               <p className={s.wireLabel}>{sec.label}</p>
               <ol className={s.lines}>
                 <AnimatePresence initial={false}>
-                  {[...sec.lines].reverse().map((l) => (
-                    <Line key={l.key} l={l} fresh={!seen.current!.has(l.key)} />
-                  ))}
+                  {[...sec.lines]
+                    .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
+                    .flatMap((l, i, all) => {
+                      const d = realDay(l.at);
+                      const row = <Line key={l.key} l={l} fresh={!seen.current!.has(l.key)} />;
+                      if (i > 0 && realDay(all[i - 1].at) === d) return [row];
+                      return [
+                        <li key={`date-${sec.key}-${d}`} className={s.wireDate} data-wire-date>
+                          {d}
+                        </li>,
+                        row,
+                      ];
+                    })}
                 </AnimatePresence>
               </ol>
             </section>
