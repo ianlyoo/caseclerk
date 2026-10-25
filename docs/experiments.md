@@ -97,10 +97,30 @@ Dispute PP-R-ADC-10194432 (all calls 200; seconds from creation 11:33:14):
 - Refunds weren't touched, so the "refund on an open chargeback = double payout" report (delta 2) is unchecked.
 - To repeat: `scripts/spike/run.sh flow.mjs settle <dispute_id>`.
 
+### Route (a) follow-up — buyer consent + buyer-approved order: **FAILED (`TRANSACTION_NOT_ELIGIBLE`)**
+- Consent: the browser worker ticked Log in with PayPal and the sandbox buyer approved. The callback showed `CONSENT_OK` with `https://uri.paypal.com/services/disputes/create` granted.
+- Buyer payment: order 84844404TN3911712 ($24.00, PayPal wallet, created by `flow.mjs buyer-order`) was approved by the sandbox buyer (PayerID V28TDVX8N4PMU, funded by the sandbox bank account). `flow.mjs inquiry` captured it: capture 13S14614G8210303Y COMPLETED (debug ca4fe6bec1eb4).
+- `POST /v1/customer/disputes` with the Auth-Assertion for the buyer:
+
+| Time (KST) | buyer_transaction_id tried | Result | debug_id |
+|---|---|---|---|
+| 13:16 | 13S14614G8210303Y (seller capture id) | 400 INVALID_REQUEST `TRANSACTION_NOT_ELIGIBLE` | ca4fe6bfc99ae |
+| 13:42 | 13S14614G8210303Y (retry, fresh token) | 400 INVALID_REQUEST `TRANSACTION_NOT_ELIGIBLE` | f328610b7f6e1 |
+| 13:42 | V28TDVX8N4PMU (order payer id; the order has no buyer-side transaction field) | 400 INVALID_REQUEST `TRANSACTION_NOT_ELIGIBLE` | f6988672cccab |
+
+- Progress: before consent, this call failed with "No permissions to set target_client_id". After consent it gets past authorization and fails on the transaction, so **consent works**.
+- Likely cause: we have no buyer-side id. PayPal keeps separate ids per side. Dispute PP-R-LSA-10194438 shows seller `57L5681478118904G` vs buyer `0W413568E05193925`, and neither the capture (`GET /v2/payments/captures/…`, only `related_ids.order_id`) nor the order exposes the buyer's id.
+- Ways to get the buyer id:
+  - The buyer's Activity page: blocked by sandbox 2FA.
+  - Transaction Search, ticked ~13:05: the app token still has no `reporting` scope at 13:42 (fresh token each run, checked every 5 min since 13:20). `GET /v1/reporting/transactions` → 403 NOT_AUTHORIZED (debug f452626c74015). Even with the scope, it is a seller-side search and may not return the buyer's id (unverified).
+- Not ruled out: the payment is not eligible because it was bank-funded or too new.
+- Not run: send-message / make-offer (no PP-D dispute).
+- Next: get the buyer id from the buyer Activity page (owner clears 2FA once), then run `scripts/spike/run.sh flow.mjs inquiry 84844404TN3911712 <buyer_txn_id>`. Or retry Transaction Search once the scope appears. Fallback: route (c), the buyer UI.
+
 ### Open items
 1. ~~Vercel Deployment Protection~~: done by the PM (V6).
 2. ~~Vercel ↔ Git author~~: fixed by committing as the GitHub noreply address (V7).
 3. ~~PayPal keys in the env file~~ (in since 11:32); sandbox emails in the gitignored `scripts/spike/.env.spike`.
 4. ~~Vercel env `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET`~~: set by Rhea; `verify=SUCCESS` confirmed (criterion 2).
-5. **Inquiry disputes (send-message / make-offer)**: tick **Log in with PayPal** on the sandbox app `CaseClerk` (developer.paypal.com → Apps & Credentials → CaseClerk → Features), set a return URL, and have the sandbox buyer `sb-7qeht53532609@personal.example.com` grant consent once (needs that buyer's sandbox login, an owner step). Then retry route (a). Follow-up: the step list for the browser worker is in the worker dir `CONSENT.md`. The code is on `spike`: `/api/paypal/consent-start` (302 to the sandbox `/connect/` consent URL, with a state cookie) and `/api/paypal/consent-callback` (state check, code exchange, shows the granted dispute scopes; never shows or logs tokens). Both are deployed and smoke-tested (302, and a bogus state gives 400 `CONSENT_STATE_MISMATCH`). Alternative: the owner opens one INR case in the sandbox buyer UI (route c).
+5. **Inquiry disputes (send-message / make-offer)**: **route (a) still FAILED after consent (follow-up 10/25 13:15–13:42 KST); see "Route (a) follow-up" below.** Original note: tick **Log in with PayPal** on the sandbox app `CaseClerk` (developer.paypal.com → Apps & Credentials → CaseClerk → Features), set a return URL, and have the sandbox buyer `sb-7qeht53532609@personal.example.com` grant consent once (needs that buyer's sandbox login, an owner step). Then retry route (a). Follow-up: the step list for the browser worker is in the worker dir `CONSENT.md`. The code is on `spike`: `/api/paypal/consent-start` (302 to the sandbox `/connect/` consent URL, with a state cookie) and `/api/paypal/consent-callback` (state check, code exchange, shows the granted dispute scopes; never shows or logs tokens). Both are deployed and smoke-tested (302, and a bogus state gives 400 `CONSENT_STATE_MISMATCH`). Alternative: the owner opens one INR case in the sandbox buyer UI (route c).
 6. Decide how the demo shows `RESOLVED_WITH_PAYOUT` (chargeback "won").
