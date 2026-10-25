@@ -97,7 +97,7 @@ Dispute PP-R-ADC-10194432 (all calls 200; seconds from creation 11:33:14):
 - Refunds weren't touched, so the "refund on an open chargeback = double payout" report (delta 2) is unchecked.
 - To repeat: `scripts/spike/run.sh flow.mjs settle <dispute_id>`.
 
-### Route (a) follow-up — buyer consent + buyer-approved order: **FAILED (`TRANSACTION_NOT_ELIGIBLE`)**
+### Route (a) follow-up — buyer consent + buyer-approved order: **WORKED with the buyer-side transaction id (201, inquiry PP-R-CTQ-10194465); FAILED with seller-side ids**
 - Consent: the browser worker ticked Log in with PayPal and the sandbox buyer approved. The callback showed `CONSENT_OK` with `https://uri.paypal.com/services/disputes/create` granted.
 - Buyer payment: order 84844404TN3911712 ($24.00, PayPal wallet, created by `flow.mjs buyer-order`) was approved by the sandbox buyer (PayerID V28TDVX8N4PMU, funded by the sandbox bank account). `flow.mjs inquiry` captured it: capture 13S14614G8210303Y COMPLETED (debug ca4fe6bec1eb4).
 - `POST /v1/customer/disputes` with the Auth-Assertion for the buyer:
@@ -117,10 +117,27 @@ Dispute PP-R-ADC-10194432 (all calls 200; seconds from creation 11:33:14):
 - Not run: send-message / make-offer (no PP-D dispute).
 - Next: get the buyer id from the buyer Activity page (owner clears 2FA once), then run `scripts/spike/run.sh flow.mjs inquiry 84844404TN3911712 <buyer_txn_id>`. Or retry Transaction Search once the scope appears. Fallback: route (c), the buyer UI.
 
+### Route (a) result — **ROUTE_A_OK PP-R-CTQ-10194465** (10/25 13:47 KST)
+- A Mac worker read the buyer-side Transaction ID **3RN32089V8555584S** from the sandbox buyer's Activity page (after 2FA). Command: `scripts/spike/run.sh flow.mjs inquiry 84844404TN3911712 3RN32089V8555584S`. The order was already captured, so the command went straight to create.
+  - `POST /v1/customer/disputes` → **201** (debug f826511a8ce13). Dispute **PP-R-CTQ-10194465**, INR (`MERCHANDISE_OR_SERVICE_NOT_RECEIVED`), USD 24.00, stage **INQUIRY**. It was listed by `disputed_transaction_id=13S14614G8210303Y` after 187 s. `disputed_transactions` pairs seller `13S14614G8210303Y` with buyer `3RN32089V8555584S`.
+  - Note: the id is `PP-R-…`, not `PP-D-…`; in this sandbox the id prefix doesn't encode the stage.
+  - **The fix for `TRANSACTION_NOT_ELIGIBLE` was the buyer-side id.** The seller capture id or payer id didn't work. Neither the Orders nor the Payments API exposes it, so for now a human reads it from the buyer's Activity page. Transaction Search is the open alternative (scope still not on the token at 13:42).
+- Seller actions (HATEOAS at +2 s after listing: `WAITING_FOR_SELLER_RESPONSE/INQUIRY`, links `send_message, escalate, accept_claim, provide_evidence, make_offer`, offer_types `REFUND`):
+
+| Action | Result | debug_id |
+|---|---|---|
+| send-message ("your mug set shipped with USPS; tracking …") | **200** (dispute → `WAITING_FOR_BUYER_RESPONSE`) | ca4fe9aef0acf |
+| make-offer REFUND 6.00 (≈1 s after the message) | **422** `ACTION_NOT_ALLOWED_IN_CURRENT_DISPUTE_STATE` | ca4fe9afa5ab4 |
+
+  - After the message, `make_offer` disappeared from the links. It did not come back in ~8 min of polling (links: `send_message, provide_evidence, accept_claim, escalate`).
+  - **Lesson for the agent:** make-offer is only allowed while the dispute is `WAITING_FOR_SELLER_RESPONSE`. Make the offer **first** (or send the message and the offer as one), or the turn passes to the buyer. On the next inquiry, run make-offer before send-message.
+- Webhooks for PP-R-CTQ-10194465 reached the preview, all `verify=SUCCESS`: CREATED `WH-1N120158UV119311R-71252851WC887615T` and UPDATED ×2 (`WH-18D2791480659011X-…`, `WH-7LL00990WP545250W-…`). Each event appears twice in the logs: once in the spike format, once in a format with `case=… changed=… -> 200` (presumably the S3 build code on another deployment; not investigated).
+- PP-R-CTQ-10194465 is left open in `WAITING_FOR_BUYER_RESPONSE` (sandbox).
+
 ### Open items
 1. ~~Vercel Deployment Protection~~: done by the PM (V6).
 2. ~~Vercel ↔ Git author~~: fixed by committing as the GitHub noreply address (V7).
 3. ~~PayPal keys in the env file~~ (in since 11:32); sandbox emails in the gitignored `scripts/spike/.env.spike`.
 4. ~~Vercel env `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET`~~: set by Rhea; `verify=SUCCESS` confirmed (criterion 2).
-5. **Inquiry disputes (send-message / make-offer)**: **route (a) still FAILED after consent (follow-up 10/25 13:15–13:42 KST); see "Route (a) follow-up" below.** Original note: tick **Log in with PayPal** on the sandbox app `CaseClerk` (developer.paypal.com → Apps & Credentials → CaseClerk → Features), set a return URL, and have the sandbox buyer `sb-7qeht53532609@personal.example.com` grant consent once (needs that buyer's sandbox login, an owner step). Then retry route (a). Follow-up: the step list for the browser worker is in the worker dir `CONSENT.md`. The code is on `spike`: `/api/paypal/consent-start` (302 to the sandbox `/connect/` consent URL, with a state cookie) and `/api/paypal/consent-callback` (state check, code exchange, shows the granted dispute scopes; never shows or logs tokens). Both are deployed and smoke-tested (302, and a bogus state gives 400 `CONSENT_STATE_MISMATCH`). Alternative: the owner opens one INR case in the sandbox buyer UI (route c).
+5. **Inquiry disputes (send-message / make-offer)**: **route (a) works with the buyer-side transaction id (PP-R-CTQ-10194465; send-message 200, make-offer must come first; see "Route (a) result")**. Remaining: fetch the buyer-side id without a human (Transaction Search scope pending). Original note: tick **Log in with PayPal** on the sandbox app `CaseClerk` (developer.paypal.com → Apps & Credentials → CaseClerk → Features), set a return URL, and have the sandbox buyer `sb-7qeht53532609@personal.example.com` grant consent once (needs that buyer's sandbox login, an owner step). Then retry route (a). Follow-up: the step list for the browser worker is in the worker dir `CONSENT.md`. The code is on `spike`: `/api/paypal/consent-start` (302 to the sandbox `/connect/` consent URL, with a state cookie) and `/api/paypal/consent-callback` (state check, code exchange, shows the granted dispute scopes; never shows or logs tokens). Both are deployed and smoke-tested (302, and a bogus state gives 400 `CONSENT_STATE_MISMATCH`). Alternative: the owner opens one INR case in the sandbox buyer UI (route c).
 6. Decide how the demo shows `RESOLVED_WITH_PAYOUT` (chargeback "won").
