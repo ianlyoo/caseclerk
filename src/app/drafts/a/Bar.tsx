@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { CASES, SELLER } from "../_data";
+import { SELLER } from "../_data";
+import { ApprovalCount } from "./Controls";
 import s from "./a.module.css";
 
-const approvals = CASES.filter((c) => c.state === "approval").length;
-
-export function Bar({ active }: { active: "inbox" | "case" }) {
+export function Bar({ active }: { active: "inbox" | "case" | "approvals" | "deadlines" }) {
   return (
     <header className={s.bar}>
       <Link href="/drafts/a/inbox" className={s.mark}>
@@ -14,15 +13,16 @@ export function Bar({ active }: { active: "inbox" | "case" }) {
         <Link href="/drafts/a/inbox" className={active === "inbox" ? s.on : undefined}>
           Disputes
         </Link>
-        <Link href="/drafts/a/case">
-          Approvals <span className={s.count}>{approvals}</span>
+        <Link href="/drafts/a/inbox?f=approval" className={active === "approvals" ? s.on : undefined}>
+          Approvals <ApprovalCount className={s.count} />
         </Link>
-        <a href="/board">Deadlines</a>
-        <a href="#policy">Policy</a>
+        <Link href="/drafts/a/deadlines" className={active === "deadlines" ? s.on : undefined}>
+          Deadlines
+        </Link>
       </nav>
       <span className={s.seller}>
         {SELLER.name}
-        <span className={s.sandbox}>Sandbox</span>
+        <span className={s.sandbox}>PayPal sandbox</span>
       </span>
     </header>
   );

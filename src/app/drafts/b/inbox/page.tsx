@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  CASES,
+  OUTCOME_LABEL,
   REASON_LABEL,
   STATE_LABEL,
   countdown,
@@ -14,6 +14,7 @@ import {
   weekday,
   type InboxCase,
 } from "../../_data";
+import { OpenTest, StateWord, WaitingWords } from "../Controls";
 import { Masthead } from "../Masthead";
 import s from "../b.module.css";
 
@@ -37,7 +38,7 @@ function Entry({ c }: { c: InboxCase }) {
           </>
         ) : c.closedAt ? (
           <>
-            {c.state === "won" ? <span className={s.green}>Won</span> : "Refunded"}
+            <span className={c.state === "won" ? s.green : undefined}>{OUTCOME_LABEL[c.outcome!]}</span>
             <br />
             <span className={s.quiet}>{day(c.closedAt)}</span>
           </>
@@ -50,21 +51,25 @@ function Entry({ c }: { c: InboxCase }) {
         )}
       </p>
       <div className={s.text}>
-        <Link href="/drafts/b/case" className={s.caseTitle}>
+        <Link href={`/drafts/b/case/${c.id}`} className={s.caseTitle}>
           {c.item}
         </Link>
         <p className={s.caseMeta}>
           {c.buyer}, {c.buyerCity}. {REASON_LABEL[c.reason]}, {c.stage === "CHARGEBACK" ? "chargeback" : "inquiry"}.
         </p>
-        {!c.closedAt && (
-          <p className={s.caseNow}>
-            <span className={c.state === "approval" ? s.green : s.ink}>{STATE_LABEL[c.state]}.</span> {c.lastEvent}.
-          </p>
-        )}
+        <p className={s.caseNow}>
+          {!c.closedAt && <StateWord id={c.id} label={STATE_LABEL[c.state]} green={c.state === "approval"} />} {c.lastEvent}.
+        </p>
       </div>
       <p className={s.right}>
-        <span className={s.amt}>{usd(c.amount)}</span>
+        <span className={s.amt}>{usd(c.closedAt ? Number(c.amount) - Number(c.settledUsd ?? 0) : c.amount)}</span>
         <br />
+        {c.closedAt && (
+          <>
+            <span className={s.quiet}>kept of {usd(c.amount)}</span>
+            <br />
+          </>
+        )}
         <span className={`${s.mono} ${s.quiet}`}>{c.id.slice(5)}</span>
       </p>
     </li>
@@ -78,7 +83,6 @@ export default function DraftBInbox() {
   const closed = rows.filter((c) => c.closedAt);
   const open = due.length + paypal.length;
   const atStake = [...due, ...paypal].reduce((t, c) => t + Number(c.amount), 0);
-  const needYou = CASES.filter((c) => c.state === "approval").length;
 
   return (
     <div className={s.page}>
@@ -92,14 +96,14 @@ export default function DraftBInbox() {
           </p>
           <div className={s.text}>
             <h1 className={s.h1}>
-              {WORDS[open]} open disputes, {usd(atStake)} at stake, {WORDS[needYou].toLowerCase()} waiting for your answer.
+              {WORDS[open]} open disputes, {usd(atStake)} at stake, <WaitingWords /> waiting for your answer.
             </h1>
           </div>
         </header>
 
         <section className={s.row}>
           <p className={s.margin}>Next two weeks</p>
-          <div className={`${s.text} ${s.calWrap}`}>
+          <div className={s.calWrap}>
             <ol className={s.cal}>
               {calendar.map((d, i) => {
                 const onDay = due.filter((c) => dayOffset(c.dueAt!) === i);
@@ -112,9 +116,8 @@ export default function DraftBInbox() {
                     </span>
                     {onDay.map((c) => (
                       <span key={c.id} className={hoursLeft(c.dueAt!) < 72 ? `${s.calCase} ${s.red}` : s.calCase}>
-                        {c.buyer.split(" ")[1]}
-                        <br />
-                        {usd(c.amount)}
+                        <Link href={`/drafts/b/case/${c.id}`}>{c.buyer.split(" ")[1]}</Link>
+                        <span className={s.calAmt}>${Math.round(Number(c.amount)).toLocaleString("en-US")}</span>
                       </span>
                     ))}
                   </li>
@@ -124,7 +127,7 @@ export default function DraftBInbox() {
           </div>
         </section>
 
-        <section className={s.row}>
+        <section className={s.row} id="waiting">
           <p className={s.margin}>Soonest first</p>
           <h2 className={`${s.text} ${s.h3}`}>Waiting on you or the agent</h2>
         </section>
@@ -156,8 +159,7 @@ export default function DraftBInbox() {
 
         <footer className={`${s.row} ${s.foot}`}>
           <div className={s.text}>
-            <button className={s.openTest}>Open a test dispute</button>
-            <span className={s.quiet}> Creates a sandbox payment and chargeback; the case appears here in about 3 minutes.</span>
+            <OpenTest />
           </div>
         </footer>
       </article>

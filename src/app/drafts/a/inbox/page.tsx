@@ -1,84 +1,61 @@
 import Link from "next/link";
 import {
-  CASES,
+  OUTCOME_LABEL,
   REASON_LABEL,
   STATE_LABEL,
   STATUS_LABEL,
   countdown,
-  cost,
   day,
-  dayOffset,
   hoursLeft,
-  nextDays,
   sortedCases,
   time,
   usd,
   weekday,
-  type DeskState,
   type InboxCase,
 } from "../../_data";
 import { Bar } from "../Bar";
+import { ApprovalCount, DeskWord, OpenTest } from "../Controls";
 import s from "../a.module.css";
 
-const SPAN = 14; // days shown in the deadline lane
-const days = nextDays(SPAN);
-
-const open = CASES.filter((c) => !c.closedAt);
-const openTotal = open.reduce((t, c) => t + Number(c.amount), 0);
-const won = CASES.filter((c) => c.state === "won").reduce((t, c) => t + Number(c.amount), 0);
-const spend = CASES.reduce((t, c) => t + c.agentCostUsd, 0);
-const count = (st: DeskState[]) => CASES.filter((c) => st.includes(c.state)).length;
-
-const FILTERS: { label: string; n: number; on?: boolean }[] = [
-  { label: "Open", n: open.length, on: true },
-  { label: "Needs your approval", n: count(["approval"]) },
-  { label: "New", n: count(["new"]) },
-  { label: "Agent working", n: count(["working"]) },
-  { label: "Waiting on PayPal", n: count(["waiting_paypal"]) },
-  { label: "Closed this month", n: count(["won", "refunded"]) },
+const FILTERS: { key: string; label: string; test: (c: InboxCase) => boolean }[] = [
+  { key: "all", label: "All this month", test: () => true },
+  { key: "open", label: "Open", test: (c) => !c.closedAt },
+  { key: "approval", label: "Needs your approval", test: (c) => c.state === "approval" },
+  { key: "new", label: "New", test: (c) => c.state === "new" },
+  { key: "working", label: "Agent working", test: (c) => c.state === "working" },
+  { key: "paypal", label: "Waiting on PayPal", test: (c) => c.state === "waiting_paypal" },
+  { key: "closed", label: "Closed this month", test: (c) => !!c.closedAt },
 ];
-
-function Lane({ c }: { c: InboxCase }) {
-  if (!c.dueAt) {
-    return <span className={s.laneNote}>{c.closedAt ? `closed ${day(c.closedAt)}` : `with PayPal since ${day(c.lastEventAt)}`}</span>;
-  }
-  const end = Math.min(dayOffset(c.dueAt) + 1, SPAN);
-  const hot = hoursLeft(c.dueAt) < 72;
-  return (
-    <span className={s.lane}>
-      <span className={hot ? s.barHot : s.bar2} style={{ width: `${(end / SPAN) * 100}%` }} />
-    </span>
-  );
-}
 
 function Row({ c }: { c: InboxCase }) {
   const hot = c.dueAt && hoursLeft(c.dueAt) < 72;
+  const kept = c.closedAt ? Number(c.amount) - Number(c.settledUsd ?? 0) : null;
   return (
     <tr className={c.closedAt ? s.closedRow : undefined}>
       <td className={hot ? s.dueHot : s.dueCell}>
-        {c.dueAt ? countdown(c.dueAt) : ""}
-        {c.dueAt && <span className={s.sub}>{`${weekday(c.dueAt)} ${day(c.dueAt)}`}</span>}
-      </td>
-      <td className={s.laneCell}>
-        <Lane c={c} />
+        {c.dueAt ? countdown(c.dueAt) : c.closedAt ? "Closed" : "With PayPal"}
+        <span className={s.sub}>{c.dueAt ? `${weekday(c.dueAt)} ${day(c.dueAt)}` : day(c.closedAt ?? c.lastEventAt)}</span>
       </td>
       <td className={s.who}>
-        <Link href="/drafts/a/case" className={s.rowLink}>
+        <Link href={`/drafts/a/case/${c.id}`} className={s.rowLink}>
           {c.buyer}
         </Link>
         <span className={s.sub}>{c.item}</span>
       </td>
-      <td className={s.num}>{usd(c.amount)}</td>
+      <td className={s.num}>
+        {usd(c.amount)}
+        {kept !== null && <span className={s.sub}>kept {usd(kept)}</span>}
+      </td>
       <td>
         {REASON_LABEL[c.reason]}
         <span className={s.sub}>{c.stage === "CHARGEBACK" ? "Chargeback" : "Inquiry"}</span>
       </td>
       <td>
-        {c.outcome ? (c.outcome === "RESOLVED_SELLER_FAVOUR" ? "Seller favour" : "Buyer favour") : STATUS_LABEL[c.status]}
+        {c.outcome ? OUTCOME_LABEL[c.outcome] : STATUS_LABEL[c.status]}
         <span className={`${s.sub} ${s.mono}`}>{c.id}</span>
       </td>
-      <td>
-        <span className={s["st_" + c.state]}>{STATE_LABEL[c.state]}</span>
+      <td className={s.stateCell}>
+        <DeskWord id={c.id} label={STATE_LABEL[c.state]} cls={s["st_" + c.state]} />
         <span className={s.sub}>{c.lastEvent}</span>
       </td>
       <td className={s.when}>
@@ -89,58 +66,50 @@ function Row({ c }: { c: InboxCase }) {
   );
 }
 
-export default function DraftAInbox() {
-  const rows = sortedCases();
+export default async function DraftAInbox({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
+  const { f } = await searchParams;
+  const filter = FILTERS.find((x) => x.key === f) ?? FILTERS[0];
+  const all = sortedCases();
+  const rows = all.filter(filter.test);
   const live = rows.filter((c) => !c.closedAt);
   const closed = rows.filter((c) => c.closedAt);
 
   return (
     <div className={s.app}>
-      <Bar active="inbox" />
+      <Bar active={filter.key === "approval" ? "approvals" : "inbox"} />
       <div className={s.inboxGrid}>
-        <aside className={s.filters} aria-label="Filters">
+        <nav className={s.filters} aria-label="Filters">
           <ul>
-            {FILTERS.map((f) => (
-              <li key={f.label} className={f.on ? s.on : undefined}>
-                <span>{f.label}</span>
-                <span className={s.fN}>{f.n}</span>
+            {FILTERS.map((x) => (
+              <li key={x.key}>
+                <Link
+                  href={x.key === "all" ? "/drafts/a/inbox" : `/drafts/a/inbox?f=${x.key}`}
+                  className={x.key === filter.key ? s.on : undefined}
+                >
+                  <span>{x.label}</span>
+                  {x.key === "approval" ? (
+                    <ApprovalCount className={s.fN} />
+                  ) : (
+                    <span className={s.fN}>{all.filter(x.test).length}</span>
+                  )}
+                </Link>
               </li>
             ))}
           </ul>
-          <dl className={s.totals}>
-            <div>
-              <dt>In dispute</dt>
-              <dd>{usd(openTotal)}</dd>
-            </div>
-            <div>
-              <dt>Won this month</dt>
-              <dd>{usd(won)}</dd>
-            </div>
-            <div>
-              <dt>Agent spend</dt>
-              <dd>{cost(spend)}</dd>
-            </div>
-          </dl>
-        </aside>
+        </nav>
 
         <main className={s.inboxMain}>
           <div className={s.inboxHead}>
-            <h1 className={s.title}>Disputes</h1>
+            <h1 className={s.title}>{filter.key === "all" ? "Disputes" : filter.label}</h1>
             <span className={s.muted}>
-              {live.length} open, soonest deadline first. Times Pacific.
+              {rows.length} {rows.length === 1 ? "case" : "cases"}, soonest deadline first. Times Pacific.
             </span>
-            <button className={s.secondary}>Open test dispute</button>
+            <OpenTest />
           </div>
           <table className={s.inbox}>
             <thead>
               <tr>
                 <th>Respond within</th>
-                <th className={s.laneHead}>
-                  <span className={s.ticks}>
-                    <span className={s.today}>Today</span>
-                    <span>{day(days[SPAN - 1])}</span>
-                  </span>
-                </th>
                 <th>Buyer and item</th>
                 <th className={s.num}>Amount</th>
                 <th>Reason</th>
@@ -153,9 +122,11 @@ export default function DraftAInbox() {
               {live.map((c) => (
                 <Row key={c.id} c={c} />
               ))}
-              <tr className={s.groupRow}>
-                <td colSpan={8}>Closed this month</td>
-              </tr>
+              {closed.length > 0 && live.length > 0 && (
+                <tr className={s.groupRow}>
+                  <td colSpan={7}>Closed this month</td>
+                </tr>
+              )}
               {closed.map((c) => (
                 <Row key={c.id} c={c} />
               ))}

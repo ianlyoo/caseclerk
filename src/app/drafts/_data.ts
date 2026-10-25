@@ -50,6 +50,14 @@ export const STATUS_LABEL: Record<DisputeStatus, string> = {
   OTHER: "Other",
 };
 
+/** PayPal outcome codes in the seller's words. */
+export const OUTCOME_LABEL: Record<string, string> = {
+  RESOLVED_SELLER_FAVOUR: "Decided for you",
+  RESOLVED_BUYER_FAVOUR: "Settled with the buyer",
+  RESOLVED_WITH_PAYOUT: "PayPal covered it",
+  CANCELED_BY_BUYER: "Buyer cancelled",
+};
+
 export type Shipment = { carrier: string; service: string; tracking: string; status: string };
 
 export type InboxCase = {
@@ -70,6 +78,8 @@ export type InboxCase = {
   agentCostUsd: number;
   outcome?: string; // PayPal outcome code, closed cases
   closedAt?: string;
+  settledUsd?: string; // money that went back to the buyer, closed cases
+  claim: string; // the buyer's first message, as PayPal shows it
 };
 
 export const CASES: InboxCase[] = [
@@ -89,6 +99,7 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-25T10:36:00-07:00",
     shipment: { carrier: "UPS", service: "Worldwide Saver", tracking: "1ZA6W4416603418279", status: "Delivered Oct 8, Leeds" },
     agentCostUsd: 0.1122,
+    claim: "The light meter doesn't move at all and there's a scratch on the front of the lens that wasn't in the photos.",
   },
   {
     id: "PP-R-HBW-10226180",
@@ -106,6 +117,7 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-25T10:12:00-07:00",
     shipment: { carrier: "USPS", service: "Priority Mail Express International", tracking: "EA712304961US", status: "Held in customs, Malmö" },
     agentCostUsd: 0.0874,
+    claim: "It's been three weeks and the tracking hasn't changed since it reached Sweden. I paid for express.",
   },
   {
     id: "PP-R-TVA-10227066",
@@ -123,6 +135,7 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-24T08:15:00-07:00",
     shipment: { carrier: "USPS", service: "Ground Advantage", tracking: "9400111202062457813648", status: "In transit, last scan Oct 12, Charlotte NC" },
     agentCostUsd: 0.0613,
+    claim: "My film never showed up. Tracking has said in transit since the 12th.",
   },
   {
     id: "PP-R-NKT-10227591",
@@ -140,6 +153,7 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-25T09:57:00-07:00",
     shipment: { carrier: "UPS", service: "Worldwide Saver", tracking: "1ZA6W4410367092155", status: "Delivered Oct 14, Toronto" },
     agentCostUsd: 0.1304,
+    claim: "Hi, the OM-1 arrived well packed but the shutter hangs at 1/15 and slower, it stays open for a second or two before it closes. There's also haze inside the 50mm when I hold it up to a light. The listing said tested and clean glass. I'd like to return it or get a refund.",
   },
   {
     id: "PP-R-JDM-10228390",
@@ -157,6 +171,7 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-25T10:31:00-07:00",
     shipment: { carrier: "USPS", service: "Priority Mail International", tracking: "CP582190364US", status: "Arrived Osaka, Oct 21" },
     agentCostUsd: 0,
+    claim: "Tracking says it arrived in Osaka on the 21st but nothing has been delivered to me.",
   },
   {
     id: "PP-R-CQF-10228844",
@@ -173,6 +188,7 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-22T15:48:00-07:00",
     shipment: { carrier: "UPS", service: "2nd Day Air", tracking: "1ZA6W4410261209345", status: "Delivered Oct 3, signed TRAN" },
     agentCostUsd: 0.1418,
+    claim: "I don't recognise this charge.",
   },
   {
     id: "PP-R-WEX-10226653",
@@ -189,6 +205,7 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-20T09:30:00-07:00",
     shipment: { carrier: "USPS", service: "First-Class Package International", tracking: "LZ047188238US", status: "Delivered Oct 6, Madrid" },
     agentCostUsd: 0.1036,
+    claim: "I never received the camera.",
   },
   {
     id: "PP-R-RBN-10224961",
@@ -205,6 +222,7 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-22T06:02:00-07:00",
     shipment: { carrier: "USPS", service: "Priority Mail International", tracking: "CP610472859US", status: "Delivered Sep 26, Melbourne" },
     agentCostUsd: 0.0951,
+    claim: "The camera never arrived.",
     outcome: "RESOLVED_SELLER_FAVOUR",
     closedAt: "2026-10-22T06:02:00-07:00",
   },
@@ -223,6 +241,7 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-19T14:11:00-07:00",
     shipment: { carrier: "FedEx", service: "2Day", tracking: "774910364852", status: "Delivered Sep 22, Austin" },
     agentCostUsd: 0.1583,
+    claim: "The rangefinder is misaligned, infinity focus is off. Not the excellent condition described.",
     outcome: "RESOLVED_SELLER_FAVOUR",
     closedAt: "2026-10-19T14:11:00-07:00",
   },
@@ -241,8 +260,10 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-18T10:44:00-07:00",
     shipment: { carrier: "USPS", service: "Priority Mail", tracking: "9405510899300275166406", status: "Delivered Oct 4, Brooklyn" },
     agentCostUsd: 0.0702,
-    outcome: "RESOLVED_WITH_PAYOUT",
+    claim: "The battery check light doesn't come on and the viewfinder has a lot of dust inside.",
+    outcome: "RESOLVED_BUYER_FAVOUR",
     closedAt: "2026-10-18T10:44:00-07:00",
+    settledUsd: "40.00",
   },
   {
     id: "PP-R-ELK-10223775",
@@ -259,8 +280,10 @@ export const CASES: InboxCase[] = [
     lastEventAt: "2026-10-16T08:20:00-07:00",
     shipment: { carrier: "USPS", service: "Priority Mail International", tracking: "CP703185461US", status: "Delivered Oct 1, Munich" },
     agentCostUsd: 0.0389,
+    claim: "I was charged twice for the same camera, please refund the second payment.",
     outcome: "RESOLVED_BUYER_FAVOUR",
     closedAt: "2026-10-16T08:20:00-07:00",
+    settledUsd: "214.00",
   },
 ];
 
@@ -334,39 +357,6 @@ export const HERO = {
         "Video attached. 1/8 and 1/4 both stick. The haze is faint but it's there. Honestly I like the camera. If you knocked something off I'd keep it and have the shutter serviced here.",
     },
   ],
-  decision: {
-    strategy: "offer_partial" as const,
-    offerUsd: "180.00",
-    winProbability: 0.34,
-    acceptProbability: 0.85,
-    rationale:
-      "The buyer's video shows the slow speeds sticking, so the test roll no longer wins this. He asked for money off to keep the camera; a shutter service in Toronto runs $140 to $190.",
-    model: "claude-opus-5-5",
-    at: "2026-10-25T09:56:58-07:00",
-    options: [
-      {
-        key: "offer",
-        name: "Offer $180.00, buyer keeps the camera",
-        math: "85% he accepts × $232.00 kept, else fight",
-        ev: "218.21",
-        chosen: true,
-      },
-      {
-        key: "fight",
-        name: "Fight with the evidence pack",
-        math: "34% chance PayPal sides with you × $412.00",
-        ev: "140.08",
-        chosen: false,
-      },
-      {
-        key: "refund",
-        name: "Refund $412.00, camera comes back",
-        math: "You pay the $46.80 return label",
-        ev: "-46.80",
-        chosen: false,
-      },
-    ],
-  },
   approval: {
     actionId: "a3f1c9e2-58b4-4d1e-9c07-2b6e1f4d8a10",
     kind: "make_offer",
@@ -388,110 +378,6 @@ export const HERO = {
     ],
   },
 };
-
-export type Step = {
-  at: string;
-  actor: "paypal" | "agent" | "tool" | "seller" | "system";
-  title: string; // what happened
-  detail?: string; // the result
-  code?: string; // request, event or model, set in mono
-  costUsd?: number;
-  pending?: boolean;
-};
-
-export const TIMELINE: Step[] = [
-  {
-    at: "2026-10-23T16:47:12-07:00",
-    actor: "paypal",
-    title: "Dispute opened",
-    code: "CUSTOMER.DISPUTE.CREATED",
-    detail: "Webhook verified, event WH-4KX09214BV538122L",
-  },
-  {
-    at: "2026-10-23T16:47:13-07:00",
-    actor: "tool",
-    title: "Read the dispute",
-    code: "GET /v1/customer/disputes/PP-R-NKT-10227591",
-    detail: "200. Inquiry, waiting for your response, due Nov 2. PayPal allows a message, an offer or accepting the claim.",
-  },
-  {
-    at: "2026-10-23T16:47:16-07:00",
-    actor: "agent",
-    title: "Triage: not as described",
-    code: "claude-haiku-5-5",
-    detail: "Buyer reports a sticking shutter at slow speeds and lens haze, and asks to return or refund.",
-    costUsd: 0.0009,
-  },
-  {
-    at: "2026-10-23T16:47:18-07:00",
-    actor: "tool",
-    title: "Found the order",
-    code: "GET /v2/checkout/orders/5O190127TN364715T",
-    detail: "Paid Oct 9. Body $289.00, lens $85.00, shipping $38.00. Listing: tested with a roll of Portra 400, clean glass.",
-  },
-  {
-    at: "2026-10-23T16:47:19-07:00",
-    actor: "tool",
-    title: "Checked delivery",
-    code: "GET /v1/shipping/trackers/8MC585209K746392H-1ZA6W4410367092155",
-    detail: "Delivered Oct 14, 11:02 am in Toronto, signed OKAFOR.",
-  },
-  {
-    at: "2026-10-23T16:47:21-07:00",
-    actor: "tool",
-    title: "Looked up the buyer",
-    code: "GET /v1/reporting/transactions",
-    detail: "2 earlier orders (Mar 2024, Jun 2025), no disputes.",
-  },
-  {
-    at: "2026-10-23T16:47:41-07:00",
-    actor: "agent",
-    title: "Decided to ask for a video first",
-    code: "claude-opus-5-5",
-    detail: "The test roll supports the listing; the report is specific. Ask before offering money. Win estimate 52%.",
-    costUsd: 0.0391,
-  },
-  {
-    at: "2026-10-23T16:47:53-07:00",
-    actor: "agent",
-    title: "Sent a message to the buyer",
-    code: "POST …/PP-R-NKT-10227591/send-message",
-    detail: "200, debug id 7f3a91c2e04b8. No money involved, so no approval needed.",
-    costUsd: 0.0124,
-  },
-  {
-    at: "2026-10-25T09:56:40-07:00",
-    actor: "paypal",
-    title: "Buyer replied with a video",
-    code: "CUSTOMER.DISPUTE.UPDATED",
-    detail: "“1/8 and 1/4 both stick. If you knocked something off I'd keep it.”",
-  },
-  {
-    at: "2026-10-25T09:56:58-07:00",
-    actor: "agent",
-    title: "Recommends a $180.00 partial refund",
-    code: "claude-opus-5-5",
-    detail: "Win estimate down to 34%. Offering $180.00 keeps $218.21 on average, fighting $140.08.",
-    costUsd: 0.0462,
-  },
-  {
-    at: "2026-10-25T09:57:14-07:00",
-    actor: "agent",
-    title: "Built the evidence pack, in case he declines",
-    code: "pdf-lib, 4 pages",
-    detail: "Letter, order and listing, UPS delivery, test roll scans.",
-    costUsd: 0.0318,
-  },
-  {
-    at: "2026-10-25T09:57:15-07:00",
-    actor: "system",
-    title: "Waiting for you",
-    detail: "$180.00 is above your $50.00 approval line. Nothing goes to PayPal until you decide.",
-    pending: true,
-  },
-];
-
-export const HERO_COST = TIMELINE.reduce((s, t) => s + (t.costUsd ?? 0), 0);
 
 // ---- Formatting (fixed time zone so server and phone renders agree) ----
 
@@ -545,4 +431,13 @@ export function nextDays(n: number): string[] {
   const base = Date.parse("2026-10-25T12:00:00-07:00");
   for (let i = 0; i < n; i++) out.push(new Date(base + i * 86_400_000).toISOString());
   return out;
+}
+
+/** "43 min ago" within a day of the fixture clock, else the date and time. */
+export function ago(iso: string): string {
+  const m = Math.round((Date.parse(NOW) - Date.parse(iso)) / 60_000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  if (m < 24 * 60) return `${Math.floor(m / 60)} h ${m % 60} min ago`;
+  return `${day(iso)}, ${time(iso)}`;
 }

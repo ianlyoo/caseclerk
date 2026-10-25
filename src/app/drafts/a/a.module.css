@@ -4,7 +4,7 @@
   --bg: #f7f7f4;
   --ink: #18191b;
   --ink2: #5c5d59;
-  --ink3: #7f7f79;
+  --ink3: #6e6e68;
   --line: #e3e2dc;
   --line2: #d3d2cb;
   --blue: #2442b5;
@@ -16,7 +16,7 @@
   color: var(--ink);
   font-family: var(--a-sans), system-ui, sans-serif;
   font-weight: 400;
-  font-size: clamp(13px, 0.21vw + 9.2px, 16px);
+  font-size: clamp(14px, 0.3vw + 9.3px, 17px);
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "tnum" 1;
@@ -368,22 +368,12 @@
 }
 
 .tlCode {
+  display: block;
   font-family: var(--a-mono), monospace;
-  font-size: 0.82em;
-  color: var(--ink3);
-  max-width: 22em;
-  word-break: break-all;
-  padding-top: 0.75em !important;
-}
-
-.tlCost {
-  font-family: var(--a-mono), monospace;
-  font-size: 0.85em;
+  font-size: 0.86em;
   color: var(--ink2);
-  text-align: right;
-  white-space: nowrap;
-  padding-right: 0 !important;
-  padding-top: 0.72em !important;
+  overflow-wrap: anywhere;
+  margin-top: 0.15em;
 }
 
 .tlPending .tlTitle {
@@ -455,11 +445,6 @@
 
 .primary:hover {
   background: #1a3394;
-}
-
-.primary:disabled {
-  background: #6a7bc4;
-  cursor: progress;
 }
 
 .textBtn {
@@ -615,49 +600,26 @@
   padding: 0;
 }
 
-.filters li {
+.filters li a {
   display: flex;
   justify-content: space-between;
   padding: 0.45em 1.4em;
   color: var(--ink2);
-  cursor: pointer;
   transition: color 0.15s;
 }
 
-.filters li:hover,
-.filters li.on {
+.filters li a:hover,
+.filters li a.on {
   color: var(--ink);
 }
 
-.filters li.on {
+.filters li a.on {
   font-weight: 500;
 }
 
 .fN {
   color: var(--ink3);
   font-weight: 400;
-}
-
-.totals {
-  margin: 2em 1.4em 0;
-  padding-top: 1.2em;
-  border-top: 1px solid var(--line);
-}
-
-.totals div {
-  margin-bottom: 0.9em;
-}
-
-.totals dt {
-  color: var(--ink3);
-  font-size: 0.92em;
-}
-
-.totals dd {
-  margin: 0;
-  font-size: 1.3em;
-  font-weight: 300;
-  letter-spacing: -0.015em;
 }
 
 .inboxMain {
@@ -731,47 +693,6 @@
   opacity: 0.75;
 }
 
-.laneHead,
-.laneCell {
-  width: 15em;
-}
-
-.ticks {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.92em;
-}
-
-.ticks .today {
-  color: var(--ink);
-}
-
-.lane {
-  display: block;
-  position: relative;
-  height: 1.45em;
-  background: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px calc(100% / 14));
-}
-
-.bar2,
-.barHot {
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  height: 0.35em;
-  border-radius: 0 2px 2px 0;
-  background: var(--ink2);
-}
-
-.barHot {
-  background: var(--red);
-}
-
-.laneNote {
-  color: var(--ink3);
-  font-size: 0.92em;
-}
-
 .who {
   min-width: 14em;
 }
@@ -789,7 +710,7 @@
   color: var(--ink2);
 }
 
-.inbox td:nth-child(7) .sub {
+.stateCell .sub {
   max-width: 26em;
 }
 
@@ -804,6 +725,210 @@
   color: var(--ink2);
 }
 
+/* ---- case additions ---- */
+.live {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.35em;
+  margin: 0 0 1.1em;
+  color: var(--ink2);
+  font-size: 0.94em;
+}
+
+.live .mono {
+  color: var(--ink);
+}
+
+/* The one live signal on the page: a still green dot, no pulse. */
+.liveDot {
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--green);
+  align-self: center;
+  margin-right: 0.2em;
+}
+
+.hot {
+  color: var(--red);
+}
+
+.okHead {
+  color: var(--green);
+}
+
+.plainHead {
+  color: var(--ink);
+}
+
+.costTip {
+  color: var(--ink);
+  border-bottom: 1px dotted var(--ink2);
+  cursor: help;
+}
+
+.nextCase {
+  margin: 1.4em 0 0;
+}
+
+.decHead {
+  margin: 0 0 0.8em;
+}
+
+.valueNote {
+  margin: 0.9em 0 0;
+  padding: 0.6em 0 0;
+  border-top: 1px solid var(--line);
+  color: var(--ink2);
+}
+
+.openTest {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 1em;
+}
+
+.openTest .secondary {
+  margin-left: 0;
+}
+
+.secondary:disabled {
+  cursor: default;
+  border-color: var(--line);
+}
+
+/* ---- deadlines ---- */
+.dlMain {
+  padding: 1.6em 2em 3em;
+}
+
+.dl {
+  border-top: 1px solid var(--line2);
+}
+
+.dlRow {
+  display: grid;
+  grid-template-columns: 15em repeat(var(--span), minmax(0, 1fr));
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  min-height: 3.4em;
+}
+
+.dlRow:first-child {
+  min-height: 0;
+  padding: 0.5em 0;
+  align-items: end;
+}
+
+.dlWho {
+  grid-column: 1;
+  grid-row: 1;
+  padding-right: 1em;
+}
+
+.dlDay {
+  grid-row: 1;
+  text-align: center;
+  font-size: 0.86em;
+  color: var(--ink2);
+  line-height: 1.25;
+  position: relative;
+}
+
+.dlDay > span:first-child {
+  display: block;
+  color: var(--ink3);
+}
+
+.dlMonth {
+  position: absolute;
+  left: 0.2em;
+  top: -1.3em;
+  color: var(--ink);
+}
+
+.dlToday {
+  color: var(--blue);
+  font-weight: 500;
+}
+
+.dlToday > span:first-child {
+  color: var(--blue);
+}
+
+.dlTodayRule {
+  grid-row: 1;
+  align-self: stretch;
+  justify-self: center;
+  width: 1px;
+  background: var(--blue);
+  opacity: 0.5;
+}
+
+.dlSpan,
+.dlSpanHot {
+  grid-row: 1;
+  position: relative;
+  height: 1px;
+  background: var(--ink2);
+  margin-left: 50%;
+}
+
+.dlSpanHot {
+  background: var(--red);
+}
+
+/* The deadline: a tick at the end of the line, with the time left beside it. */
+.dlSpan::after,
+.dlSpanHot::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: -0.45em;
+  width: 2px;
+  height: 0.9em;
+  background: inherit;
+}
+
+.dlDue {
+  position: absolute;
+  right: 0;
+  bottom: 0.45em;
+  white-space: nowrap;
+  font-size: 0.9em;
+  color: var(--ink2);
+}
+
+.dlSpanHot .dlDue {
+  color: var(--red);
+}
+
+.dlRest {
+  margin-top: 2.2em;
+  max-width: 60em;
+}
+
+.dlRestHead {
+  font-size: 1em;
+  font-weight: 500;
+  margin: 0 0 0.5em;
+}
+
+.dlRest ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dlRest li {
+  display: flex;
+  gap: 1em;
+  padding: 0.55em 0;
+  border-top: 1px solid var(--line);
+}
+
 /* ---- wide screens ---- */
 @media (min-width: 2200px) {
   .desk {
@@ -816,11 +941,8 @@
   .desk {
     grid-template-columns: 15em minmax(0, 1fr) 26em;
   }
-  .tlCode {
-    display: none;
-  }
-  .inbox td:nth-child(8),
-  .inbox th:nth-child(8) {
+  .inbox td:nth-child(7),
+  .inbox th:nth-child(7) {
     display: none;
   }
 }
@@ -831,9 +953,11 @@
     font-size: 15px;
   }
   .bar {
-    gap: 1.2em;
+    gap: 0.9em;
     padding: 0 1em;
-    overflow-x: auto;
+  }
+  .nav {
+    gap: 0.9em;
   }
   .seller {
     display: none;
@@ -845,53 +969,66 @@
   .list {
     display: none;
   }
-  .main {
-    display: contents;
-  }
-  .head {
-    order: 1;
-    padding: 1.2em 1em 1.4em;
-  }
+  .main,
+  .head,
   .rail {
     display: contents;
+  }
+  /* Phone order: who and how much, then the ask, then the facts behind it. */
+  .headTop {
+    order: 1;
+    padding: 1.2em 1em 0.2em;
+  }
+  .ask {
+    order: 2;
+  }
+  .headMore {
+    order: 3;
+    padding: 1.2em 1em 1.4em;
+    border-top: 1px solid var(--line);
+  }
+  .why {
+    order: 4;
+  }
+  .timelineSec {
+    order: 5;
+    margin: 0;
+    padding: 1.4em 1em 2.5em;
+    border-top: 1px solid var(--line);
+  }
+  .pack {
+    order: 6;
+  }
+  .sandboxCtl {
+    order: 7;
+    padding-bottom: 2.5em;
   }
   .ask,
   .why,
   .pack,
   .sandboxCtl {
-    padding: 1.4em 1em;
+    padding: 1.2em 1em 1.4em;
     border-top: 1px solid var(--line);
     border-bottom: 0;
   }
-  .ask {
-    order: 2;
-  }
-  .why {
-    order: 3;
-  }
-  .pack {
-    order: 5;
-  }
-  .sandboxCtl {
-    order: 6;
-    padding-bottom: 2.5em;
-  }
-  .timelineSec {
-    order: 4;
-    margin: 0;
-    padding: 1.4em 1em 2.5em;
-    border-top: 1px solid var(--line);
+  .ask .note {
+    margin: 1.2em 0 0;
   }
   .amount {
     font-size: 2.4em;
   }
   .headline {
-    gap: 0.6em;
+    gap: 0.5em;
     flex-direction: column;
     align-items: flex-start;
+    margin: 0.6em 0 0.8em;
+  }
+  .live {
+    font-size: 0.9em;
   }
   .facts {
     grid-template-columns: 1fr 1fr;
+    column-gap: 1.2em;
   }
   .tl,
   .tl tbody {
@@ -899,7 +1036,7 @@
   }
   .tl tr {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr;
     column-gap: 0.8em;
     border-top: 1px solid var(--line);
     padding: 0.6em 0;
@@ -914,11 +1051,7 @@
   }
   .tlWhat {
     grid-column: 1 / -1;
-    order: 4;
     margin-top: 0.2em;
-  }
-  .tlCode {
-    display: none;
   }
   .tlActor {
     width: auto;
@@ -929,22 +1062,19 @@
   .filters {
     border-right: 0;
     border-bottom: 1px solid var(--line);
-    padding: 0.8em 0;
+    padding: 0.6em 0;
     overflow-x: auto;
   }
   .filters ul {
     display: flex;
-    gap: 0.2em;
   }
-  .filters li {
+  .filters li a {
     white-space: nowrap;
     padding: 0.3em 0.8em;
     gap: 0.4em;
   }
-  .totals {
-    display: none;
-  }
-  .inboxMain {
+  .inboxMain,
+  .dlMain {
     padding: 1.2em 1em 2em;
   }
   .inboxHead {
@@ -953,6 +1083,10 @@
   .inboxHead .muted {
     order: 3;
     width: 100%;
+  }
+  .openTest {
+    flex-direction: column-reverse;
+    align-items: flex-end;
   }
   .inbox thead {
     display: none;
@@ -992,22 +1126,17 @@
   .dueHot .sub {
     display: none;
   }
-  .inbox td:nth-child(7) {
+  .stateCell {
     grid-row: 2;
     grid-column: 1;
     margin-top: 0.3em;
   }
-  .inbox td:nth-child(7) .sub {
+  .stateCell .sub {
     display: none;
   }
-  .laneCell {
-    grid-row: 3;
-    grid-column: 1 / -1;
-    margin-top: 0.5em;
-  }
+  .inbox td:nth-child(4),
   .inbox td:nth-child(5),
-  .inbox td:nth-child(6),
-  .inbox td:nth-child(8) {
+  .inbox td:nth-child(7) {
     display: none;
   }
   .groupRow {
@@ -1016,5 +1145,27 @@
   }
   .pages {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* Deadlines on a phone: the name and the time left; the day grid needs a wider screen. */
+  .dlRow {
+    grid-template-columns: 1fr auto;
+  }
+  .dlRow:first-child,
+  .dlTodayRule {
+    display: none;
+  }
+  .dlSpan,
+  .dlSpanHot {
+    grid-column: 2 !important;
+    background: none;
+    height: auto;
+    margin: 0;
+  }
+  .dlSpan::after,
+  .dlSpanHot::after {
+    display: none;
+  }
+  .dlDue {
+    position: static;
   }
 }

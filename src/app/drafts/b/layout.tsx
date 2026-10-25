@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Newsreader, Spline_Sans_Mono } from "next/font/google";
+import { DecisionProvider } from "../_store";
 import s from "./b.module.css";
 
 const serif = Newsreader({
@@ -13,5 +14,9 @@ const mono = Spline_Sans_Mono({ subsets: ["latin"], weight: ["400"], variable: "
 export const metadata = { title: "CaseClerk, draft B", robots: { index: false } };
 
 export default function DraftBLayout({ children }: { children: ReactNode }) {
-  return <div className={`${serif.variable} ${mono.variable} ${s.root}`}>{children}</div>;
+  return (
+    <div className={`${serif.variable} ${mono.variable} ${s.root}`}>
+      <DecisionProvider>{children}</DecisionProvider>
+    </div>
+  );
 }
