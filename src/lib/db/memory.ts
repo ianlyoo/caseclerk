@@ -2,6 +2,7 @@
 // State lives per server instance and is lost on cold start.
 import { randomUUID } from "node:crypto";
 import { DEFAULT_POLICY, type AgentAction, type AuditEntry, type CaseRecord, type SellerPolicy } from "@/lib/types";
+import type { CaseMoney } from "@/lib/paypal/money";
 import type { Repo, SpendEntry, TestCapture, WireEntry } from "./repo";
 import { clampLimit, isVerifiedWire, wireRecentLimit, isNewerSnapshot, isOpenCase, LOCK_TTL_DEFAULT_S, round6, statusAfterSnapshot, utcDayStart } from "./shared";
 
@@ -18,6 +19,7 @@ export function createMemoryRepo(): Repo {
   const locks = new Map<string, { holder: string; expiresAt: number }>();
   const captures = new Map<string, TestCapture>();
   const wire: WireEntry[] = [];
+  const money = new Map<string, CaseMoney>();
 
   const now = () => new Date().toISOString();
 
@@ -214,6 +216,17 @@ export function createMemoryRepo(): Repo {
         } finally {
           if (locks.get(caseId)?.holder === holder) locks.delete(caseId);
         }
+      },
+    },
+
+    caseMoney: {
+      async get(caseId) {
+        const m = money.get(caseId);
+        return m ? clone(m) : null;
+      },
+      async put(caseId, m) {
+        if (!money.has(caseId)) money.set(caseId, clone(m));
+        return clone(money.get(caseId)!);
       },
     },
 

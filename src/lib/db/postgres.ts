@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { DEFAULT_POLICY, type AgentAction, type AuditEntry, type CaseRecord, type SellerPolicy } from "@/lib/types";
+import type { CaseMoney } from "@/lib/paypal/money";
 import type { ActionPatch, Repo, TestCapture, WireEntry } from "./repo";
 import { clampLimit, VERIFIED_WIRE_SQL, wireRecentLimit, LOCK_TTL_DEFAULT_S, round6, statusAfterSnapshot, utcDayStart } from "./shared";
 
@@ -344,6 +345,18 @@ export function createPostgresRepo(url: string, query?: Query): Repo {
             console.warn(`[db] lock release failed case=${caseId}: ${e instanceof Error ? e.message : "unknown"}`),
           );
         }
+      },
+    },
+
+    caseMoney: {
+      async get(caseId) {
+        const rows = await q(`SELECT money FROM case_money WHERE case_id = $1`, [caseId]);
+        return rows[0] ? (rows[0].money as CaseMoney) : null;
+      },
+      async put(caseId, m) {
+        await q(`INSERT INTO case_money (case_id, money) VALUES ($1, $2::jsonb) ON CONFLICT (case_id) DO NOTHING`, [caseId, json(m)]);
+        const rows = await q(`SELECT money FROM case_money WHERE case_id = $1`, [caseId]);
+        return rows[0].money as CaseMoney;
       },
     },
 
