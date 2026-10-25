@@ -11,7 +11,7 @@ import type { AgentAction } from "@/lib/types";
 import { POLICY, EVIDENCE_GATE_USD } from "../../../_shared/data";
 import { PHOTOS } from "../../../_shared/photos";
 import { EASE_OUT, Masthead, Wire, foldRoutine, plainOf, putRealCase, realDay, realTime, wireClock, type ShownLine } from "../../ui";
-import { buttonFor, filedAction, filedAt, headline, money, SANDBOX_RULING, pendingAction, ptify, realLines, realState, recommendation, rulingAsked, slipSummary, story, usd, whyWaits, type ApiCase } from "../../_real/model";
+import { buttonFor, filedAction, headline, lockedFiledAt, money, SANDBOX_RULING, pendingAction, ptify, realLines, realState, recommendation, rulingAsked, slipSummary, story, usd, whyWaits, type ApiCase } from "../../_real/model";
 import s from "../../a.module.css";
 
 const POLL_MS = 5000;
@@ -93,7 +93,7 @@ export function RealCaseView({ initial }: { initial: ApiCase }) {
     ) : filed ? (
       <>
         <span className={s.wirePinHead}>Filed with PayPal</span>
-        <span className={s.mono}>POST provide-evidence {filed.result?.httpStatus ?? ""}</span> {pt(filedAt(filed))}
+        <span className={s.mono}>POST provide-evidence {filed.result?.httpStatus ?? ""}</span> {pt(filed.updatedAt)}
         <br />
         <span className={`${s.mono} ${s.lDebug}`}>debug {filed.result?.debugId}</span>
       </>
@@ -399,6 +399,7 @@ function Reader({ id, sheets, at, setAt }: { id: string; sheets: Sheet[]; at: nu
 function Receipt({ r, a, photo }: { r: ApiCase; a: AgentAction; photo: boolean }) {
   const reduce = useReducedMotion();
   const approved = a.requiresApproval;
+  const filedTime = lockedFiledAt(a);
   return (
     <>
       <div className={`${s.margin} ${s.section} ${s.filedGap}`}>
@@ -416,7 +417,7 @@ function Receipt({ r, a, photo }: { r: ApiCase; a: AgentAction; photo: boolean }
       >
         <p className={s.filedHead}>CaseClerk filed the evidence with PayPal.</p>
         <p className={s.filedTimes} data-filed-times>
-          Filed at {pt(filedAt(a))}; PayPal answered at {pt(a.updatedAt)}.
+          {filedTime ? <>Filed at {pt(filedTime)}; PayPal answered at {pt(a.updatedAt)}.</> : <>PayPal answered at {pt(a.updatedAt)}.</>}
         </p>
         <p className={s.filedSub}>
           {a.result?.httpStatus ? <>PayPal answered {a.result.httpStatus}</> : <>PayPal took the filing</>}

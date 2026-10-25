@@ -92,6 +92,8 @@ export function actionPath(r: ApiCase, a: AgentAction): string {
 
 /** When PayPal answered an action: the audit's execution entry, else the demo control's, else the action's update. */
 function answeredAt(r: ApiCase, a: AgentAction): string {
+  // A filing's answer time is the executed time from the approve response; later refetches never move it.
+  if (a.kind === "provide_evidence" && (a.status === "executed" || a.status === "failed")) return a.updatedAt;
   const call = a.result?.debugId && r.wire?.find((w) => w.debugId === a.result!.debugId);
   if (call) return call.at;
   const hit = r.audit.find((x) => (a.result?.debugId && x.data?.debugId === a.result.debugId) || ((x.kind === "action.executed" || x.kind === "action.failed") && x.data?.actionId === a.id));
@@ -152,6 +154,9 @@ const MONEY: Record<string, { kept: string; fee: string }> = {
   "PP-R-AAJ-10194495": { kept: "385.25", fee: "10.75" },
   "PP-R-IMW-10194496": { kept: "382.33", fee: "10.67" },
   "PP-R-RCJ-10194476": { kept: "26.74", fee: "1.21" },
+  "PP-R-EGZ-10194505": { kept: "383.31", fee: "10.69" },
+  "PP-R-IHX-10194506": { kept: "380.38", fee: "10.62" },
+  "PP-R-SGV-10194507": { kept: "386.23", fee: "10.77" },
 };
 /** The fallback for a resolved case with no verified money (PM ruling). */
 export const NO_DEBIT = "PayPal closed the chargeback with no debit to your account.";
@@ -253,6 +258,13 @@ export function filedAction(r: ApiCase): AgentAction | undefined {
   return executed(r, "provide_evidence").at(-1);
 }
 export const filedAt = (a: AgentAction) => ((a.params?.filing as { at?: string } | undefined)?.at ?? a.updatedAt);
+
+/** The filing time as first seen for this action, or null if the first copy (an approve response) didn't carry it: never changes once rendered. */
+const filedSeen = new Map<string, string | null>();
+export function lockedFiledAt(a: AgentAction): string | null {
+  if (!filedSeen.has(a.id)) filedSeen.set(a.id, (a.params?.filing as { at?: string } | undefined)?.at ?? null);
+  return filedSeen.get(a.id) ?? null;
+}
 
 /** The policy line for a waiting action, in the seller's numbers. */
 export function whyWaits(r: ApiCase, a: AgentAction, evidenceLine: number, moneyLine: number): string {
