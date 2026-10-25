@@ -71,10 +71,13 @@ export function Row({ c }: { c: InboxCase }) {
   );
 }
 
-export function Headline() {
-  const waiting = usePendingApprovals();
+/** Counts the sample desk and the real sandbox cases together, as the nav does. */
+export function Headline({ real }: { real: RealRow[] }) {
+  const realOpen = real.filter((r) => r.state !== "resolved");
+  const waiting = usePendingApprovals() + real.filter((r) => r.state === "pending").length;
   const heroResolved = usePhase("PP-R-NKT-10227591") === "resolved";
-  const open = CASES.filter((c) => !c.closedAt && !(heroResolved && c.id === "PP-R-NKT-10227591"));
+  const sampleOpen = CASES.filter((c) => !c.closedAt && !(heroResolved && c.id === "PP-R-NKT-10227591"));
+  const open = [...sampleOpen, ...realOpen];
   const stake = open.reduce((t, c) => t + Number(c.amount), 0);
   return (
     <h1 className={s.headline}>

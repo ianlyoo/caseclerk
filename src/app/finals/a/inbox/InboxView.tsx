@@ -22,7 +22,7 @@ export function InboxView({ real }: { real: ApiCase[] }) {
       <div className={s.paper}>
         <Masthead here="inbox" />
         <main className={s.inbox}>
-          <Headline />
+          <Headline real={realRows} />
           <Strip />
           {realRows.length > 0 && (
             <section>

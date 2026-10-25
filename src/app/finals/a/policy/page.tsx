@@ -89,20 +89,22 @@ function rules(money: number, evidence: number): Rule[] {
 }
 
 /** Each open case's next step: what the agent will do next, and the money it moves. */
-const NEXT: { id: string; kind: "evidence" | "refund" | "message" | "none" }[] = [
-  { id: "PP-R-PLZ-10225917", kind: "evidence" },
-  { id: "PP-R-HBW-10226180", kind: "message" },
-  { id: "PP-R-TVA-10227066", kind: "refund" },
-  { id: "PP-R-NKT-10227591", kind: "evidence" },
-  { id: "PP-R-JDM-10228390", kind: "none" },
-  { id: "PP-R-CQF-10228844", kind: "none" },
-  { id: "PP-R-WEX-10226653", kind: "none" },
+type Next = { label: string; amount: string; kind: "evidence" | "refund" | "message" | "none" };
+const sample = (id: string, kind: Next["kind"]): Next => ({ label: `${first(byId(id).buyer)}\u2019s ${usd(byId(id).amount)}`, amount: byId(id).amount, kind });
+const NEXT: Next[] = [
+  sample("PP-R-PLZ-10225917", "evidence"),
+  sample("PP-R-HBW-10226180", "message"),
+  sample("PP-R-TVA-10227066", "refund"),
+  sample("PP-R-NKT-10227591", "evidence"),
+  sample("PP-R-JDM-10228390", "none"),
+  sample("PP-R-CQF-10228844", "none"),
+  sample("PP-R-WEX-10226653", "none"),
+  // The two open real sandbox cases: the $412.00 waits for evidence approval; PayPal is deciding the $17.95.
+  { label: "the real $412.00", amount: "412.00", kind: "evidence" },
+  { label: "the real $17.95", amount: "17.95", kind: "none" },
 ];
 const waits = (money: number, evidence: number) =>
-  NEXT.filter((n) => {
-    const amt = Number(byId(n.id).amount);
-    return (n.kind === "evidence" && amt >= evidence) || (n.kind === "refund" && amt > money);
-  }).map((n) => byId(n.id));
+  NEXT.filter((n) => (n.kind === "evidence" && Number(n.amount) >= evidence) || (n.kind === "refund" && Number(n.amount) > money));
 
 /** A dollar value inside the sentence, edited in place. */
 function Dollars({ value, set, label, name }: { value: number; set: (n: number) => void; label: string; name: string }) {
@@ -140,7 +142,7 @@ function Sentence({ money, evidence, setMoney, setEvidence }: { money: number; e
       </p>
       <p className={s.consequence} data-consequence={w.length}>
         With this policy, <Num value={w.length} money={false} cause="policy-edit" /> of your {open} open cases would wait for you
-        {w.length ? <>: {w.map((c) => `${first(c.buyer)}\u2019s ${usd(c.amount)}`).join(", ")}.</> : "."}
+        {w.length ? <>: {w.map((n) => n.label).join(", ")}.</> : "."}
       </p>
       <p className={s.ruleWhere}>A preview: change the numbers to see who would wait. This page saves nothing.</p>
     </div>

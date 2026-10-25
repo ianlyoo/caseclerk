@@ -520,14 +520,14 @@ const idsProbe = (page) =>
       judgeAnims(await animProbe(page), "policy switch");
       out((await page.locator("header nav a[href='/finals/a/policy'][aria-current=page]").count()) === 1, "Policy is in the nav and marked current");
       const sent = await page.evaluate(() => ({ text: (document.querySelector("[data-policy-sentence]") || {}).innerText || "", n: (document.querySelector("[data-consequence]") || {}).getAttribute?.("data-consequence") }));
-      out(/^Act on my own when the money is under/.test(sent.text) && sent.n === "3" && /With this policy, .{0,12}of your 7 open cases would wait for you/.test(sent.text.replace(/\s+/g, " ")), "policy reads as a sentence with editable values; 3 of 7 open cases would wait", sent.text.split("\n").slice(-2)[0]);
+      out(/^Act on my own when the money is under/.test(sent.text) && sent.n === "4" && /With this policy, .{0,12}of your 9 open cases would wait for you/.test(sent.text.replace(/\s+/g, " ")), "policy reads as a sentence with editable values; 4 of 9 open cases would wait", sent.text.split("\n").slice(-2)[0]);
       await page.locator("[data-policy-input=money]").fill("80");
       await page.waitForTimeout(1100);
       const n2 = await page.locator("[data-consequence]").getAttribute("data-consequence");
       await page.locator("[data-policy-input=evidence]").fill("500");
       await page.waitForTimeout(1100);
       const n3 = await page.locator("[data-consequence]").getAttribute("data-consequence");
-      out(n2 === "2" && n3 === "0", "editing the lines rolls the consequence: $80.00 money line -> 2, $500.00 evidence line -> 0", `${n2}, ${n3}`);
+      out(n2 === "3" && n3 === "0", "editing the lines rolls the consequence: $80.00 money line -> 3, $500.00 evidence line -> 0", `${n2}, ${n3}`);
     }
     await ctx.close();
   }
