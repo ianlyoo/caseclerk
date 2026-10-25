@@ -1163,6 +1163,16 @@
   .cell:nth-child(n + 8) {
     display: none;
   }
+  /* Seven narrow days: the amount gets the whole cell; the surname stays in the title. */
+  .cell {
+    padding: 8px 3px 10px;
+  }
+  .mark {
+    padding-left: 4px;
+  }
+  .mark > span + span {
+    display: none;
+  }
   .rowLink {
     grid-template-columns: 56px minmax(0, 1fr) auto;
     gap: 12px;

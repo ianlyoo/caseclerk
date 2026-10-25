@@ -354,7 +354,7 @@ const idsProbe = (page) =>
   }
 
   // ---- Inbox: G13, G15, G19, page probe ----
-  for (const v of [V1440, V1920, V2560]) {
+  for (const v of [V1440, V1920, V1536, V2560, PHONE]) {
     const { ctx, page } = await open(browser, v, `${P}/inbox`);
     const strip = await page.evaluate(() => {
       const s = document.querySelector("[data-strip]");
@@ -364,8 +364,10 @@ const idsProbe = (page) =>
         over: s.scrollWidth - s.clientWidth,
         cellOver: cells.filter((c) => c.scrollWidth > c.clientWidth + 0.5).length,
         due: [...s.querySelectorAll("[data-due]")].map((m) => ({ due: m.getAttribute("data-due"), cents: /\.\d\d/.test(m.textContent) })),
+        cutAmounts: [...s.querySelectorAll("[data-due] > span:first-child")].filter((x) => x.offsetWidth > 0 && x.scrollWidth > x.clientWidth).map((x) => x.textContent),
       };
     });
+    out(!strip.cutAmounts.length, `G19 no strip amount is truncated at ${v.name}`, strip.cutAmounts.join(", "));
     out(strip.cells === 14 && strip.over <= 0 && !strip.cellOver, `G19 14-day strip has no overflow at ${v.name}`, JSON.stringify({ cells: strip.cells, over: strip.over, cellOver: strip.cellOver }));
     out(strip.due.length && strip.due.every((m) => DUE.includes(m.due) && !m.cents), `G19 every strip mark is bound to a case dueAt, amounts without cents at ${v.name}`, `${strip.due.length} marks`);
     judgePage(await pageProbe(page, true), `inbox first screen ${v.name}`, v === V1440 ? { h1Min: 46 } : {});
