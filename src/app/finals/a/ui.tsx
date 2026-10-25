@@ -128,8 +128,7 @@ function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
   const path = l.dir === "in" ? (l.status.startsWith("RESOLVED") ? "outcome" : "status") : l.path.replace(/^(GET|POST) /, "");
   const status = l.inflight ? "sending" : l.dir === "in" ? "verified" : l.status;
   const second = l.dir === "in" ? l.status : path;
-  // With a debug id beside it, the tail keeps only the last path segment.
-  const cut = l.debugId && second.includes("/") ? second.length - second.lastIndexOf("/") : Math.min(18, Math.floor(second.length / 2));
+  const cut = Math.min(18, Math.floor(second.length / 2));
   return (
     <motion.li
       layout={reduce ? false : "position"}
@@ -142,7 +141,7 @@ function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
       data-origin={real ? "paypal" : undefined}
       data-sample={real ? undefined : ""}
       data-cause={l.dir === "in" ? "webhook" : "paypal-call"}
-      title={l.eventId ? `Event ${l.eventId}` : undefined}
+      title={l.eventId ? `Event ${l.eventId}` : l.debugId ? l.path : undefined}
     >
       <span className={s.lTime}>{wireClock(l.at)}</span>
       <span className={s.lDir}>{l.dir}</span>
@@ -159,10 +158,13 @@ function Line({ l, fresh }: { l: ShownLine; fresh: boolean }) {
       </motion.span>
       <span className={s.lPath}>
         {/* Truncated in the middle: the head shrinks with an ellipsis, the tail always shows. */}
-        <span className={s.lPathText}>
-          <span className={s.lHead}>{second.slice(0, second.length - cut)}</span>
-          <span className={s.lTail}>{second.slice(second.length - cut)}</span>
-        </span>
+        {/* A real call's name already says the endpoint; its row gives the debug id room (full path in the title). */}
+        {!l.debugId && (
+          <span className={s.lPathText}>
+            <span className={s.lHead}>{second.slice(0, second.length - cut)}</span>
+            <span className={s.lTail}>{second.slice(second.length - cut)}</span>
+          </span>
+        )}
         {l.debugId && <span className={s.lDebug}>debug {l.debugId}</span>}
         {!real && l.dir === "out" && !l.inflight && l.status === "200" && <span className={s.lDebug}>sample</span>}
       </span>

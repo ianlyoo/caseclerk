@@ -227,7 +227,6 @@
 }
 .lDebug {
   flex: none;
-  margin-left: auto;
 }
 .line[data-origin="paypal"] .lName,
 .line[data-origin="paypal"] .lStatus {
