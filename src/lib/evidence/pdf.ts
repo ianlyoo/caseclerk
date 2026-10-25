@@ -9,6 +9,8 @@ export type EvidencePdfInput = {
   narrative: string; // seller statement; blank lines split paragraphs, "- " starts a bullet
   exhibits: { title: string; body: string }[];
   seller?: { name: string; website?: string; contact?: string };
+  /** Total the buyer paid (items + shipping/tax). Adds a shipping-and-other row when above the items subtotal. */
+  amountCharged?: Money;
   generatedAt?: Date;
 };
 
@@ -275,6 +277,10 @@ export async function buildEvidencePdf(input: EvidencePdfInput): Promise<Uint8Ar
   w.heading(1, "Order details");
   const currency = order.items[0]?.unitAmount.currency_code ?? s.amount.currency_code;
   const itemsTotal = order.items.reduce((n, i) => n + Number(i.unitAmount.value) * i.quantity, 0);
+  const rows = order.items.map((i) => [i.description ? `${i.name}\n${i.description}` : i.name, String(i.quantity), formatMoney(i.unitAmount), formatMoney(lineTotal(i))]);
+  const charged = input.amountCharged;
+  const extra = charged ? Number(charged.value) - itemsTotal : 0;
+  if (extra > 0.004) rows.push(["Shipping and other charges", "", "", formatMoney({ currency_code: currency, value: extra.toFixed(2) })]);
   w.table(
     [
       ["Item", CONTENT_W - 210, "left"],
@@ -282,19 +288,21 @@ export async function buildEvidencePdf(input: EvidencePdfInput): Promise<Uint8Ar
       ["Unit price", 80, "right"],
       ["Total", 80, "right"],
     ],
-    order.items.map((i) => [i.description ? `${i.name}\n${i.description}` : i.name, String(i.quantity), formatMoney(i.unitAmount), formatMoney(lineTotal(i))]),
-    ["Items subtotal", "", "", formatMoney({ currency_code: currency, value: itemsTotal.toFixed(2) })],
+    rows,
+    [charged ? "Total charged" : "Items subtotal", "", "", formatMoney(charged ?? { currency_code: currency, value: itemsTotal.toFixed(2) })],
   );
   w.gap(6);
   const orderFacts: [string, string][] = [];
   if (order.paidAt) orderFacts.push(["Paid", formatDate(order.paidAt, true)]);
-  orderFacts.push(["Amount charged", formatMoney(s.amount)]);
+  if (charged && charged.value !== s.amount.value) orderFacts.push(["Disputed amount", formatMoney(s.amount)]);
   if (order.buyerCountry) orderFacts.push(["Ship-to country", order.buyerCountry]);
-  w.facts(orderFacts);
+  if (orderFacts.length) w.facts(orderFacts);
 
   // 2. Shipping
   w.heading(2, "Shipping and delivery");
   if (order.shipping?.length) {
+    w.text("Tracking was uploaded to PayPal on the original transaction and is visible in the case.", { size: 9, color: C.muted });
+    w.gap(4);
     for (const sh of order.shipping) {
       const rows: [string, string][] = [
         ["Carrier", sh.carrier],
@@ -306,7 +314,6 @@ export async function buildEvidencePdf(input: EvidencePdfInput): Promise<Uint8Ar
       w.facts(rows);
       w.gap(6);
     }
-    w.text("Tracking was uploaded to PayPal on the original transaction and is visible in the case.", { size: 9, color: C.muted });
   } else {
     w.text("No shipment tracking is on file for this order.", { size: 10, color: C.muted });
   }
