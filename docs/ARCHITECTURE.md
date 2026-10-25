@@ -62,3 +62,4 @@ PayPal sandbox ──webhook──▶ src/app/api/webhooks/paypal (verify → de
 - Secrets only from env. Server code never logs secrets, full names, emails, addresses or message bodies; IDs and states only.
 - Each worker works on its own branch `s3-w<n>-<name>` in its own worktree, pushes often, and asks the PM to merge (PM merges to `main`). `package.json`/lockfile: add only what you need; the PM resolves lockfile merges.
 - Tests: vitest. No local `next build` loops on Oracle (shared, loaded): typecheck + unit tests locally, builds on Vercel previews.
+- Production (deploys from `main`): https://caseclerk.vercel.app — PayPal webhook URL: https://caseclerk.vercel.app/api/webhooks/paypal
