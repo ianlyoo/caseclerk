@@ -21,6 +21,8 @@ const flushAfter = async () => {
 vi.mock("@/lib/paypal/testDispute", () => ({
   openTestDispute: m.openTestDispute,
   TEST_SCENARIOS: { not_received: {}, not_as_described: {} },
+  JUDGE_SHOP: "Judge Shop",
+  judgeItem: () => ({ name: "Camera", quantity: 1, unitAmount: { currency_code: "USD", value: "389.00" } }),
 }));
 vi.mock("@/lib/paypal/simulators", () => ({ adjudicate: m.adjudicate, requireEvidence: m.requireEvidence }));
 vi.mock("@/lib/paypal/disputes", () => ({ getDispute: m.getDispute }));
@@ -43,8 +45,9 @@ async function fakeOpenTestDispute() {
   return { captureId: "CAP-9", orderId: "ORD-9", amount: { value: "30.00", currency_code: "USD" }, order: ORDER };
 }
 
-const req = (path: string, init?: RequestInit & { ip?: string }) =>
+const reqBase = (path: string, init?: RequestInit & { ip?: string }) =>
   new Request(`http://x${path}`, { ...init, headers: { "x-forwarded-for": init?.ip ?? "1.2.3.4", ...(init?.headers ?? {}) } });
+const req = reqBase;
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
 
 let db: Repo;
@@ -80,7 +83,19 @@ describe("cases", () => {
 });
 
 describe("policy", () => {
+  it("refuses edits without the edit token", async () => {
+    vi.stubEnv("POLICY_EDIT_TOKEN", "");
+    const off = await policy.PUT(req("/api/policy", { method: "PUT", body: JSON.stringify(DEFAULT_POLICY) }));
+    expect(off.status).toBe(403);
+    vi.stubEnv("POLICY_EDIT_TOKEN", "t0k");
+    const wrong = await policy.PUT(req("/api/policy", { method: "PUT", body: JSON.stringify(DEFAULT_POLICY), headers: { "x-policy-edit-token": "nope" } }));
+    expect(wrong.status).toBe(403);
+    vi.unstubAllEnvs();
+  });
+
   it("gets defaults, validates and saves", async () => {
+    vi.stubEnv("POLICY_EDIT_TOKEN", "t0k");
+    const req = (path: string, init?: RequestInit) => reqBase(path, { ...init, headers: { "x-policy-edit-token": "t0k" } });
     expect((await (await policy.GET()).json()).policy).toEqual(DEFAULT_POLICY);
     const bad = await policy.PUT(req("/api/policy", { method: "PUT", body: JSON.stringify({ ...DEFAULT_POLICY, maxOfferPercent: 300 }) }));
     expect(bad.status).toBe(400);
@@ -90,6 +105,7 @@ describe("policy", () => {
     const ok = await policy.PUT(req("/api/policy", { method: "PUT", body: JSON.stringify(next) }));
     expect((await ok.json()).policy).toEqual(next);
     expect(await db.policy.get()).toEqual(next);
+    vi.unstubAllEnvs();
   });
 });
 
@@ -104,7 +120,14 @@ describe("test-dispute", () => {
     expect((await limited.json()).error.code).toBe("rate_limited");
     expect((await post("8.8.8.8")).status).toBe(202);
     expect(m.openTestDispute).toHaveBeenCalledTimes(4);
-    expect(m.openTestDispute).toHaveBeenCalledWith({ scenario: "not_received", waitMs: 0 });
+    // A visitor's test dispute is one camera above the $250 evidence line, free shipping.
+    expect(m.openTestDispute).toHaveBeenCalledWith({
+      scenario: "not_received",
+      waitMs: 0,
+      items: [expect.objectContaining({ unitAmount: { currency_code: "USD", value: "389.00" } })],
+      shippingFee: null,
+      shopName: "Judge Shop",
+    });
     expect(await db.testCaptures.get("CAP-9")).toMatchObject({ orderId: "ORD-9", scenario: "not_received", order });
     // The webhook's upsert then gives the case the test badge and the order context.
     const { record } = await db.cases.upsertFromSnapshot(snapshot({ id: "PP-R-9", sellerTransactionId: "CAP-9" }));
@@ -170,6 +193,16 @@ describe("approvals", () => {
       requiresApproval: true, status: "awaiting_approval",
     });
   }
+
+  it("refuses a case held for the demo recording", async () => {
+    vi.stubEnv("RESERVED_CASE_IDS", "PP-R-A, PP-R-Z");
+    const a = await pending();
+    const res = await approve.POST(req(`/api/actions/${a.id}/approve`, { method: "POST" }), params(a.id));
+    expect(res.status).toBe(403);
+    expect(m.executeApproved).not.toHaveBeenCalled();
+    expect((await db.actions.get(a.id))?.status).toBe("awaiting_approval");
+    vi.unstubAllEnvs();
+  });
 
   it("approves through the agent and refuses a second decision", async () => {
     const a = await pending();

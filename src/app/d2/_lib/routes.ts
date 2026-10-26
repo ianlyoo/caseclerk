@@ -6,7 +6,7 @@ export const href = {
   cases: () => `${BASE}/cases`,
   case: (id: string) => `${BASE}/case/${encodeURIComponent(id)}`,
   policy: () => `${BASE}/policy`,
-  /** The Bryntum deadline board stays at the root, outside this app's shell. */
+  /** The deadline board (Bryntum), in the top bar as Deadlines. */
   board: () => "/board",
 };
 

@@ -75,8 +75,8 @@ export function caseModel(b: CaseBundle, nowIso: string): CaseModel {
     ],
   };
   const pos = (t: number) => logPos(t, tau, tMax);
-  // A filing made a moment ago sits at "now": the filing keeps the dot and says where it stands.
-  const near = stops.find((st) => st.id === "filed" && pos(nowT) - pos(st.t) < 0.07);
+  // A filing (or a sandbox ruling asked for) a moment ago sits at "now": it keeps the dot and says where it stands.
+  const near = [...stops].reverse().find((st) => (st.id === "filed" || st.id === "ruled") && pos(nowT) - pos(st.t) < 0.07);
   stops = foldClose(near ? stops : [...stops, now], pos, 0.07).map((st) =>
     st.id === "filed" && near && state.key === "review" ? { ...st, detail: `${st.detail}. Reviewing` } : st,
   );

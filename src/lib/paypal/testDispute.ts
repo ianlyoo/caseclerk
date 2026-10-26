@@ -26,6 +26,20 @@ const CATALOG: OrderItemInput[] = [
 ];
 const SHIPPING_FEE = usd("5.95");
 
+/** A judge's test dispute: one used camera above the $250 evidence line, so it stops for the seller's yes. */
+export const JUDGE_SHOP = "Northlight Camera Exchange";
+export const JUDGE_CATALOG: OrderItemInput[] = [
+  { name: "Olympus OM-1n body, chrome", sku: "NC-OM1N-CHR", quantity: 1, unitAmount: usd("389.00"), description: "Used, tested, light brassing on the top plate" },
+  { name: "Nikon FM2n body, black", sku: "NC-FM2N-BLK", quantity: 1, unitAmount: usd("449.00"), description: "Used, shutter tested at all speeds" },
+  { name: "Canon AE-1 Program with FD 50mm f/1.8", sku: "NC-AE1P-50", quantity: 1, unitAmount: usd("329.00"), description: "Used, new light seals, meter accurate" },
+  { name: "Pentax MX body, silver", sku: "NC-MX-SLV", quantity: 1, unitAmount: usd("289.00"), description: "Used, clean viewfinder, cloth shutter" },
+];
+
+/** One random judge item (see JUDGE_CATALOG). */
+export function judgeItem(): OrderItemInput {
+  return JUDGE_CATALOG[Math.floor(Math.random() * JUDGE_CATALOG.length)];
+}
+
 function pick<T>(list: T[], n: number): T[] {
   const copy = [...list];
   for (let i = copy.length - 1; i > 0; i--) {

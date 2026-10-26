@@ -32,7 +32,13 @@ export async function GET() {
 }
 
 // PUT /api/policy  body: SellerPolicy → { policy }
+// Editing is off on the public demo (judges share one seller): it needs POLICY_EDIT_TOKEN set and sent
+// as the x-policy-edit-token header.
 export async function PUT(req: Request) {
+  const token = process.env.POLICY_EDIT_TOKEN;
+  if (!token || req.headers.get("x-policy-edit-token") !== token) {
+    return jsonError(403, "forbidden", "Policy editing is off on this demo.");
+  }
   const body = await parseBody(req, Policy);
   if (body instanceof Response) return body;
   try {
