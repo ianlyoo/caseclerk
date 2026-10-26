@@ -93,7 +93,7 @@ export async function Policy() {
               axis={PERCENT}
               line={policy.minWinProbabilityToFight}
               lineLabel={`${pct(policy.minWinProbabilityToFight)} minimum to fight`}
-              below="Settles"
+              below="Settles if cheaper"
               above="Fights"
               marks={called.length ? { label: `${called.length} cases it has called`, values: called } : undefined}
             />

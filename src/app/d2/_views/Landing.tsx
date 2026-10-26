@@ -138,6 +138,9 @@ export async function Landing() {
               <Link className="btn btn-go" href={href.case(w.id)}>
                 Review the {wAmount} case
               </Link>
+              <div className="waiting-try">
+                <TestDispute on="leather" lede="Or open a new one and watch it arrive." />
+              </div>
             </div>
             <dl className="facts facts-dark">
               <div>
