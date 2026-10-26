@@ -132,9 +132,9 @@ export function DeskHome() {
       <div className="pending-heading"><h2 id="pending-title">{awaiting ? "Waiting for your approval" : "Featured case"}</h2><Badge tone={awaiting ? "pending" : "neutral"}>{statusName(c)}</Badge></div>
       <div className="pending-main">
         <div className="pending-product"><h3>{itemName(c)}</h3><div className="case-meta"><span>{reason(c)}</span><span>Chargeback</span></div><div className="pending-facts"><span><Icon name="check" size={16} />Delivery confirmed</span><span className="warning-text"><Icon name="alert" size={16} />Condition unverified</span></div></div>
-        <div className="pending-value"><span className="amount-large">{money(c.snapshot.amount.value, c.snapshot.amount.currency_code)}</span><span>Disputed amount</span></div>
+        <div className="pending-value"><p className="amount-large">{money(c.snapshot.amount.value, c.snapshot.amount.currency_code)}</p><span>Disputed amount</span></div>
       </div>
-      <div className="pending-footer"><div className="due"><Icon name="clock" /><span>Reply by <strong>{date(c.snapshot.sellerResponseDueDate)}</strong></span></div><Link className="button primary" href={`/d1/case/${c.id}`}>Review case<Icon name="chevron" size={16} /></Link></div>
+      <div className="pending-footer"><div className="due"><Icon name="clock" /><span>Reply by <strong>{date(c.snapshot.sellerResponseDueDate)}</strong></span></div><Link className="button primary" href={`/d1/case/${c.id}`}>Review case</Link></div>
     </section>
     <section className="recent-section" aria-labelledby="recent-title">
       <div className="section-heading"><h2 id="recent-title">Recent cases</h2><span className="quiet-label">Latest {recent.length} of {others.length} other cases</span></div>
@@ -170,6 +170,7 @@ export function CaseView({ id }: { id: string }) {
     <nav className="breadcrumb" aria-label="Breadcrumb"><Link href="/d1"><Icon name="back" size={16} />Disputes</Link><span>Case review</span></nav>
     <div className="case-heading"><div><h1>{itemName(c)}</h1><div className="case-meta"><span>{reason(c)}</span><span>{c.snapshot.stage === "CHARGEBACK" ? "Chargeback" : "Dispute"}</span><span>Opened {date(c.createdAt)}</span></div></div><Badge tone={isPending ? "pending" : "neutral"}>{statusName(c)}</Badge></div>
     {resource.error && <p className="stale-note" role="status">Updates are unavailable. Showing the last received case. <button onClick={resource.retry}>Try again</button></p>}
+    <section className="mobile-case-context" aria-label="Case at a glance"><div><span className="quiet-label">Disputed amount</span><strong>{money(c.snapshot.amount.value, c.snapshot.amount.currency_code)}</strong></div><div className="mobile-case-deadline"><span className="quiet-label">Reply by</span><strong>{date(c.snapshot.sellerResponseDueDate)}</strong></div><p>Your review is required from {money(threshold)}.</p></section>
     <div className="case-layout">
       <div className="case-evidence">
         <section className="evidence-section" aria-labelledby="evidence-title">
