@@ -2122,3 +2122,172 @@
 .inbox-try .inbox-fine {
   margin-top: 0;
 }
+
+/* ---------- stage 3: the deadline board (/board) ---------- */
+/* the page is the viewport: the plate on top, the board fills the rest and scrolls inside itself (Bryntum's own scroller) */
+.bd-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 560px;
+}
+.bd-top {
+  flex: none;
+}
+.bd-head {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-5);
+}
+.bd-title {
+  font-size: clamp(30px, 3vw, 44px);
+  line-height: 1.08;
+  font-weight: 700;
+  font-variation-settings: "wdth" 112;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+.bd-counts {
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--ink);
+  max-width: 84ch;
+  text-wrap: pretty;
+}
+.bd-board {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--metal-1);
+  background-image: linear-gradient(180deg, var(--metal-1), #e3e6e8);
+  border-top: 1px solid var(--seam);
+}
+.bd-tools {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-6);
+  row-gap: var(--space-3);
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid rgba(16, 18, 20, 0.1);
+}
+.bd-views {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+.bd-views-k {
+  float: left;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  font-variation-settings: "wdth" 110;
+  color: var(--ink-2);
+}
+.bd-view {
+  position: relative;
+  display: inline-flex;
+}
+.bd-view input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.bd-view span {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--seam);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  font-variation-settings: "wdth" 106;
+  color: var(--ink-2);
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.bd-view input:checked + span {
+  color: var(--ink);
+  background: var(--metal-3);
+  border-color: var(--ink-3);
+  box-shadow: inset 0 1px 2px rgba(16, 18, 20, 0.22);
+}
+.bd-view input:focus-visible + span {
+  outline: 2px solid var(--go);
+  outline-offset: 2px;
+}
+.bd-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-5);
+  row-gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.bd-key li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.bd-key-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: var(--ink);
+}
+.bd-key-dot[data-who="paypal"] {
+  background: var(--metal-1);
+}
+.bd-key-now {
+  width: 2px;
+  height: 14px;
+  background: var(--go);
+}
+.bd-sched {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.bd-sched > .b-scheduler {
+  position: absolute;
+  inset: 0;
+}
+.bd-loading {
+  flex: 1;
+}
+@media (max-width: 899px) {
+  .bd-head {
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+  .bd-counts {
+    font-size: 15px;
+  }
+  .bd-tools {
+    column-gap: var(--space-4);
+  }
+  /* a phone shows the two spans and the key; the group keeps its name for screen readers (aria-label) */
+  .bd-views-k,
+  .bd-key-fine {
+    display: none;
+  }
+}

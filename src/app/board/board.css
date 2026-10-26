@@ -1,0 +1,347 @@
+/* The deadline board: Bryntum Scheduler on the top plate. Svalbard is only the base; every surface, line and
+   type colour below is the d2 world's (satin metal rows, engraved ink, one orange: the seller's and "now"). */
+
+.bd-sched .b-scheduler {
+  --b-primary: #f26a1b;
+  --b-widget-font-size: 14px;
+  --b-widget-font-weight: 400;
+  --b-widget-border-radius: 6px;
+  --b-panel-background: transparent;
+  --b-grid-header-background: transparent;
+  --b-grid-header-color: var(--ink-2);
+  --b-grid-header-font-weight: 600;
+  --b-grid-header-font-size: 13px;
+  --b-grid-header-border-color: var(--seam);
+  --b-grid-header-text-transform: none;
+  --b-grid-cell-background: transparent;
+  --b-grid-cell-color: var(--ink);
+  --b-grid-cell-border-color: rgba(16, 18, 20, 0.1);
+  --b-grid-row-border-color: rgba(16, 18, 20, 0.1);
+  --b-grid-cell-hover-background: rgba(16, 18, 20, 0.045);
+  --b-grid-cell-selected-background: rgba(16, 18, 20, 0.06);
+  --b-grid-cell-hover-selected-background: rgba(16, 18, 20, 0.08);
+  --b-grid-cell-focused-outline-color: var(--go);
+  --b-grid-cell-padding-inline: var(--space-4);
+  --b-group-header-background: transparent;
+  --b-group-header-stripe-background: transparent;
+  --b-column-lines-tick-color: rgba(16, 18, 20, 0.06);
+  --b-column-lines-major-color: rgba(16, 18, 20, 0.16);
+  --b-current-time-color: var(--go);
+  --b-time-range-line-color: var(--go);
+  --b-time-range-line-width: 2px;
+  /* the "Now" tag: the Go button's ink on orange, at the board's smallest size */
+  --b-time-range-line-label-color: var(--go-ink);
+  --b-time-range-line-label-font-size: 12px;
+  --b-time-range-line-label-border-radius: 3px;
+  /* now runs behind the bars: their dots and words sit on it, not under it */
+  --b-time-range-line-zindex: 1;
+  --b-sch-event-background: transparent;
+  --b-sch-event-hover-background: transparent;
+  --b-sch-event-selected-background: transparent;
+  --b-sch-event-border-width: 0;
+  --b-sch-event-color: var(--ink);
+  --b-sch-event-padding-inline: 0;
+  --b-sch-event-padding-block: 0;
+  --b-splitter-color: var(--seam);
+  --b-splitter-size: 1px;
+  font-family: var(--font);
+  font-feature-settings: "tnum" 1;
+  color: var(--ink);
+  background: transparent;
+}
+
+/* ---------- headers: engraved on the plate ---------- */
+.bd-sched .b-grid-header-container {
+  background: linear-gradient(180deg, var(--metal-1), var(--metal-2));
+  border-bottom: 1px solid var(--seam);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.bd-sched .b-grid-header-text,
+.bd-sched .b-sch-header-text {
+  font-variation-settings: "wdth" 110;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.bd-sched .b-grid-header.bd-case-head {
+  padding-inline-start: var(--margin);
+}
+.bd-sched .b-sch-header-row-0 .b-sch-header-timeaxis-cell {
+  font-weight: 600;
+  color: var(--ink);
+}
+.bd-sched .b-sch-header-row-1 .b-sch-header-timeaxis-cell {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+/* ---------- rows ---------- */
+.bd-sched .b-grid-cell.bd-case-cell {
+  padding-inline-start: var(--margin);
+  cursor: pointer;
+}
+.bd-sched .b-grid-row {
+  cursor: pointer;
+}
+.bd-case {
+  display: grid;
+  grid-template-columns: 6.5em minmax(0, 1fr);
+  column-gap: var(--space-3);
+  align-items: baseline;
+  width: 100%;
+  line-height: 1.3;
+}
+.bd-amount {
+  grid-row: 1 / span 2;
+  font-size: 15px;
+  font-weight: 650;
+  font-variation-settings: "wdth" 108;
+  text-align: right;
+  color: var(--ink);
+}
+.bd-sched .bd-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: normal;
+}
+.bd-sched .bd-name:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--go);
+  text-underline-offset: 0.25em;
+}
+/* a phone: the amount over the item, no state line (the band and the bar's end say it) */
+.bd-case-narrow {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-1);
+}
+.bd-case-narrow .bd-amount {
+  grid-row: auto;
+  text-align: left;
+  font-size: 14px;
+}
+.bd-sched .bd-case-narrow .bd-name {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.bd-state {
+  grid-column: 2;
+  font-size: 13px;
+  font-variation-settings: "wdth" 104;
+  color: var(--ink-2);
+}
+.bd-waiting .bd-state,
+.bd-sched .b-grid-row:has(.bd-waiting) .bd-state {
+  color: var(--ink);
+}
+
+/* group headers: the inbox's bands, engraved; waiting for your yes is the leather strip */
+.bd-sched .b-group-row {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(16, 18, 20, 0.03));
+  border-top: 1px solid var(--seam);
+}
+.bd-sched .b-group-row .b-grid-cell {
+  padding-inline-start: var(--margin);
+}
+.bd-sched .b-group-row .b-grid-cell.b-group-title {
+  white-space: normal;
+}
+.bd-group {
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 650;
+  font-variation-settings: "wdth" 110;
+  color: var(--ink);
+}
+@media (max-width: 899px) {
+  .bd-group {
+    font-size: 15px;
+    font-variation-settings: "wdth" 104;
+  }
+}
+
+/* ---------- bars ---------- */
+.bd-sched .b-sch-event-wrap,
+.bd-sched .b-sch-event,
+.bd-sched .b-sch-event-content {
+  overflow: visible;
+}
+/* the bar's parts are placed on the whole bar, not on Bryntum's content box (which shrinks to its text) */
+.bd-sched .b-sch-event.bd-ev .b-sch-event-content {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+}
+.bd-sched .b-sch-event.bd-ev {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  cursor: pointer;
+  --bd-c: var(--ink);
+}
+.bd-sched .b-sch-event.bd-waiting {
+  --bd-c: var(--go);
+}
+.bd-sched .b-sch-event.bd-kept {
+  --bd-c: var(--kept-ink);
+}
+.bd-sched .b-sch-event.bd-lost {
+  --bd-c: #a72d1c;
+}
+.bd-track,
+.bd-lit,
+.bd-cap,
+.bd-strip,
+.bd-dot,
+.bd-label {
+  position: absolute;
+}
+.bd-track {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0;
+  border-top: 2px dashed rgba(16, 18, 20, 0.28);
+  transform: translateY(-1px);
+}
+.bd-lit {
+  left: 0;
+  top: 50%;
+  height: 2px;
+  background: var(--bd-c);
+  transform: translateY(-1px);
+}
+.bd-end-closed .bd-track,
+.bd-end-now .bd-track {
+  border-top-color: transparent;
+}
+/* an open case with no deadline from PayPal: the line runs to now and fades, with no end */
+.bd-end-now .bd-lit {
+  background: linear-gradient(90deg, var(--bd-c) 70%, transparent);
+}
+/* PayPal's deadline: an engraved end tick, like the scale's */
+.bd-cap {
+  right: -1px;
+  top: 50%;
+  width: 2px;
+  height: 20px;
+  background: var(--ink);
+  transform: translateY(-50%);
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.7);
+}
+.bd-strip {
+  left: 0;
+  top: 50%;
+  height: 17px;
+  border-radius: 9px;
+  background: #d9dde0;
+  box-shadow:
+    inset 0 1px 1px rgba(16, 18, 20, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: translateY(-50%);
+}
+.bd-dot {
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: var(--ink);
+  border: 2px solid var(--ink);
+}
+/* PayPal's moments are rings; CaseClerk's (and yours) are filled */
+.bd-dot[data-who="paypal"] {
+  background: var(--metal-1);
+}
+.bd-strip ~ .bd-dot[data-who="paypal"] {
+  background: #d9dde0;
+}
+.bd-dot[data-tone="ask"] {
+  border-color: var(--go);
+  background: var(--go);
+}
+.bd-dot[data-tone="kept"] {
+  border-color: var(--kept-ink);
+}
+.bd-dot[data-tone="kept"][data-who="caseclerk"] {
+  background: var(--kept-ink);
+}
+.bd-dot[data-tone="lost"] {
+  border-color: #a72d1c;
+}
+/* a label sits on a plate of the board's own metal, so the now line passes behind it, not through its words */
+.bd-label {
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: var(--metal-1);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+.bd-label[data-place="out"] {
+  margin-left: -6px;
+}
+.bd-label[data-place="in"] {
+  color: var(--ink);
+}
+.bd-waiting .bd-label {
+  color: var(--ink);
+}
+
+/* "now": the orange index */
+.bd-sched .b-sch-current-time {
+  border-inline-start: 2px solid var(--go);
+}
+
+/* ---------- tooltip (floats outside the page's shell, so its colours are its own) ---------- */
+.b-tooltip.bd-tip {
+  --b-tooltip-background: #151514;
+  --b-tooltip-color: #f2f1ec;
+  --b-popup-background: #151514;
+  font-family: var(--font-archivo, Arial), Arial, sans-serif;
+  font-feature-settings: "tnum" 1;
+  max-width: 360px;
+}
+.bd-tip .b-popup-content,
+.bd-tip .b-tooltip-content {
+  background: #151514;
+  color: #f2f1ec;
+  padding: 12px 14px;
+}
+.bd-tip p,
+.bd-tip ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bd-tip-title {
+  font-size: 15px;
+  font-weight: 650;
+}
+.bd-tip-state {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #b6b5af;
+}
+.bd-tip-moments {
+  margin-top: 8px;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.bd-tip-at {
+  display: inline-block;
+  min-width: 8em;
+  color: #b6b5af;
+}
+.bd-tip-end {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #f2f1ec;
+}

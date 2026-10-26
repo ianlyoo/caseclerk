@@ -14,7 +14,7 @@ export function Wordmark() {
   );
 }
 
-type Place = "cases" | "policy" | "home";
+type Place = "cases" | "board" | "policy" | "home";
 
 export function TopBar({ here, children }: { here?: Place; children?: ReactNode }) {
   return (
@@ -25,6 +25,9 @@ export function TopBar({ here, children }: { here?: Place; children?: ReactNode 
           {children}
           <Link href={href.cases()} aria-current={here === "cases" ? "page" : undefined}>
             Cases
+          </Link>
+          <Link href={href.board()} aria-current={here === "board" ? "page" : undefined}>
+            Deadlines
           </Link>
           <Link href={href.policy()} aria-current={here === "policy" ? "page" : undefined}>
             Rules
