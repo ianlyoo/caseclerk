@@ -38,3 +38,28 @@ Mocked approve flow on dev (POSTs answered locally): success at 1440 and 390, re
 - `approve-1440.mp4`: 18.8 s, 1440×900, H.264 25 fps; the real VAB approval from the click through confirm, the 5 s undo and sending to PayPal's 200 and the updated page. Frames: `approve-{confirm,undo,sending,answer}-1440.png`.
 - `<page>-<state>-{1440,390}.png`: landing, inbox, inbox test-dispute wait and capped, landing test-dispute wait, policy, and the case in each state.
 - `critique-inbox.md`, `critique-policy.md` (degraded: single context).
+
+## Delta v5: critic round 2 fixes, 2026-10-26
+
+Every row was reproduced against the hosted build and production data before it was fixed. No POST, PUT or DELETE was sent; every shot and check ran GET-only.
+
+| Row | Reproduced? | Result |
+|---|---|---|
+| P0-1 Deadlines → /board | yes, on every page ≥ 900px | fixed: link removed from the top bar; `/board` untouched (200) |
+| P0-2 $15 truth | yes: landing said "or $50", ledger line at $50; /policy at $15 | fixed: landing and /policy say "Over $250 to file evidence, or over $15 to refund or offer, it asks you first." from `/api/policy` (the lower of `autoRefundMaxUsd` and `approvalAboveUsd`, fallback 15/250); the landing ledger draws the $15 line like /policy |
+| P0-3 scale thinning | yes on VAB (Filed folded into Closed once PayPal resolved it); YDQ's "read" is folded on purpose, not thinned | fixed, changed approach: `foldClose` drops only passing stops (now, read); milestones are spaced ≥ ~20px along the rail; labels that would run past the rail hang left. VAB, YDQ, JKB and all 32 scales clean at 1440, 1536, 1920, 2560, 390 |
+| P0-4 proof per stop | yes: stale "Chargeback in" webhook on later stops; blank on cases with no CREATED webhook | fixed: every stop carries its own record (webhook, call, status, debug id, capture, outcome; else the line CaseClerk logged: the rule it stopped at, the error); the record line shows the selected stop's, unselected the stop under the index |
+| P1-5 mobile money / Claim repeat | yes (SGV, YSE, TMU at 390) | fixed: the plate keeps its figure under 900px once nothing waits; no Claim row when the title is the claim. Also: Kept green only for money PayPal stated (VAB, JKB show the disputed amount in ink) |
+| P1-6 ids in mobile wire record | yes | fixed: each entry on two lines, PayPal's id under time, what, status |
+| P2-7 policy lane labels | yes ("Own") | fixed: a line in the lowest quarter leaves its under-zone unlabelled (named in the accessible label); head says "Asks over $15"; bead captions at the lane's right edge |
+| P2-8 /cases WARN | not reproduced: /cases was 0 WARN at all 5 sizes; `.td-lede` is already a `<p>` | the landing's try band had the same G2 WARN at 1536/1920/2560; fixed by putting the control under its band's words |
+| VAB kept with Filed | VAB resolved 05:02:34Z (RESOLVED webhook) | shows in, Asked you, You said yes. Filed, Closed for you |
+
+Gates on hosted 933049e (ffbe17f for pages the last commit doesn't touch):
+
+| Page | check.sh (1440, 1920, 1536, 2560, 390) | detect 1440 / 390 |
+|---|---|---|
+| `/`, `/cases`, `/policy` | 0 FAIL, 0 WARN | 0 / 0 |
+| case VPY, VAB, SGV, YSE, YDQ, JKB, TMU | 0 FAIL, 0 WARN | 0 / 0 |
+
+Shots refreshed: landing, inbox, policy and every case shot; new: `case-resolved-kept-vab-*`, `case-autofiled-kept-jkb-*` (JKB was resolved for the seller 05:23Z; replaces `case-autofiled-jkb-*`), `case-vab-stop-filed-1440` and `case-tmu-stop-in-1440` (a selected stop's own record), `landing-stop-read-1440`, `case-record-vpy-390` (mobile wire record). Not refreshed: the approve frames and video, `case-filed-vab-after-approval-*` and the test-dispute wait shots: they record live moments that can't be replayed without new real actions (the 1440 ones still show the old Deadlines link).
