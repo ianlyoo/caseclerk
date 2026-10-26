@@ -43,8 +43,9 @@ async function fakeOpenTestDispute() {
   return { captureId: "CAP-9", orderId: "ORD-9", amount: { value: "30.00", currency_code: "USD" }, order: ORDER };
 }
 
-const req = (path: string, init?: RequestInit & { ip?: string }) =>
+const reqBase = (path: string, init?: RequestInit & { ip?: string }) =>
   new Request(`http://x${path}`, { ...init, headers: { "x-forwarded-for": init?.ip ?? "1.2.3.4", ...(init?.headers ?? {}) } });
+const req = reqBase;
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
 
 let db: Repo;
@@ -80,7 +81,19 @@ describe("cases", () => {
 });
 
 describe("policy", () => {
+  it("refuses edits without the edit token", async () => {
+    vi.stubEnv("POLICY_EDIT_TOKEN", "");
+    const off = await policy.PUT(req("/api/policy", { method: "PUT", body: JSON.stringify(DEFAULT_POLICY) }));
+    expect(off.status).toBe(403);
+    vi.stubEnv("POLICY_EDIT_TOKEN", "t0k");
+    const wrong = await policy.PUT(req("/api/policy", { method: "PUT", body: JSON.stringify(DEFAULT_POLICY), headers: { "x-policy-edit-token": "nope" } }));
+    expect(wrong.status).toBe(403);
+    vi.unstubAllEnvs();
+  });
+
   it("gets defaults, validates and saves", async () => {
+    vi.stubEnv("POLICY_EDIT_TOKEN", "t0k");
+    const req = (path: string, init?: RequestInit) => reqBase(path, { ...init, headers: { "x-policy-edit-token": "t0k" } });
     expect((await (await policy.GET()).json()).policy).toEqual(DEFAULT_POLICY);
     const bad = await policy.PUT(req("/api/policy", { method: "PUT", body: JSON.stringify({ ...DEFAULT_POLICY, maxOfferPercent: 300 }) }));
     expect(bad.status).toBe(400);
@@ -90,6 +103,7 @@ describe("policy", () => {
     const ok = await policy.PUT(req("/api/policy", { method: "PUT", body: JSON.stringify(next) }));
     expect((await ok.json()).policy).toEqual(next);
     expect(await db.policy.get()).toEqual(next);
+    vi.unstubAllEnvs();
   });
 });
 
@@ -170,6 +184,16 @@ describe("approvals", () => {
       requiresApproval: true, status: "awaiting_approval",
     });
   }
+
+  it("refuses a case held for the demo recording", async () => {
+    vi.stubEnv("RESERVED_CASE_IDS", "PP-R-A, PP-R-Z");
+    const a = await pending();
+    const res = await approve.POST(req(`/api/actions/${a.id}/approve`, { method: "POST" }), params(a.id));
+    expect(res.status).toBe(403);
+    expect(m.executeApproved).not.toHaveBeenCalled();
+    expect((await db.actions.get(a.id))?.status).toBe("awaiting_approval");
+    vi.unstubAllEnvs();
+  });
 
   it("approves through the agent and refuses a second decision", async () => {
     const a = await pending();

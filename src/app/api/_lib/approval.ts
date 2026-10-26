@@ -16,6 +16,11 @@ export async function handleApproval(req: Request, id: string, verdict: "approve
 
   const action = await actions.get(id).catch(() => null);
   if (!action) return jsonError(404, "not_found", `No action ${id}.`);
+  // Cases held for the demo recording: nobody approves or denies them through the API until the
+  // hold is lifted (RESERVED_CASE_IDS, comma-separated; set it to "" to lift every hold).
+  if (reservedCaseIds().includes(action.caseId)) {
+    return jsonError(403, "forbidden", "This case is held for the demo recording.", { action });
+  }
   if (action.status !== "awaiting_approval") {
     return jsonError(409, "conflict", `This action is already ${action.status.replaceAll("_", " ")}.`, { action });
   }
@@ -46,6 +51,10 @@ export async function handleApproval(req: Request, id: string, verdict: "approve
       action: await actions.get(id).catch(() => null),
     });
   }
+}
+
+function reservedCaseIds(): string[] {
+  return (process.env.RESERVED_CASE_IDS ?? "PP-R-VPY-10194485").split(",").map((v) => v.trim()).filter(Boolean);
 }
 
 /** PayPal's answer to the executed action, for the approval slip: HTTP status, debug id, time. */
