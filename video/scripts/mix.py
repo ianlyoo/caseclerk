@@ -25,6 +25,8 @@ None of it goes in git: the take and the mix carry the owner's voice.
   (a lift never rises under a word). It fades out over the end card's last seconds, after the last word.
 - Cues: edit.json "cues", the CC0 recordings in assets/sfx/.
 - Master: gain to audio.targetLufs integrated, then a limiter under audio.ceilingDbtp.
+  audio.voiceTrim scales the voice stem (the final cut's 0.9x); audio.masterGainDb, when set,
+  replaces the gain to targetLufs, so a trim isn't normalized away.
 
 Needs an ffmpeg with aevalsrc, afir, deesser, amultiply, alimiter and ebur128.
 """
@@ -345,8 +347,10 @@ def main():
     vchain, vplan, comp_db = voice(ff, edit, args.take, out)
     v_in = loudness(ff, vchain)
     v_gain = au["targetLufs"] - 0.5 - v_in["I"]
+    trim = au.get("voiceTrim", 1.0)
     vpath = os.path.join(out, "voice.wav")
-    run(ff, ["-i", vchain, "-af", f"volume={v_gain:.2f}dB", "-c:a", "pcm_f32le", vpath])
+    run(ff, ["-i", vchain, "-af", f"volume={v_gain:.2f}dB" + (f",volume={trim}" if trim != 1.0 else ""),
+             "-c:a", "pcm_f32le", vpath])
 
     raw, plan = make_bed(ff, edit, out)
     b_in = loudness(ff, raw)
@@ -367,7 +371,7 @@ def main():
     run(ff, ["-i", vpath, "-i", bpath, "-i", cpath, "-filter_complex",
              f"amix=inputs=3:normalize=0:duration=longest,{RESTAMP},atrim=0:{D}", "-c:a", "pcm_f32le", summed])
     s_in = loudness(ff, summed)
-    gain = au["targetLufs"] - s_in["I"]
+    gain = au.get("masterGainDb", au["targetLufs"] - s_in["I"])
     mix = os.path.join(VIDEO, au["mix"])
     # the AAC encode adds a few tenths of a dB of true peak, so the WAV keeps half a dB in hand
     limit = au["ceilingDbtp"] - 1.0
@@ -385,11 +389,12 @@ def main():
         "take": os.path.basename(args.take),
         "retakes": sorted({p["source"] for p in vplan if p["source"] != os.path.basename(args.take)}),
         "voiceChain": "high-pass 80 Hz; -3 dB at 150 Hz; +1.5 dB at 2.8 kHz; -2 dB shelf from 8 kHz; de-esser; 2.5:1 compression",
-        "voiceBeforeGain": v_in, "voiceGainDb": round(v_gain, 2), "compressorAvgGrDb": comp_db,
+        "voiceBeforeGain": v_in, "voiceGainDb": round(v_gain, 2), "voiceTrim": trim, "compressorAvgGrDb": comp_db,
         "bedRaw": b_in, "bedLufsTarget": au["bedLufs"],
         "voiceRmsInSpeechDb": voice_speech, "bedRmsUnderSpeechDb": bed_speech, "bedRmsInGapsDb": bed_gaps,
         "bedUnderVoiceDb": round(bed_speech - voice_speech, 1),
-        "sumBeforeMaster": s_in, "masterGainDb": round(gain, 2), "limiterDbfs": round(limit, 2),
+        "sumBeforeMaster": s_in, "masterGainDb": round(gain, 2), "masterGainPinned": "masterGainDb" in au,
+        "limiterDbfs": round(limit, 2),
         "mix": m, "stems": {"voice": loudness(ff, vpath), "bed": loudness(ff, bpath), "cues": loudness(ff, cpath)},
         "placements": vplan,
         "bed": [{"from": round(a, 2), "to": round(z, 2), "chord": name} for a, z, _, _, name in plan],

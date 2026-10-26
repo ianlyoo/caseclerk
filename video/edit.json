@@ -641,8 +641,7 @@
      "source": "retake-N20.m4a",
      "sourceSha": "5961982ca836",
      "gainDb": 1.0,
-     "text": "Anything bigger waits for yes.",
-     "script": "Anything bigger waits for a yes."
+     "text": "Anything bigger waits for a yes."
     }
    ]
   },
@@ -927,6 +926,9 @@
    ]
   ],
   "targetLufs": -14,
+  "voiceTrim": 0.9,
+  "masterGainDb": 0.8,
+  "finalNote": "The final cut (owner, 10/27): the narration stem at 0.9x (-0.92 dB) over the whole film, the bed and cues unchanged. masterGainDb pins rehearsal E's master gain, so nothing normalizes the voice back up to targetLufs; the mix lands about 1 dB under it, as intended.",
   "ceilingDbtp": -1
  }
 }

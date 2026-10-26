@@ -173,7 +173,7 @@
     "sha256": "de6fab347ca63215431c09cf99fb32c0fa9fbbd6083e505cbaaaebe58b9ce050"
    }
   },
-  "use": "Each sentence cut at its row's 'take' span in edit.json (from the take, or from the row's 'source' retake) and placed at the row's start. Take-1 rows: time shifts only. Retakes (scripts/retakes.py): trimmed at -45 dBFS, through audio.retakeEq (lowshelf +1.5 dB at 160 Hz, -2 dB at 2.5 kHz, highshelf -0.5 dB at 7 kHz: the retakes are about 1.5 dB brighter at 2-4 kHz and 1 dB thinner under 250 Hz), then the row's gainDb (+0.7 to +3.9 dB) to take 1's -12.1 LUFS; N10 and N24 sped up 4% and 3.3% to fit their slots (atempo, no pitch change). Then the same light chain for all: high-pass 80 Hz, -3 dB at 150 Hz, +1.5 dB at 2.8 kHz, -2 dB shelf from 8 kHz, de-esser, 2.5:1 compression (about 3 dB on average)."
+  "use": "Each sentence cut at its row's 'take' span in edit.json (from the take, or from the row's 'source' retake) and placed at the row's start. Take-1 rows: time shifts only. Retakes (scripts/retakes.py): trimmed at -45 dBFS, through audio.retakeEq (lowshelf +1.5 dB at 160 Hz, -2 dB at 2.5 kHz, highshelf -0.5 dB at 7 kHz: the retakes are about 1.5 dB brighter at 2-4 kHz and 1 dB thinner under 250 Hz), then the row's gainDb (+0.7 to +3.9 dB) to take 1's -12.1 LUFS; N10 and N24 sped up 4% and 3.3% to fit their slots (atempo, no pitch change). Then the same light chain for all: high-pass 80 Hz, -3 dB at 150 Hz, +1.5 dB at 2.8 kHz, -2 dB shelf from 8 kHz, de-esser, 2.5:1 compression (about 3 dB on average). The final cut scales the voice stem by 0.9 (-0.92 dB, the owner's call) and keeps rehearsal E's +0.8 dB master gain, so the bed and cues sound as in E."
  },
  "music": {
   "title": "CaseClerk bed (untitled)",
@@ -181,7 +181,7 @@
   "license": "Ours outright: no third-party rights, no attribution owed, no Content ID registration.",
   "date": "2026-10-27",
   "what": "A slow vi-IV-I-V pad in D major (Bm9, Gmaj9, Dmaj9, A add9, 8.02 s a chord) with three soft notes a chord, resolving to Dmaj9 with a low D on the end card.",
-  "level": "Unducked about -26.5 LUFS before the master; under speech it dips 10 dB, about 20 dB under the voice; +4 dB over the title's brand (7.6-10.4 s) and +5 dB on the end card, in the pauses only; it fades out after the last word, over the last 2 s (166.4-168.4 s)."
+  "level": "Unducked about -26.5 LUFS before the master; under speech it dips 10 dB, about 20 dB under the voice (19.2 dB in the final cut, with the voice at 0.9x); +4 dB over the title's brand (7.6-10.4 s) and +5 dB on the end card, in the pauses only; it fades out after the last word, over the last 2 s (166.4-168.4 s)."
  },
  "cuesNote": "Sparse, on real picture events only: the arrival click, the +3 min plate, the click on Yes, file it, PayPal's 200, the diagram coming in, the end card's mark. None sits on a key spoken word: the Yes click lands between 'A yes' and 'files' (56 ms, about 14 dB under the voice), the others in pauses. Rehearsal C's other clicks (sfx-03 to 05, 08, 09) were dropped."
 }

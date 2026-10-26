@@ -159,3 +159,20 @@ I snapshotted every re-recorded row's caption (0:53, 0:58.5, 1:30.5, 1:44.5, 2:0
 - The bed's room is wide; folded to mono the bed loses 2.9 dB (median), the voice nothing.
 - N19's caption sits over the rules page's "Chance PayPal sides with you" heading, as in rehearsals C and D.
 - At each a/b handover the caption still dips for 0.1 s.
+
+# Review: the final cut (PM 02:35, the owner's verdict on E, #541)
+
+The owner listened to rehearsal E: N20 is heard as "waits for a yes", the rest is clear, and the narration should come down about 10%. So the final cut is E's picture and takes, with two changes. N20's caption is back to "Anything bigger waits for a yes." (in the .srt and .vtt too). The voice stem is scaled by 0.9 (−0.92 dB) over the whole film; the bed and cues are unchanged, and the master gain is pinned at E's +0.8 dB, so no normalization pulls the voice back up. `LISTEN.md` has the numbers.
+
+## Before rendering (10/27)
+
+The new mix against E's: bit-identical in every pause (bed and cues only); under speech the difference sits 20.5 dB under the mix, the tenth of the voice taken out. Voice stem −15.4 LUFS (E −14.5), bed −32.3 and cues −29.1 LUFS as in E. A snapshot of N20 at 2:03.8 shows the restored caption clear of the rules page. The on-screen count was re-read at 2026-10-26T17:33:58Z (11 of 15, unchanged). Lint: 0 errors, 0 warnings.
+
+## Render (10/27 02:35–02:44 KST, 8 min 37 s)
+
+`s4/video/final.mp4`, sha256 8245078c506bed53d83a6f0e7d7e38162d22d28d232493bc89646df0c36e5d50, 52.4 MB, with `final.srt`, `final.vtt` (32 cues) and `final-contact-sheet.png` beside it, and a copy at `board/narration/final.mp4` (same sha256). Rendered on win-guest, not on the Mac.
+
+- ffprobe: h264 High, yuv420p, 1920×1080, 30/1, 5055 frames, 168.5 s (2:48.5), 2.49 Mb/s, AAC LC.
+- A full decode with `-xerror` logged 0 error lines. Atom order is ftyp moov free mdat (fast-start).
+- Sound: −15.3 LUFS, −1.8 dBTP, LRA 6.4 LU on the AAC track (E: −14.2 LUFS, −1.7 dBTP); the bed 19.2 dB under the voice (E: 20.1).
+- I looked at the nine beat midpoints and the before/after pair at each of the 14 cuts; the picture is E's, with N20's caption restored. For the sound: spectrogram, waveform, small-speaker and earbud simulations, a mono fold-down, meters, the null test against E and fresh transcriptions. Nothing to fix turned up.
