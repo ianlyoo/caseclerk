@@ -1,7 +1,7 @@
 "use client";
 // A case page that stays live: it polls the case, shows PayPal's answer the moment it comes back,
 // and lets later webhooks arrive on the scale and the panel without a reload.
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import NumberFlow from "@number-flow/react";
 import type { CaseBundle } from "../_lib/api";
@@ -10,10 +10,12 @@ import { clock, day, dayClock, reasonWords, stageWord, usd } from "../_lib/forma
 import { claimWords, deadlineWords, itemName } from "../_lib/state";
 import { lastWebhook, moneyFor } from "../_lib/story";
 import { ACTOR_WORDS, EVENT_WORDS, firstSentences, wireWords } from "../_lib/words";
+import { RESERVED_CASES } from "../_lib/routes";
 import type { CaseRecord } from "@/lib/types";
 import { Scale } from "./Scale";
 import { Decide } from "./Decide";
 import { More } from "./More";
+import { Rule, type Outcome } from "./Rule";
 
 /** An exhibit in plain words; its exact text (ids, timestamps) stays in the details layer. */
 function plain(e: Exhibit, c: CaseRecord): string {
@@ -31,6 +33,15 @@ function plain(e: Exhibit, c: CaseRecord): string {
 
 const FAST_MS = 4000;
 const SLOW_MS = 20000;
+/** after a sandbox ruling is asked for, PayPal's RESOLVED webhook and its money follow within minutes */
+const RULING_MS = 15 * 60_000;
+
+/** The sandbox ruling asked for on this case, from CaseClerk's audit. */
+function rulingOf(b: CaseBundle): { outcome: Outcome; at: string } | null {
+  const a = [...b.audit].reverse().find((x) => x.kind === "demo.adjudicate");
+  if (!a) return null;
+  return { outcome: a.data?.outcome === "BUYER_FAVOR" || /for the buyer/.test(a.summary) ? "BUYER_FAVOR" : "SELLER_FAVOR", at: a.at };
+}
 
 export function CaseView({ initial, line, serverNow }: { initial: CaseBundle; line: number; serverNow: string }) {
   const [polled, setPolled] = useState(initial);
@@ -40,6 +51,7 @@ export function CaseView({ initial, line, serverNow }: { initial: CaseBundle; li
   const [fresh, setFresh] = useState<string | undefined>(undefined);
   const seen = useRef(new Set(initial.wire.map((w) => w.id)));
   const [arrived, setArrived] = useState<string | null>(null);
+  const [askedAt, setAskedAt] = useState<string | null>(null);
   const reduce = useReducedMotion();
 
   const b = useMemo(() => withAnswer(polled, answer), [polled, answer]);
@@ -68,16 +80,23 @@ export function CaseView({ initial, line, serverNow }: { initial: CaseBundle; li
     const id = window.setInterval(() => setNow(new Date().toISOString()), 30_000);
     return () => window.clearInterval(id);
   }, []);
-  // fast for two minutes after an answer (PayPal's webhooks follow a filing), never while a filing is in flight
-  const fast = Boolean(answer) && Date.parse(now) - Date.parse(answer?.at ?? now) < 120_000;
+  const ruling = rulingOf(b);
+  const ruledAt = askedAt ?? ruling?.at ?? null;
+  // fast for two minutes after an answer (PayPal's webhooks follow a filing) and while a sandbox ruling is due,
+  // never while a filing is in flight
+  const fast =
+    (Boolean(answer) && Date.parse(now) - Date.parse(answer?.at ?? now) < 120_000) || (Boolean(ruledAt) && Date.parse(now) - Date.parse(ruledAt ?? now) < RULING_MS);
   const phase = m.state.phase;
   const was = useRef(phase);
   useEffect(() => {
     if (was.current !== "closed" && phase === "closed") setFresh("kept");
     was.current = phase;
   }, [phase]);
+  // a case that closed while open here keeps listening until PayPal states the money (ten minutes at most)
+  const closeAt = m.stops.find((x) => x.id === "kept")?.at;
+  const awaitMoney = fresh === "kept" && !b.money && Date.parse(now) - Date.parse(closeAt ?? now) < 600_000;
   useEffect(() => {
-    if ((closed && !answer) || busy) return;
+    if ((closed && !awaitMoney) || busy) return;
     let stop = false;
     let id: number | undefined;
     const loop = async () => {
@@ -89,7 +108,7 @@ export function CaseView({ initial, line, serverNow }: { initial: CaseBundle; li
       stop = true;
       window.clearTimeout(id);
     };
-  }, [closed, answer, busy, fast, refresh]);
+  }, [closed, awaitMoney, busy, fast, refresh]);
 
   const onAnswer = useCallback((a: Answer) => {
     setAnswer(a);
@@ -97,6 +116,13 @@ export function CaseView({ initial, line, serverNow }: { initial: CaseBundle; li
     setFresh(a.kind === "approve" ? "filed" : "denied");
   }, []);
   const onPhase = useCallback((x: boolean) => setBusy(x), []);
+  const onAsked = useCallback((at: string) => {
+    setAskedAt(at);
+    setNow(at);
+    setFresh("ruled");
+  }, []);
+  // the judge's step: test disputes only, never the case kept for the demo recording, once PayPal is reviewing a filing
+  const rulable = c.isTestDispute && !RESERVED_CASES.includes(c.id) && m.state.key === "review";
 
   const item = itemName(c);
   const title = item ?? claimWords(c);
@@ -146,7 +172,18 @@ export function CaseView({ initial, line, serverNow }: { initial: CaseBundle; li
               <DecideRead c={c} />
             </>
           ) : (
-            <Plate b={b} m={m} line={line} answered={answer?.kind === "approve"} arrived={arrived} denied={Boolean(deny)} />
+            <Plate
+              b={b}
+              m={m}
+              line={line}
+              answered={answer?.kind === "approve"}
+              arrived={arrived}
+              denied={Boolean(deny)}
+              rule={
+                rulable ? <Rule caseId={c.id} status={s.status} asked={ruling} onAsked={onAsked} onCheck={refresh} /> : null
+              }
+              ruling={ruling}
+            />
           )}
         </motion.aside>
       </AnimatePresence>
@@ -286,7 +323,26 @@ function DecideRead({ c }: { c: CaseRecord }) {
 }
 
 /** The panel once nothing waits for the seller: PayPal's answer, the result, or where the case stands. */
-function Plate({ b, m, line, answered, arrived, denied }: { b: CaseBundle; m: CaseModel; line: number; answered: boolean; arrived: string | null; denied: boolean }) {
+function Plate({
+  b,
+  m,
+  line,
+  answered,
+  arrived,
+  denied,
+  rule,
+  ruling,
+}: {
+  b: CaseBundle;
+  m: CaseModel;
+  line: number;
+  answered: boolean;
+  arrived: string | null;
+  denied: boolean;
+  /** the sandbox ruling control, on a test dispute PayPal is reviewing */
+  rule?: ReactNode;
+  ruling: { outcome: Outcome; at: string } | null;
+}) {
   const c = b.case;
   const s = c.snapshot;
   const amount = usd(s.amount.value);
@@ -307,7 +363,9 @@ function Plate({ b, m, line, answered, arrived, denied }: { b: CaseBundle; m: Ca
       <>
         <p className="plate-k">PayPal ruled for you</p>
         {/* Kept green only for money PayPal stated; until then the figure is the disputed amount, in ink */}
-        <p className={`decide-amount ${money ? "plate-kept" : "plate-amount"}`}>{money ? usd(money.kept.value) : amount}</p>
+        <p className={`decide-amount ${money ? "plate-kept" : "plate-amount"}`}>
+          <NumberFlow value={Number(money ? money.kept.value : s.amount.value)} locales="en-US" format={{ style: "currency", currency: "USD" }} />
+        </p>
         <h2 id="panel-title" className="decide-title">
           {money ? `You kept ${usd(money.kept.value)} of ${amount}.` : "Closed for you."}
         </h2>
@@ -320,6 +378,12 @@ function Plate({ b, m, line, answered, arrived, denied }: { b: CaseBundle; m: Ca
             <dt>Ruling</dt>
             <dd>PayPal&rsquo;s RESOLVED webhook, {dayClock(closedAt)}</dd>
           </div>
+          {ruling && (
+            <div>
+              <dt>Asked of the sandbox</dt>
+              <dd>By you, {clock(ruling.at)} PT</dd>
+            </div>
+          )}
           {placed?.at && released?.at && (
             <div>
               <dt>Held, then released</dt>
@@ -358,6 +422,12 @@ function Plate({ b, m, line, answered, arrived, denied }: { b: CaseBundle; m: Ca
             <dt>Disputed</dt>
             <dd>{amount}</dd>
           </div>
+          {ruling && (
+            <div>
+              <dt>Asked of the sandbox</dt>
+              <dd>By you, {clock(ruling.at)} PT</dd>
+            </div>
+          )}
         </dl>
       </>
     );
@@ -378,8 +448,12 @@ function Plate({ b, m, line, answered, arrived, denied }: { b: CaseBundle; m: Ca
           Filed. PayPal is reviewing.
         </h2>
         <p className="decide-why">
-          {m.filed.approved ? `You said yes, ${clock(m.filed.at)} PT.` : `Under your ${lineWord(line)} line, CaseClerk filed on its own, ${dayClock(m.filed.at)}.`} PayPal
-          rules on its own schedule; this page updates as its webhooks arrive.
+          {m.filed.approved ? `You said yes, ${clock(m.filed.at)} PT.` : `Under your ${lineWord(line)} line, CaseClerk filed on its own, ${dayClock(m.filed.at)}.`}{" "}
+          {rule
+            ? answered
+              ? "Next, ask PayPal\u2019s sandbox to rule, below."
+              : "On a test dispute the sandbox rules only when asked, below."
+            : "PayPal rules on its own schedule; this page updates as its webhooks arrive."}
         </p>
         <dl className="decide-read">
           {m.filed.debugId && (
@@ -413,6 +487,7 @@ function Plate({ b, m, line, answered, arrived, denied }: { b: CaseBundle; m: Ca
             <dd>{amount}</dd>
           </div>
         </dl>
+        {rule}
       </>
     );
   }

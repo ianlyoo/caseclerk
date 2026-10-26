@@ -314,6 +314,8 @@ export default function DisputeScheduler({ board, span: initial }: { board: Boar
           zoomOnMouseWheel={false}
           zoomOnTimeAxisDoubleClick={false}
           rowHeight={rowHeight}
+          // a phone: the board is as tall as its rows and the page scrolls, not a frame inside one screen
+          autoHeight={narrow}
           barMargin={(rowHeight - barHeight) / 2}
           eventLayout="none"
           eventStyle={null}

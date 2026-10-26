@@ -178,6 +178,23 @@ export function storyStops(b: CaseBundle, voice: "story" | "seller" = "story"): 
     });
   }
 
+  // a test dispute only: the sandbox rules when asked (live PayPal rules on its own)
+  const ruled = lastAudit(b, "demo.adjudicate");
+  if (ruled) {
+    const call = [...b.wire].reverse().find((w) => w.kind === "call" && w.method === "POST" && /\/adjudicate$/.test(w.path ?? ""));
+    const forBuyer = ruled.data?.outcome === "BUYER_FAVOR" || /for the buyer/.test(ruled.summary);
+    add({
+      id: "ruled",
+      at: ruled.at,
+      title: you ? "You asked for a ruling" : "Ruling asked for",
+      detail: forBuyer ? "Sandbox, for the buyer" : you ? "Sandbox, for you" : "Sandbox, for the seller",
+      tone: "done",
+      proof: call
+        ? [{ label: "Call", value: `POST ${call.path}` }, { label: "Status", value: String(call.status) }, ...(call.debugId ? [{ label: "Debug id", value: call.debugId }] : [])]
+        : [logged(ruled)],
+    });
+  }
+
   const denied = firstAudit(b, "action.denied");
   if (denied) {
     add({ id: "denied", at: denied.at, title: you ? "You said no" : "Seller said no", detail: "Nothing was filed", tone: "done", proof: [logged(denied)] });

@@ -39,7 +39,7 @@ export type Span = "deadlines" | "hours";
 
 export type Board = { rows: BoardRow[]; now: string; counts: Record<Phase, number>; nearest?: { id: string; due: string; words: string } };
 
-const WHO: Record<string, Who> = { in: "paypal", read: "caseclerk", ask: "caseclerk", filed: "caseclerk", error: "caseclerk", denied: "you", kept: "paypal" };
+const WHO: Record<string, Who> = { in: "paypal", read: "caseclerk", ask: "caseclerk", filed: "caseclerk", error: "caseclerk", denied: "you", ruled: "you", kept: "paypal" };
 
 /** "13 min", "3 h 9 min", "26 h 21 min": how long a closed case was open (seconds would be noise on a board) */
 function took(ms: number) {

@@ -19,6 +19,8 @@ export const callWords = (method?: string, path?: string) => {
   if (/make-offer$/.test(p)) return "Made an offer";
   if (/send-message$/.test(p)) return "Wrote to the buyer";
   if (p.includes("process-chargeback")) return "Filed the sandbox chargeback";
+  if (/\/adjudicate$/.test(p)) return "Asked the sandbox to rule";
+  if (/require-evidence$/.test(p)) return "Asked the sandbox for evidence";
   if (/\/v2\/checkout\/orders\/[^/]+\/capture$/.test(p)) return "Took the payment";
   if (p.startsWith("/v1/customer/disputes")) return "Read the dispute";
   if (p.startsWith("/v2/payments/captures")) return "Read the payment";
