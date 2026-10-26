@@ -204,3 +204,23 @@ Mix: voice stem −16.8 LUFS (first final −15.4), the bed 18.3 dB under it, th
   - the meters and fresh transcriptions: 28 caption words differ from the mix's (first final: 30).
 
   Nothing to fix turned up.
+
+# Review: one zoom across the case-page dissolves (PM 03:27, #543)
+
+The owner's note: around 0:36 the screen is nearly the same on both sides of the dissolve, but it seems to change resolution and zoom out as it fades. Where only the case changes on the same kind of screen, keep one zoom level by matching one side to the other. The cause was the camera, not the footage. Every take involved is 1920×1080, and the RSL and VPY pages have the same layout pixel for pixel. RSL was framed at 1.3×, VPY at 1.25×, a little further left and up.
+
+What changed (edit.json cams only; audio, cut times and captions as they were):
+- **0:37.2 RSL → VPY:** RSL takes VPY's opening framing (1.25×, −240, −265). The two pages now line up exactly.
+- **1:04.2 VPY evidence → the approval:** the approval drops to the evidence shot's 1.1× (it was 1.15×), with the same left edge and crop line (y 884). The approval take was recorded unscrolled and the evidence take 210 px down the page, and the panel is sticky. No framing lines up both, so the panel lands within 35 px and the page under it 167 px apart. Before, this dissolve had both offsets and a 1.15/1.1 zoom change.
+- **1:22.4 the approval → VAB:** VAB opens on the approval's framing (1.1×, the headline covered by plate, as the approval's is) and lines up exactly. After N14 it pushes in to its old 1.3× framing (1:25.8, over 1.6 s, before N15 starts).
+- **1:42.4 VAB → the ruling control:** the control opens on VAB's 1.3× framing and lines up exactly. It then eases in to the panel (1.5× by 1:44.2, then the old creep to 1.58×), the crop rising to y 680 over the same 1.8 s.
+- Left as they were: 0:56.4 (VPY's 2× close-up on the panel → the same case's evidence at 1.1×) is a deliberate reframe of one case, not a case change. 0:24.6 already shares one framing, and the other dissolves join different pages or scenes.
+
+## Render (10/27, done 03:49 KST, capture 10 min 12 s)
+
+`s4/video/final.mp4` (replaces the #542 final), sha256 afec30d3e5f855346ee7892cdf43497afcfa08d68fbd329d3b34136aa84d55db, 54.9 MB, and `final-contact-sheet.png`; `final.srt`/`final.vtt` are unchanged. A copy is at `board/narration/final.mp4` (same sha256). Rendered on win-guest.
+
+- ffprobe: h264 High, yuv420p, 1920×1080, 30/1, 5055 frames, 168.5 s, 2.60 Mb/s, AAC LC. A full decode with `-xerror` logged 0 error lines; atoms ftyp moov free mdat.
+- Sound: the AAC stream is bit-identical to the #542 final (same packet MD5), so every loudness, duck and cue number in `LISTEN.md` stands.
+- Picture against the #542 final: 2,980 of 5,055 frames identical. The ones that changed on purpose are in 0:33.3–0:37.2 and 1:03.85–1:48.6. The other 610 changed only at the encoder level (PSNR 48 dB or more).
+- Checks: before/after stills and a 50% blend at each changed dissolve (0.4 s before the cut and just after it). At 0:37.2, 1:22.4 and 1:42.4 the header, timeline and panel line up. Below the timeline the page shifts by one wrapped record line where the content differs. At 1:04.2 the zoom and left edge match, with the offsets above. I also checked the contact sheet, the 14 cut pairs and the vab cover at 1:22.45 and 1:28.

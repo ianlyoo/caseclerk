@@ -17,11 +17,11 @@ This is the locked cut and the source of truth for the film. The machine copy is
 
 **B3 · 0:37.2–1:04.2 · The agent's call on a harder case.** PP-R-VPY-10194485, waiting for a yes, framed below the item headline. Chargeback in, then Asked you, 98 s after it arrived. The camera pushes in to "About 35%" and "Weak: tracking proves delivery, not condition", then to the cost of each choice: filing $292.22 against refunding $442.87. At N11 it cuts to the same page scrolled down: "What CaseClerk will send PayPal" (order details, shipment and tracking, the seller statement) beside the panel's "Over your $250 evidence line, so CaseClerk asks first" and File the evidence (never clicked). That shot is cropped above the exact-text toggle, so the caption sits on an empty band under the evidence, not on it.
 
-**B4 · 1:04.2–1:22.4 · The seller's yes.** D2's take of the real approval of PP-R-VPY-10194485 on production (10/26, 15:47 UTC), at 1.15× with the item headline covered. File the evidence, then Yes, file it, clicked at 1:06.5 as the owner says "A yes", the 5 s undo (`UNDO_MS = 5000`), Sending to PayPal, then PayPal's answer: "200 accepted", "Filed. PayPal is reviewing.", the debug id f411956448116, and the record line "Call POST /v1/customer/disputes/PP-R-VPY-10194485/provide-evidence, Status 200". The 200 arrives at 1:18.2 and settles at 1:19.2; N13b ("PayPal returns success…") starts at 1:19.4.
+**B4 · 1:04.2–1:22.4 · The seller's yes.** D2's take of the real approval of PP-R-VPY-10194485 on production (10/26, 15:47 UTC), at 1.1× (the zoom of the B3 shot it dissolves from) with the item headline covered. File the evidence, then Yes, file it, clicked at 1:06.5 as the owner says "A yes", the 5 s undo (`UNDO_MS = 5000`), Sending to PayPal, then PayPal's answer: "200 accepted", "Filed. PayPal is reviewing.", the debug id f411956448116, and the record line "Call POST /v1/customer/disputes/PP-R-VPY-10194485/provide-evidence, Status 200". The 200 arrives at 1:18.2 and settles at 1:19.2; N13b ("PayPal returns success…") starts at 1:19.4.
 
-**B5 · 1:22.4–1:42.4 · PayPal's ruling.** The cut leaves the pending $412.00 case, and the screen says so: "An earlier case, same flow · The $399.00 case, ruled Oct 25." PP-R-VAB-10194570, closed, framed below the item headline: "PayPal ruled for you", $388.18 kept of $399.00. $388.18 belongs to VAB and is never said of VPY. The stops shown are Closed for you, then You said yes, whose record reads POST provide-evidence, 200, debug id f95638041ab53. Then Held, then released. VPY was ruled on too (PayPal for the seller, $400.84 kept of $412.00, Oct 26), but N15 as spoken names VAB's amount, so B5 stays on VAB.
+**B5 · 1:22.4–1:42.4 · PayPal's ruling.** The cut leaves the pending $412.00 case, and the screen says so: "An earlier case, same flow · The $399.00 case, ruled Oct 25." PP-R-VAB-10194570, closed. It opens on B4's framing with the item headline covered, so the dissolve holds one zoom, and pushes in below the headline after N14: "PayPal ruled for you", $388.18 kept of $399.00. $388.18 belongs to VAB and is never said of VPY. The stops shown are Closed for you, then You said yes, whose record reads POST provide-evidence, 200, debug id f95638041ab53. Then Held, then released. VPY was ruled on too (PayPal for the seller, $400.84 kept of $412.00, Oct 26), but N15 as spoken names VAB's amount, so B5 stays on VAB.
 
-**B5J · 1:42.4–1:48.6 · The judge loop.** The approval take's filed panel, which since 10/26 carries the sandbox control: "Sandbox control, test disputes only · Ask PayPal's sandbox to rule", Seller wins, Buyer wins and Ask for the ruling (never clicked). The camera eases in on it under N17.
+**B5J · 1:42.4–1:48.6 · The judge loop.** The approval take's filed panel, which since 10/26 carries the sandbox control: "Sandbox control, test disputes only · Ask PayPal's sandbox to rule", Seller wins, Buyer wins and Ask for the ruling (never clicked). It opens on B5's framing, so the dissolve holds one zoom, then the camera eases in on it under N17.
 
 **B6 · 1:48.6–2:07.0 · The seller's rules.** Your rules, "It asks before money moves". The camera moves to the two lanes: evidence asks at $250 and up, refunds and offers ask over $15. The cursor hovers each Asks you.
 
@@ -46,12 +46,12 @@ The real enforcement (the panel's "Over your $250 evidence line, so CaseClerk as
 | B2 | arrival-click | 0:13.6–0:21.6 | `footage/arrival.webm` from 1.6 s | 1x, 1.45x over 2.2 s; dissolves in over 0.4 s |
 | B2 | arrival-plate | 0:21.6–0:24.6 | `footage/arrival.webm` from 13.55 s | 1.8x; dissolves in over 0.3 s |
 | B2 | arrival-webhook | 0:24.6–0:33.6 | `footage/arrival.webm` from 201 s | 1.8x; dissolves in over 0.3 s |
-| B2 | rsl-asked | 0:33.6–0:37.2 | `footage/rsl.webm` from 6.9 s | 1.3x; dissolves in over 0.3 s |
+| B2 | rsl-asked | 0:33.6–0:37.2 | `footage/rsl.webm` from 6.9 s | 1.25x; dissolves in over 0.3 s |
 | B3 | vpy | 0:37.2–0:56.4 | `footage/vpy-b3-waiting.webm` from 4 s | 1.25x, 2x over 1 s; dissolves in over 0.35 s |
 | B3 | vpy-evidence | 0:56.4–1:04.2 | `footage/vpy-b3-waiting.webm` from 28.2 s | 1.1x, cropped to y 0–884; dissolves in over 0.3 s |
-| B4 | approve | 1:04.2–1:22.4 | `footage/vpy.webm` from 2.9 s | 1.15x, cropped to y 0–800, the headline covered; dissolves in over 0.35 s |
-| B5 | vab | 1:22.4–1:42.4 | `footage/vab.webm` from 0.9 s | 1.3x; dissolves in over 0.35 s |
-| B5J | judge | 1:42.4–1:48.6 | `footage/vpy.webm` from 19.1 s | 1.5x, 1.58x over 6.2 s, cropped to y 0–680; dissolves in over 0.35 s |
+| B4 | approve | 1:04.2–1:22.4 | `footage/vpy.webm` from 2.9 s | 1.1x, cropped to y 0–884, the headline covered; dissolves in over 0.35 s |
+| B5 | vab | 1:22.4–1:42.4 | `footage/vab.webm` from 0.9 s | 1.1x, 1.3x over 1.6 s, the headline covered; dissolves in over 0.35 s |
+| B5J | judge | 1:42.4–1:48.6 | `footage/vpy.webm` from 19.1 s | 1.3x, 1.5x over 1.8 s, 1.58x over 4.4 s, cropped to y 0–1080, then y 0–680 over 1.8 s; dissolves in over 0.35 s |
 | B6 | rules | 1:48.6–2:07.0 | `footage/rules.webm` from 1 s | 1.4x, 1.8x over 1 s; dissolves in over 0.35 s |
 | B7 | arch | 2:07.0–2:28.0 | `video/compositions/arch.html` | none; dissolves in over 0.35 s |
 | B7 | cases | 2:28.0–2:32.8 | `footage/cases.webm` from 14.7 s | 1.2x, cropped to y 0–746; dissolves in over 0.35 s |

@@ -1,6 +1,6 @@
 # Listen: the final cut
 
-`s4/video/final.mp4`: rehearsal E as the owner approved it (#541), with the owner's last notes on the sound (#542): the narration 15% quieter again, the cues louder and five more, and the bed's dip under the voice made gradual. Every take is as in E, and N20's caption is the written line ("Anything bigger waits for a yes."). Mixed by `scripts/mix.py` (numbers from its `out/audio/loudness.json` and from the MP4 itself). The first final cut (02:44, the narration at 0.9×) is replaced.
+`s4/video/final.mp4`: rehearsal E as the owner approved it (#541), with the owner's last notes on the sound (#542): the narration 15% quieter again, the cues louder and five more, and the bed's dip under the voice made gradual. Every take is as in E, and N20's caption is the written line ("Anything bigger waits for a yes."). Mixed by `scripts/mix.py` (numbers from its `out/audio/loudness.json` and from the MP4 itself). The first final cut (02:44, the narration at 0.9×) is replaced. The owner's note on the dissolve at 0:36 (#543) changed only the picture: four dissolves between two case pages now hold one zoom (see Cuts that became dissolves). The sound is the same `mix.wav`.
 
 ## Loudness and peaks
 
@@ -92,7 +92,7 @@ To splice more retakes: put `retake-<ID>.m4a` beside the take and rerun `scripts
 
 ## Cuts that became dissolves
 
-Unchanged from D. Every cut is a short dissolve. A dissolve into footage ends on the cut; a dissolve into the diagram or the end card starts on the cut, over the held footage. Either way the narration and the cut times don't move.
+The cut times and lengths are unchanged from D. Every cut is a short dissolve. A dissolve into footage ends on the cut; a dissolve into the diagram or the end card starts on the cut, over the held footage. Either way the narration and the cut times don't move.
 
 | Cut | From → to | Dissolve |
 |---|---|---|
@@ -110,6 +110,14 @@ Unchanged from D. Every cut is a short dissolve. A dissolve into footage ends on
 | 2:28.0 | diagram → cases | 0.35 s |
 | 2:32.8 | cases → landing | 0.35 s |
 | 2:40.4 | landing → end card | 0.4 s |
+
+Four dissolves between two case pages hold one zoom (the owner, #543: at 0:36 the same page seemed to zoom out as it faded):
+- **0:37.2** RSL → VPY: RSL takes VPY's opening framing, 1.25× (it was 1.3×). The two pages line up exactly.
+- **1:04.2** VPY evidence → the approval: the approval drops from 1.15× to 1.1×, the evidence shot's zoom, with the same crop line. The two takes were recorded at different scroll positions, so the panel moves 35 px and the page under it 167 px. No framing lines up both, because the panel stays put when the page scrolls.
+- **1:22.4** the approval → VAB: VAB opens on the approval's framing, 1.1× with the headline covered, and lines up exactly. After N14 (1:25.8, over 1.6 s) it pushes in to its old 1.3× framing.
+- **1:42.4** VAB → the ruling control: the control opens on VAB's 1.3× framing and lines up exactly. It then eases in to the panel (1.5× by 1:44.2, then 1.58×), with the crop rising to y 680 over the same 1.8 s.
+
+0:56.4 (VPY's 2× close-up on the panel → the same case scrolled to its evidence, 1.1×) is a deliberate reframe of one case, so it stays as it was. The other dissolves join different pages or scenes, or (0:24.6) shots that already share a framing.
 
 ## VPY
 
