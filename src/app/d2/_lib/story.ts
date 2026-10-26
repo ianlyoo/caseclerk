@@ -209,7 +209,7 @@ const STEPS: Tick[] = [
   { t: 604800, label: "7 days" },
 ];
 
-/** Shutter-like ticks for a scale: kept at least `gap` apart, clear of the axis end, every other label hidden when narrow. */
+/** Shutter-like ticks for a scale: kept at least `gap` apart, clear of the axis end; fewer labels when narrow. */
 export function ticksFor(tau: number, tMax: number, endAt = 0.94, gap = 0.1): Tick[] {
   const out: Tick[] = [];
   for (const s of STEPS) {
@@ -218,7 +218,10 @@ export function ticksFor(tau: number, tMax: number, endAt = 0.94, gap = 0.1): Ti
     if (out.length && p - logPos(out[out.length - 1].t, tau, tMax) < gap) continue;
     out.push({ ...s });
   }
-  return out.map((t, i) => (i % 2 === 0 && i !== out.length - 1 ? { ...t, narrow: "hide" as const } : t));
+  // narrow: every other label, and none near the right end, where the end label (the deadline) is engraved
+  return out.map((t, i) =>
+    (i % 2 === 0 && i !== out.length - 1) || logPos(t.t, tau, tMax) > 0.74 ? { ...t, narrow: "hide" as const } : t,
+  );
 }
 
 export const STORY_TICKS: Tick[] = [

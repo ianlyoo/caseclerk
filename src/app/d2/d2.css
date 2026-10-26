@@ -1628,7 +1628,6 @@
 .rail {
   position: relative;
   height: 16px;
-  margin-top: var(--space-2);
   max-width: 520px;
 }
 .rail-line,
@@ -1722,6 +1721,11 @@
 }
 .rows-sub code {
   font-size: 12px;
+  white-space: nowrap;
+}
+/* the column head says it on wide screens; stacked rows say it inline */
+.rows-k {
+  display: none;
 }
 .rows-state {
   width: 24%;
@@ -1997,17 +2001,18 @@
   .rows tbody {
     display: block;
   }
+  /* the band's count sits at the row's right edge, clear of the stacked case column */
+  .inbox-band-title {
+    justify-content: space-between;
+  }
+  /* each case reads as a short stack beside its amount; the column heads aren't needed */
   .rows thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
+    display: none;
   }
   .rows tr {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: var(--space-4);
+    grid-template-columns: 88px minmax(0, 1fr);
+    column-gap: var(--space-3);
     row-gap: var(--space-1);
     padding: var(--space-3) 0;
     border-bottom: 1px solid rgba(16, 18, 20, 0.12);
@@ -2021,24 +2026,21 @@
     text-align: left;
   }
   .rows-amount {
-    grid-row: 1;
+    grid-row: 1 / span 3;
     grid-column: 1;
-  }
-  .rows-state {
-    grid-row: 1;
-    grid-column: 2;
-    text-align: right;
-    font-size: 14px;
-  }
-  .rows td.rows-state {
-    text-align: right;
+    font-size: 16px;
   }
   .rows-case,
+  .rows-state,
   .rows-due {
-    grid-column: 1 / -1;
+    grid-column: 2;
   }
+  .rows-state,
   .rows-due {
     font-size: 14px;
+  }
+  .rows-k {
+    display: inline;
   }
   .policy-head {
     padding-top: var(--space-6);

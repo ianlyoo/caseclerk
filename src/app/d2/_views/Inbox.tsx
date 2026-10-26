@@ -208,7 +208,10 @@ export async function Inbox() {
                         <span className="rows-lost">For the buyer, {usd(c.snapshot.amount.value)} back to them</span>
                       )}
                     </td>
-                    <td className="rows-due">{day(c.snapshot.updateTime)}</td>
+                    <td className="rows-due">
+                      <span className="rows-k">Closed </span>
+                      {day(c.snapshot.updateTime)}
+                    </td>
                   </tr>
                 );
               })}
