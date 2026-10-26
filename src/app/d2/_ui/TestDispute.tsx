@@ -23,8 +23,18 @@ type Flow =
 
 const amountOf = (a: unknown) => (typeof a === "string" ? a : typeof a === "object" && a && "value" in a ? String((a as { value: unknown }).value) : null);
 
-/** `on`: the material it sits on; on metal the wait is its own leather plate. */
-export function TestDispute({ tone = "quiet", lede, on = "metal" }: { tone?: "go" | "quiet"; lede?: string; on?: "metal" | "leather" }) {
+/** `on`: the material it sits on; on metal the wait is its own leather plate. `line`: the seller's evidence line. */
+export function TestDispute({
+  tone = "quiet",
+  lede,
+  on = "metal",
+  line,
+}: {
+  tone?: "go" | "quiet";
+  lede?: string;
+  on?: "metal" | "leather";
+  line: number;
+}) {
   const [flow, setFlow] = useState<Flow>({ at: "idle" });
 
   // a wait in progress survives a reload
@@ -67,6 +77,7 @@ export function TestDispute({ tone = "quiet", lede, on = "metal" }: { tone?: "go
     return (
       <Wait
         opened={flow.opened}
+        line={line}
         plate={on === "metal"}
         go={tone === "go"}
         onDone={() => {
@@ -104,7 +115,7 @@ export function TestDispute({ tone = "quiet", lede, on = "metal" }: { tone?: "go
 type Found = Pick<CaseRecord, "id" | "status" | "snapshot" | "decision">;
 
 /** `go`: this control is the page's one action, so the arrived case gets the Go button; otherwise it stays Quiet. */
-function Wait({ opened, plate, go, onDone }: { opened: Opened; plate: boolean; go: boolean; onDone: () => void }) {
+function Wait({ opened, line, plate, go, onDone }: { opened: Opened; line: number; plate: boolean; go: boolean; onDone: () => void }) {
   const [now, setNow] = useState(() => Date.now());
   const [rows, setRows] = useState<WireEntry[]>([]);
   const [found, setFound] = useState<Found | null>(null);
@@ -156,7 +167,7 @@ function Wait({ opened, plate, go, onDone }: { opened: Opened; plate: boolean; g
 
   const t0 = Date.parse(opened.at);
   const arrived = found ?? null;
-  const st = arrived ? caseState(arrived as CaseRecord) : null;
+  const st = arrived ? caseState(arrived as CaseRecord, line) : null;
   const worked = arrived && arrived.status !== "new" && arrived.status !== "acting";
   const related = rows.filter((w) => mine(w) || (w.kind === "event" && w.eventType === "CUSTOMER.DISPUTE.CREATED" && Date.parse(w.at) >= t0));
   const amount = arrived ? usd(arrived.snapshot.amount.value) : opened.amount ? usd(opened.amount) : null;
@@ -172,7 +183,8 @@ function Wait({ opened, plate, go, onDone }: { opened: Opened; plate: boolean; g
     {
       id: "worked",
       title: "CaseClerk works the case",
-      detail: worked && st ? st.words : arrived ? "Reading the order and tracking" : "After the webhook",
+      // while the agent runs, which way it goes: over the line it asks you, under it, it answers alone
+      detail: st && arrived?.status !== "new" ? st.words : arrived ? "Reading the order and tracking" : "After the webhook",
       done: Boolean(worked),
     },
   ];

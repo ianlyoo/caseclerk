@@ -55,8 +55,8 @@ const byNewest = (a: CaseRecord, b: CaseRecord) => Date.parse(b.createdAt) - Dat
 const dueOf = (c: CaseRecord) => (c.snapshot.sellerResponseDueDate ? Date.parse(c.snapshot.sellerResponseDueDate) : Infinity);
 const later = (a: string, b: string) => (Date.parse(a) >= Date.parse(b) ? a : b);
 
-function rowFor(c: CaseRecord, b: CaseBundle | null, nowIso: string): BoardRow {
-  const st = caseState(c);
+function rowFor(c: CaseRecord, b: CaseBundle | null, nowIso: string, line: number): BoardRow {
+  const st = caseState(c, line);
   const stops = b ? storyStops(b, "seller") : [];
   const moments: Moment[] = stops.map((s) => ({ id: s.id, at: s.at, title: s.title, when: `${day(s.at)}, ${clock(s.at)}`, who: WHO[s.id] ?? "caseclerk", tone: s.tone }));
   const start = c.snapshot.createTime;
@@ -103,7 +103,7 @@ function rowFor(c: CaseRecord, b: CaseBundle | null, nowIso: string): BoardRow {
 }
 
 /** Rows in the inbox's order: waiting for your yes (the case a visitor may answer first), then open by deadline, then closed, newest first. */
-export function boardOf(list: CaseRecord[], bundles: Map<string, CaseBundle | null>, nowIso: string): Board {
+export function boardOf(list: CaseRecord[], bundles: Map<string, CaseBundle | null>, nowIso: string, line: number): Board {
   const judge = judgeCase(list);
   const phase = (c: CaseRecord) => caseState(c).phase;
   const waiting = list
@@ -113,7 +113,7 @@ export function boardOf(list: CaseRecord[], bundles: Map<string, CaseBundle | nu
   const closed = list
     .filter((c) => phase(c) === "closed")
     .sort((x, y) => Date.parse(y.snapshot.updateTime) - Date.parse(x.snapshot.updateTime) || byNewest(x, y));
-  const rows = [...waiting, ...open, ...closed].map((c) => rowFor(c, bundles.get(c.id) ?? null, nowIso));
+  const rows = [...waiting, ...open, ...closed].map((c) => rowFor(c, bundles.get(c.id) ?? null, nowIso, line));
   const next = [...waiting, ...open].filter((c) => c.snapshot.sellerResponseDueDate && dueOf(c) > Date.parse(nowIso)).sort((x, y) => dueOf(x) - dueOf(y))[0];
   const nd = next?.snapshot.sellerResponseDueDate;
   return {

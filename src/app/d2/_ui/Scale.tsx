@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import NumberFlow, { NumberFlowGroup } from "@number-flow/react";
 import { logPos, spread, type Stop, type Tick } from "../_lib/story";
+import { placeLabels, type End } from "../_lib/rows";
 
 type Props = {
   stops: Stop[];
@@ -26,16 +27,15 @@ type Props = {
   fresh?: string;
 };
 
-type Layout = { rows: Record<string, "1" | "2">; ends: Record<string, "left" | "right">; width: number };
+type Layout = { rows: Record<string, 1 | 2 | 3>; ends: Record<string, End>; hidden: string[]; nRows: number; width: number };
 
 /**
- * Labels sit in two rows. A row-2 label's leader runs up through row 1, so the rows are chosen (all
- * combinations; a case has a handful of stops) so no two labels in a row come within 16px and no leader
- * crosses a row-1 label; among clean layouts, the one closest to alternating wins. A label that would run
- * past the rail's end hangs left of its leader instead.
+ * Labels sit in rows under the rail; a lower label's leader runs up through the rows above it. `placeLabels`
+ * picks rows and sides (right or left of the leader) so no two labels in a row come within 16px and no leader
+ * crosses a label: two rows, alternating, when they fit; a third when they don't; then "now" gives up its label.
  */
 function useRows(ol: RefObject<HTMLOListElement | null>, sig: string) {
-  const [layout, setLayout] = useState<Layout>({ rows: {}, ends: {}, width: 0 });
+  const [layout, setLayout] = useState<Layout>({ rows: {}, ends: {}, hidden: [], nRows: 2, width: 0 });
   useLayoutEffect(() => {
     const el = ol.current;
     if (!el) return;
@@ -43,36 +43,13 @@ function useRows(ol: RefObject<HTMLOListElement | null>, sig: string) {
       const W = el.clientWidth;
       const items = [...el.querySelectorAll<HTMLElement>(".sc-stop")];
       const set = (next: Layout) => setLayout((cur) => (JSON.stringify(cur) === JSON.stringify(next) ? cur : next));
-      if (!W || items.length > 10 || items.some((li) => getComputedStyle(li).position !== "absolute")) return set({ rows: {}, ends: {}, width: W });
-      const box = items.map((li) => {
-        const w = li.offsetWidth;
-        const x = Number(li.dataset.x) * W;
-        const end: "left" | "right" = x + w > W ? "right" : "left";
-        const left = end === "right" ? x - w : x;
-        return { id: li.dataset.id ?? "", x, end, left, right: left + w };
-      });
-      let best = { cost: Infinity, mask: 0 };
-      for (let mask = 0; mask < 1 << box.length; mask++) {
-        const row = (i: number) => (mask >> i) & 1; // 0: row 1, 1: row 2
-        let bad = 0;
-        let off = 0;
-        box.forEach((b, i) => {
-          if (row(i) !== i % 2) off++;
-          for (let j = i + 1; j < box.length; j++) {
-            const o = box[j];
-            if (row(i) === row(j) && o.left < b.right + 16 && b.left < o.right + 16) bad++;
-            if (row(j) === 1 && row(i) === 0 && o.x > b.left - 6 && o.x < b.right + 6) bad++;
-            if (row(i) === 1 && row(j) === 0 && b.x > o.left - 6 && b.x < o.right + 6) bad++;
-          }
-        });
-        const cost = bad * 100 + off;
-        if (cost < best.cost) best = { cost, mask };
+      if (!W || items.length > 10 || items.some((li) => getComputedStyle(li).position !== "absolute")) {
+        return set({ rows: {}, ends: {}, hidden: [], nRows: 2, width: W });
       }
-      set({
-        rows: Object.fromEntries(box.map((b, i) => [b.id, (best.mask >> i) & 1 ? "2" : "1"])),
-        ends: Object.fromEntries(box.map((b) => [b.id, b.end])),
-        width: W,
-      });
+      // a hidden label keeps its box (visibility), so it is measured like the rest
+      const boxes = items.map((li) => ({ id: li.dataset.id ?? "", x: Number(li.dataset.x) * W, w: li.offsetWidth, passing: li.dataset.id === "now" }));
+      const { rows, ends, hidden, nRows } = placeLabels(boxes, W);
+      set({ rows, ends, hidden, nRows, width: W });
     };
     place();
     // labels change width when the web font arrives, without the scale itself resizing
@@ -141,7 +118,7 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
 
   // the record line is the selected stop's own; unselected, the stop the index rests on
   const proofStop = current ?? (nowAt >= 0 ? stops[nowAt] : stops[last]);
-  const { rows, ends, width: measured } = useRows(olRef, stops.map((s, i) => `${s.id}:${s.title}:${s.detail}:${xs[i].toFixed(3)}`).join("|"));
+  const { rows, ends, hidden, nRows, width: measured } = useRows(olRef, stops.map((s, i) => `${s.id}:${s.title}:${s.detail}:${xs[i].toFixed(3)}`).join("|"));
   useEffect(() => setWidth(measured), [measured]);
 
   const pick = (i: number) => {
@@ -224,7 +201,7 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
         <span className="sc-index" aria-hidden="true" />
       </div>
 
-      <ol className="sc-stops" ref={olRef}>
+      <ol className="sc-stops" ref={olRef} data-rows={nRows > 2 ? nRows : undefined}>
         {stops.map((s, i) => {
           if (s.quiet) return null;
           const row = rows[s.id] ?? (stops.slice(0, i).filter((o) => !o.quiet).length % 2 ? "2" : "1");
@@ -235,6 +212,7 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
               key={s.id}
               className="sc-stop"
               data-row={row}
+              data-hidden={hidden.includes(s.id) || undefined}
               data-id={s.id}
               data-x={x}
               data-new={s.id === fresh || undefined}

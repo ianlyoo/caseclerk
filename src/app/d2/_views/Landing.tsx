@@ -78,7 +78,7 @@ export async function Landing() {
                 No case is waiting for you right now
               </p>
               <p className="hero-wait-body">Open a real PayPal sandbox chargeback and watch CaseClerk work it. PayPal takes a few minutes to deliver it.</p>
-              <TestDispute tone="go" on="leather" />
+              <TestDispute tone="go" on="leather" line={evidenceLine} />
             </aside>
           )}
         </section>
@@ -184,7 +184,7 @@ export async function Landing() {
                 Watch one arrive.
               </h2>
               <p className="body">Open a real PayPal sandbox chargeback of your own. PayPal takes a few minutes to deliver it; then CaseClerk works it under these rules.</p>
-              <TestDispute />
+              <TestDispute line={evidenceLine} />
             </div>
           </div>
         </section>

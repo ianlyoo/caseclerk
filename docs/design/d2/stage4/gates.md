@@ -41,7 +41,7 @@ Totals: 1 approve, 19 simulate POSTs (18 × 409, 1 × 200). That is 19 of the AP
 2. **Cut: about 18 minutes of waiting.** Take 1's page reloaded at 07:49:2x because I synced source to the dev server mid-recording (the recorder's context died); take 2 opened the same page and asked again at 07:50:35, and the band asked once a minute until PayPal opened the step.
 3. Take 2, 14.1 s: the last checks, the 200, "Ruling asked for the seller" and the new stop on the scale.
 
-**Not in the clip:** the RESOLVED webhook and the money (see above). Takes 1 and 2 were recorded on the Mac (before PM delta v8). The clip and `judge-asked-1440.png` show the asked band's earlier wording ("often minutes later").
+**Not in the clip:** the RESOLVED webhook and the money (see above). Takes 1 and 2 were recorded on the Mac (before PM delta v8). The clip shows the asked band's earlier wording ("often minutes later").
 
 ## Gates
 
@@ -70,6 +70,23 @@ Receipts are in `s3/redesign/receipts/`.
 
 **Copy:** the band says "sandbox" in its label, its heading and its message; amounts carry cents; no middots, numbering, arrows or emoji; the action and debug ids appear only in the scale's record lines (G7).
 
+## PM v9 and v10 (after the merge of 304a3d9)
+
+**v9, G3 at 768 on the landing:** the waiting case's Go ("Review the $289.00 case") was stretched to its column below 900px, which centres its label, so the label's start moved with the item and amount and landed 2.9px off the facts' second column. The Go now keeps its label's width on the column's edge at every size (the inbox's phone rows the same), so it holds for any name and amount.
+
+**Found on the way, the scale's labels on production:** XCS's "You said yes. Filed" and "You asked for a ruling" touched at 1440, and at 1280 the ruling's leader ran through "Now"; TZD had a leader clash at 1280. The labels now come from a small search over rows and sides (`src/app/d2/_lib/rows.ts`): two rows, a third only where two can't hold them, and last, "Now" gives up its label. A GET-only checker over the landing and every case page (overlaps, and leaders through labels): production 3 clashes over 70 pages (1440, 1280); dev 0 over 175 pages (1440, 1280, 1536, 1920, 2560), a third row on 2, "Now" never hidden. Production needs the deploy for this.
+
+**v10, the agent's working words:** a case the agent is working (status `acting`) said "Sending to PayPal". It now says which way it goes from the seller's evidence line: "Reading it, then asking you" (at or over, the visitor's $289 to $449 test disputes), "Reading it, then answering on its own" (under), "Reading PayPal's update" (already decided, PayPal changed the case). The test-dispute wait's third step, the inbox, the board, the scale's "Now" and the case plate all read it from `caseState(c, line)`. Checked by a unit run of the words (both sides of $250.00, a re-run, no line) and in the browser: the landing's wait with a saved wait and the page's own `/api/cases` answer replaced by a case in `acting` at $289.00 and $42.00 (nothing sent anywhere; no test dispute opened).
+
+| Check | Pages | Result |
+|---|---|---|
+| `check.sh`, 1440, 1920, 1536, 2560, 390, 768, 1280 | `/`, `/cases`, `/policy`, case VPY, XCS, MFL, SGV, VAB, YDQ, MOL, TZD | 0 FAIL; 1 WARN at 1280 on VPY and MFL (G2, "Don't file"; the same on production) |
+| `check.sh`, the 5 sizes | `/board`, `/board?span=hours` | 0 FAIL, 0 WARN, 1 exempt |
+| `gate.sh` 1440x900, hydrated | the 13 above | 0, `gate-1440x900-1026-192553.json` |
+| `gate.sh` 390x844, hydrated | the same 13 | 0, `gate-390x844-1026-192823.json` |
+
+`judge-asked-1440.png` is now XCS on the fixed scale with the asked band's current wording (dev, 10:32Z).
+
 ## Also in stage 4
 
 - **P2 from the board critique, the phone board's inner scroll frame:** below 900px the board takes its rows' height (Bryntum `autoHeight`) and the page scrolls; the time header scrolls away with the page. `board-390.png` (first screen), `board-390-full.png` (the whole board).
@@ -80,7 +97,7 @@ Receipts are in `s3/redesign/receipts/`.
 - `judge-before-1440.png`: XCS waiting for your yes (take 1, before the approve).
 - `judge-filed-1440.png`: after the yes: Filed, the guide line and the band.
 - `judge-checking-1440.png`: Not open yet, Under review, 17 checks.
-- `judge-asked-1440.png`: Ruling asked for the seller, the new stop on the scale.
+- `judge-asked-1440.png`: Ruling asked for the seller, the new stop on the scale (retaken after v9: the fixed labels, the current wording).
 - `case-ydq-control-1440.png`, `case-ydq-control-390.png`: another test dispute in review, the band idle.
 - `case-mol-no-control-1440.png`: a live dispute in review, no band.
 - `board-390.png`, `board-390-full.png`: the phone board without its inner frame.

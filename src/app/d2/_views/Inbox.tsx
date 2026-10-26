@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import type { CaseRecord } from "@/lib/types";
-import { listCases } from "../_lib/api";
+import { getPolicy, listCases } from "../_lib/api";
 import { day, usd } from "../_lib/format";
 import { href, RESERVED_CASES } from "../_lib/routes";
 import { caseState, claimWords, deadlineWords, itemName, judgeCase, sellerWon, sharedListings } from "../_lib/state";
@@ -30,7 +30,7 @@ function Rail({ c, now }: { c: CaseRecord; now: number }) {
 }
 
 export async function Inbox() {
-  const list = await listCases();
+  const [list, policy] = await Promise.all([listCases(), getPolicy()]);
   if (!list) {
     return (
       <div className="metal page-error">
@@ -45,7 +45,8 @@ export async function Inbox() {
 
   const now = Date.now();
   const judge = judgeCase(list);
-  const rows = list.map((c) => ({ c, st: caseState(c) }));
+  const line = policy?.evidenceApprovalAtUsd ?? 250;
+  const rows = list.map((c) => ({ c, st: caseState(c, line) }));
   const waiting = rows
     .filter((r) => r.st.phase === "waiting")
     .sort((x, y) => Number(x.c.id === judge?.id ? 0 : 1) - Number(y.c.id === judge?.id ? 0 : 1) || Number(RESERVED_CASES.includes(x.c.id)) - Number(RESERVED_CASES.includes(y.c.id)) || byNewest(x.c, y.c));
@@ -73,7 +74,7 @@ export async function Inbox() {
               </p>
             )}
           </div>
-          {judge && <TestDispute lede="Want to watch one arrive?" />}
+          {judge && <TestDispute lede="Want to watch one arrive?" line={line} />}
         </header>
       </div>
 
@@ -129,7 +130,7 @@ export async function Inbox() {
               <p className="inbox-fine">
                 {waiting.length ? "The case waiting here is kept for a demo recording. " : ""}Open a real PayPal sandbox chargeback and watch CaseClerk work it.
               </p>
-              <TestDispute tone="go" on="leather" />
+              <TestDispute tone="go" on="leather" line={line} />
             </div>
           )}
         </div>
