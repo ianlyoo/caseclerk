@@ -42,14 +42,14 @@ A band adds "Ruling: PayPal's webhooks bring it back, checked the same way." and
 |---|---|---|---|---|
 | B1 | title | 0:00.0–0:13.6 | `video/compositions/title.html` | none |
 | B2 | arrival-click | 0:13.6–0:21.6 | `footage/arrival.webm` from 1.6 s | 1x, 1.45x over 2.2 s |
-| B2 | arrival-plate | 0:21.6–0:24.6 | `footage/arrival.webm` from 13.4 s | 1.8x |
-| B2 | arrival-webhook | 0:24.6–0:33.6 | `footage/arrival.webm` from 201.0 s | 1.8x |
+| B2 | arrival-plate | 0:21.6–0:24.6 | `footage/arrival.webm` from 13.55 s | 1.8x |
+| B2 | arrival-webhook | 0:24.6–0:33.6 | `footage/arrival.webm` from 201 s | 1.8x |
 | B2 | rsl-asked | 0:33.6–0:37.2 | `footage/rsl.webm` from 6.9 s | 1.3x |
-| B3 | vpy | 0:37.2–1:04.2 | `footage/vpy.webm` from 4.0 s | 1.25x, 2x over 1 s, 1.25x over 1 s |
-| B4 | approve | 1:04.2–1:22.4 | `docs/design/d2/stage2/approve-1440.mp4` from 0.0 s | 1.15x |
+| B3 | vpy | 0:37.2–1:04.2 | `footage/vpy.webm` from 4 s | 1.25x, 2x over 1 s, 1.25x over 1 s |
+| B4 | approve | 1:04.2–1:22.4 | `docs/design/d2/stage2/approve-1440.mp4` from 0 s | 1.15x |
 | B5 | vab | 1:22.4–1:42.4 | `footage/vab.webm` from 0.9 s | 1.3x |
 | B5J | judge | 1:42.4–1:48.6 | `video/compositions/judge.html` | none |
-| B6 | rules | 1:48.6–2:07.0 | `footage/rules.webm` from 1.0 s | 1.4x, 1.8x over 1 s |
+| B6 | rules | 1:48.6–2:07.0 | `footage/rules.webm` from 1 s | 1.4x, 1.8x over 1 s |
 | B7 | arch | 2:07.0–2:26.8 | `video/compositions/arch.html` | none |
 | B7 | cases | 2:26.8–2:32.8 | `footage/cases.webm` from 6.6 s | 1x |
 | B8 | landing | 2:32.8–2:40.4 | `footage/landing.webm` from 0.9 s | 1x |

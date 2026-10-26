@@ -11,14 +11,12 @@
     .chip b { font-size: 88px; line-height: 1; letter-spacing: -2px; font-variation-settings: "wdth" 115; margin-bottom: 14px; }
     .note { padding: 16px 24px 20px; max-width: 760px; }
     .note b { font-size: 30px; line-height: 1.2; margin-bottom: 4px; }
-    .line { padding: 14px 24px 16px; white-space: nowrap; }
-    .line b, .line small { display: inline; font-size: 30px; line-height: 1.2; }
-    .line small { color: #b6b5af; }
+    #ov-honest-tag { width: 440px; box-sizing: border-box; }
   </style>
   <div id="root" data-composition-id="overlays" data-width="1920" data-height="1080">
     <div id="ov-wait" class="clip ov" style="left:200px; top:300px;" data-start="24.6" data-duration="4.2"><div class="tag chip" id="ov-wait-tag"><b>+3 min</b><small>Real wait, cut. The page&#x27;s own clock keeps counting.</small></div></div>
     <div id="ov-standin" class="clip ov" style="left:200px; top:244px;" data-start="64.2" data-duration="18.2"><div class="tag note" id="ov-standin-tag"><b>Stand-in: the $399.00 case, Oct 25</b><small>Phase B records the $412.00 case.</small></div></div>
-    <div id="ov-honest" class="clip ov" style="right:240px; top:112px;" data-start="147.4" data-duration="5.4"><div class="tag line" id="ov-honest-tag"><b>We asked the sandbox to rule on each.</b> <small>A working loop, not a win rate.</small></div></div>
+    <div id="ov-honest" class="clip ov" style="right:40px; top:300px;" data-start="147.4" data-duration="5.4"><div class="tag note" id="ov-honest-tag"><b>We asked the sandbox to rule on each.</b><small>A working loop, not a win rate.</small></div></div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });

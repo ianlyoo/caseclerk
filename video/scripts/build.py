@@ -195,7 +195,7 @@ OVERLAY_STYLE = {
     # where each note sits; every one is clear of the caption band and of the UI it is about
     "ov-wait": "left:200px; top:300px;",
     "ov-standin": "left:200px; top:244px;",
-    "ov-honest": "right:240px; top:112px;",
+    "ov-honest": "right:40px; top:300px;",  # over the Closed dates; the list drifts up under anything further left
 }
 
 
@@ -205,9 +205,6 @@ def write_overlays(edit):
         oid = o["id"]
         if oid == "ov-wait":
             inner = (f'<div class="tag chip" id="{oid}-tag"><b>{esc(o["text"])}</b>'
-                     f'<small>{esc(o["sub"])}</small></div>')
-        elif oid == "ov-honest":
-            inner = (f'<div class="tag line" id="{oid}-tag"><b>{esc(o["text"])}</b> '
                      f'<small>{esc(o["sub"])}</small></div>')
         else:
             inner = (f'<div class="tag note" id="{oid}-tag"><b>{esc(o["text"])}</b>'
@@ -232,9 +229,7 @@ def write_overlays(edit):
     .chip b {{ font-size: 88px; line-height: 1; letter-spacing: -2px; font-variation-settings: "wdth" 115; margin-bottom: 14px; }}
     .note {{ padding: 16px 24px 20px; max-width: 760px; }}
     .note b {{ font-size: 30px; line-height: 1.2; margin-bottom: 4px; }}
-    .line {{ padding: 14px 24px 16px; white-space: nowrap; }}
-    .line b, .line small {{ display: inline; font-size: 30px; line-height: 1.2; }}
-    .line small {{ color: #b6b5af; }}
+    #ov-honest-tag {{ width: 440px; box-sizing: border-box; }}
   </style>
   <div id="root" data-composition-id="overlays" data-width="{edit['width']}" data-height="{edit['height']}">
 {chr(10).join(items)}
@@ -337,7 +332,7 @@ def print_md(edit, rows):
         for s in b["shots"]:
             if "src" in s:
                 src = edit["sources"][s["src"]]
-                what = f"`{src['take']}` from {s['in']:.1f} s"
+                what = f"`{src['take']}` from {s['in']:g} s"
                 cam = ", ".join(f"{k[1]:g}x" + (f" over {k[4]:g} s" if k[4] else "") for k in s["cam"])
             else:
                 what, cam = f"`video/{s['scene']}`", "none"
