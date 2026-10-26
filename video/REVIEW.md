@@ -74,3 +74,33 @@ Both were checked in snapshots (82.35, 82.45, 105.5, 108.55, 108.65) before rend
 - PM visual fix 6 (an enforcement insert under the B7 diagram) is skipped: it crowds the beat. The real enforcement is on screen in B2 and B3 instead.
 - N25's last caption group runs 0.55 s onto the end card's plate, inside the same beat, as in rehearsal A.
 - Rehearsal A's other notes still apply (the arch's empty plate for 0.35 s, the pointer parked in the cases shot, the stand-in and placeholder slots, softer text at 2.0×).
+
+# Review: rehearsal C (PM delta v2: one caption per sentence)
+
+Same pipeline as rehearsal B. The lines and their times don't change. What changed: each line of two sentences (N01, N09, N12, N13, N22, N26) is now two rows, N01a and N01b and so on, that abut, and each row is one caption. No caption splits a sentence any more. Sentences of more than 84 characters (N23, N25) are set on two balanced lines, and the box hugs the text. `captions.srt` and `captions.vtt` carry the same 32 sentences on the same clock, N26a and N26b included. Each split is the sentences' share of the line's time by spoken length, held to 2.4 words a second on both sides: N01 at 0:02.65, N09 at 0:47.75, N12 at 1:06.45, N13 at 1:18.65, N22 at 2:14.7 and N26 at 2:42.0.
+
+## Snapshots before rendering (HyperFrames, 10/26)
+
+| Where | What I found | Fix |
+|---|---|---|
+| 2:19.8–2:27.0, N23 | On two lines, the caption covered the arch band's "Spend: Hard caps on every AI call…" row. | The band rises to y 690 and its rows sit at 30 and 84 px, so Spend ends about 36 px above the caption. |
+| 0:24.7–0:30.0, N06; 2:33.2–2:41.0, N25 | With `text-wrap: balance` and a max width, a two-line box stayed 1,400 px wide around shorter lines. N06 on two lines also reached the wait plate's capture note. | `build.py` breaks a caption over 84 characters itself, between words and never after a weak word ("an", "the"…). N06 (82) stays on one line, under the plate. |
+
+I snapshotted the middle of all 30 burned captions, every a/b handover, and the start and end of each two-line caption.
+
+## Render (10/26 23:07–23:16 KST, capture 8 min 39 s)
+
+`s4/video/rehearsal-c.mp4`, sha256 3f77d62c86f5068fcca4939b481aa0d9f3b8efcbc10d692724bf5c85a7521174, 39.6 MB, with `rehearsal-c.srt` and `rehearsal-c.vtt` beside it. The on-screen count was read at 2026-10-26T14:07:02Z (10 of 15 documented cases, as before).
+
+- ffprobe: h264 High, yuv420p, 1920×1080, 30/1, 5055 frames, 168.5 s (2:48.5), 1.88 Mb/s, AAC LC.
+- A full decode with `-xerror` logged 0 error lines. Atom order is ftyp moov free mdat (fast-start).
+- Sound: silencedetect (−45 dB) finds exactly nine onsets, at 18.23, 24.68, 38.96, 43.80, 65.53, 68.43, 79.10, 88.16 and 93.95 s. Peak −7.3 dB.
+- I looked at the nine beat midpoints (`rehearsal-c-contact-sheet.png`), the before/after pair at each of the 14 cuts, and a frame from the file at the middle of each of the 30 captions and just after each of the five a/b handovers. Every sentence shows whole, in order, and none covers the stop, panel, lane or row it is about. Nothing new turned up.
+
+## Known and accepted (rehearsal C)
+
+- N13b starts at 1:18.65, on PayPal's answer panel while its counter still runs up; the 200 settles 0.45 s later (1:19.1). A later start would put N13b over 2.4 words a second.
+- At each a/b handover the caption dips for 0.1 s (a fades out, b fades in), as the old caption groups did.
+- N25's two lines sit over the landing's Record row (the webhook id and "Replay the case"), which isn't being talked about.
+- N26a and N26b stay off the picture (the end card shows their words); they are in the .srt and .vtt.
+- Rehearsal B's notes still apply.

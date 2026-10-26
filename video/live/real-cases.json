@@ -1,6 +1,6 @@
 {
  "about": "N24's on-screen count. Written by scripts/count_cases.py from production GETs; only the ids documented in docs/REAL-CASES.md are read.",
- "readAt": "2026-10-26T10:50:25Z",
+ "readAt": "2026-10-26T14:07:02Z",
  "count": 10,
  "counted": [
   {

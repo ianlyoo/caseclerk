@@ -1,0 +1,127 @@
+1
+00:00:00,300 --> 00:00:02,650
+A buyer files a chargeback.
+
+2
+00:00:02,650 --> 00:00:05,450
+The seller has days to answer.
+
+3
+00:00:05,500 --> 00:00:09,450
+Miss it, and PayPal rules for the buyer.
+
+4
+00:00:09,600 --> 00:00:13,550
+CaseClerk answers them for small PayPal sellers.
+
+5
+00:00:13,900 --> 00:00:17,500
+Here it is, live on PayPal's sandbox.
+
+6
+00:00:17,500 --> 00:00:22,750
+One click opens a real sandbox chargeback on a test order.
+
+7
+00:00:24,700 --> 00:00:29,950
+Three minutes later, PayPal's webhook arrives, and CaseClerk checks its signature.
+
+8
+00:00:30,100 --> 00:00:37,050
+A Claude agent reads the order and the tracking, then stops to ask the seller.
+
+9
+00:00:37,700 --> 00:00:44,650
+A harder one: a $412.00 camera the buyer says isn't as described.
+
+10
+00:00:44,900 --> 00:00:47,750
+Tracking proves delivery, not condition.
+
+11
+00:00:47,750 --> 00:00:50,850
+It estimates a 35% chance.
+
+12
+00:00:51,100 --> 00:00:55,650
+It still recommends filing, because the expected loss is smaller.
+
+13
+00:00:55,900 --> 00:01:03,450
+Over the $250 line, it stops and asks, with the evidence already written.
+
+14
+00:01:04,700 --> 00:01:06,450
+The seller decides.
+
+15
+00:01:06,450 --> 00:01:10,450
+A yes files it, with five seconds to undo.
+
+16
+00:01:15,200 --> 00:01:18,650
+CaseClerk files through PayPal's Disputes API.
+
+17
+00:01:18,650 --> 00:01:22,400
+PayPal returns success and its own debug ID.
+
+18
+00:01:22,900 --> 00:01:27,350
+We asked PayPal's sandbox to rule for the seller.
+
+19
+00:01:27,500 --> 00:01:35,350
+It ruled for the seller and released the hold: $388.18 kept.
+
+20
+00:01:35,500 --> 00:01:41,350
+This amount comes from PayPal's own hold and release records.
+
+21
+00:01:42,700 --> 00:01:48,600
+You can ask the sandbox to rule on your own test case, too.
+
+22
+00:01:49,000 --> 00:01:53,850
+The seller's limits are enforced in code, not a prompt.
+
+23
+00:01:54,300 --> 00:02:02,250
+Evidence under $250 and refunds up to $15 go out on their own.
+
+24
+00:02:02,500 --> 00:02:05,850
+Anything bigger waits for a yes.
+
+25
+00:02:07,400 --> 00:02:12,150
+Under the hood, every PayPal webhook is verified first.
+
+26
+00:02:12,300 --> 00:02:14,700
+Claude Haiku sorts the case.
+
+27
+00:02:14,700 --> 00:02:19,650
+Claude Opus works it with tools, and writes the evidence.
+
+28
+00:02:19,800 --> 00:02:26,950
+Every action is checked against those limits before reaching PayPal, and AI spend is capped.
+
+29
+00:02:27,200 --> 00:02:32,450
+Real sandbox chargebacks have run this whole loop, every answer kept.
+
+30
+00:02:33,200 --> 00:02:40,950
+For a one-person shop, every dispute gets an answer with evidence ready, not a loss by default.
+
+31
+00:02:41,100 --> 00:02:42,000
+CaseClerk.
+
+32
+00:02:42,000 --> 00:02:47,050
+It answers your PayPal disputes, within the limits you set.

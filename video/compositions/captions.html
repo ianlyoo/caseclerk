@@ -5,108 +5,77 @@
     #root { position: absolute; inset: 0; }
     .cap { position: absolute; left: 0; right: 0; bottom: 112px; text-align: center; opacity: 0; visibility: hidden; }
     .cap span {
-      display: inline-block; padding: 9px 22px 11px; background: rgba(21, 21, 20, 0.92); color: #f2f1ec;
+      display: inline-block; white-space: nowrap;
+      padding: 9px 22px 11px; background: rgba(21, 21, 20, 0.92); color: #f2f1ec;
       font-family: Archivo; font-size: 40px; font-weight: 500; line-height: 1.2; letter-spacing: -0.2px;
       font-feature-settings: "tnum"; font-variation-settings: "wdth" 100;
     }
   </style>
   <div id="root" data-composition-id="captions" data-width="1920" data-height="1080">
-    <div id="cap-n01-1" class="cap" data-line="N01"><span>A buyer files a chargeback.</span></div>
-    <div id="cap-n01-2" class="cap" data-line="N01"><span>The seller has days to answer.</span></div>
-    <div id="cap-n02-1" class="cap" data-line="N02"><span>Miss it, and PayPal rules for the buyer.</span></div>
-    <div id="cap-n03-1" class="cap" data-line="N03"><span>CaseClerk answers them for small PayPal sellers.</span></div>
-    <div id="cap-n04-1" class="cap" data-line="N04"><span>Here it is, live on PayPal&#x27;s sandbox.</span></div>
-    <div id="cap-n05-1" class="cap" data-line="N05"><span>One click opens a real sandbox</span></div>
-    <div id="cap-n05-2" class="cap" data-line="N05"><span>chargeback on a test order.</span></div>
-    <div id="cap-n06-1" class="cap" data-line="N06"><span>Three minutes later, PayPal&#x27;s webhook arrives,</span></div>
-    <div id="cap-n06-2" class="cap" data-line="N06"><span>and CaseClerk checks its signature.</span></div>
-    <div id="cap-n07-1" class="cap" data-line="N07"><span>A Claude agent reads the order and the tracking,</span></div>
-    <div id="cap-n07-2" class="cap" data-line="N07"><span>then stops to ask the seller.</span></div>
-    <div id="cap-n08-1" class="cap" data-line="N08"><span>A harder one: a $412.00 camera</span></div>
-    <div id="cap-n08-2" class="cap" data-line="N08"><span>the buyer says isn&#x27;t as described.</span></div>
-    <div id="cap-n09-1" class="cap" data-line="N09"><span>Tracking proves delivery, not condition.</span></div>
-    <div id="cap-n09-2" class="cap" data-line="N09"><span>It estimates a 35% chance.</span></div>
-    <div id="cap-n10-1" class="cap" data-line="N10"><span>It still recommends filing,</span></div>
-    <div id="cap-n10-2" class="cap" data-line="N10"><span>because the expected loss is smaller.</span></div>
-    <div id="cap-n11-1" class="cap" data-line="N11"><span>Over the $250 line, it stops and asks,</span></div>
-    <div id="cap-n11-2" class="cap" data-line="N11"><span>with the evidence already written.</span></div>
-    <div id="cap-n12-1" class="cap" data-line="N12"><span>The seller decides.</span></div>
-    <div id="cap-n12-2" class="cap" data-line="N12"><span>A yes files it, with five seconds to undo.</span></div>
-    <div id="cap-n13-1" class="cap" data-line="N13"><span>CaseClerk files through PayPal&#x27;s Disputes API.</span></div>
-    <div id="cap-n13-2" class="cap" data-line="N13"><span>PayPal returns success and its own debug ID.</span></div>
-    <div id="cap-n14-1" class="cap" data-line="N14"><span>We asked PayPal&#x27;s sandbox to rule for the seller.</span></div>
-    <div id="cap-n15-1" class="cap" data-line="N15"><span>It ruled for the seller and released the hold:</span></div>
-    <div id="cap-n15-2" class="cap" data-line="N15"><span>$388.18 kept.</span></div>
-    <div id="cap-n16-1" class="cap" data-line="N16"><span>This amount comes from PayPal&#x27;s own</span></div>
-    <div id="cap-n16-2" class="cap" data-line="N16"><span>hold and release records.</span></div>
-    <div id="cap-n17-1" class="cap" data-line="N17"><span>You can ask the sandbox to rule</span></div>
-    <div id="cap-n17-2" class="cap" data-line="N17"><span>on your own test case, too.</span></div>
-    <div id="cap-n18-1" class="cap" data-line="N18"><span>The seller&#x27;s limits are enforced in code,</span></div>
-    <div id="cap-n18-2" class="cap" data-line="N18"><span>not a prompt.</span></div>
-    <div id="cap-n19-1" class="cap" data-line="N19"><span>Evidence under $250</span></div>
-    <div id="cap-n19-2" class="cap" data-line="N19"><span>and refunds up to $15 go out on their own.</span></div>
-    <div id="cap-n20-1" class="cap" data-line="N20"><span>Anything bigger waits for a yes.</span></div>
-    <div id="cap-n21-1" class="cap" data-line="N21"><span>Under the hood, every PayPal webhook is verified first.</span></div>
-    <div id="cap-n22-1" class="cap" data-line="N22"><span>Claude Haiku sorts the case.</span></div>
-    <div id="cap-n22-2" class="cap" data-line="N22"><span>Claude Opus works it with tools,</span></div>
-    <div id="cap-n22-3" class="cap" data-line="N22"><span>and writes the evidence.</span></div>
-    <div id="cap-n23-1" class="cap" data-line="N23"><span>Every action is checked against those limits</span></div>
-    <div id="cap-n23-2" class="cap" data-line="N23"><span>before reaching PayPal, and AI spend is capped.</span></div>
-    <div id="cap-n24-1" class="cap" data-line="N24"><span>Real sandbox chargebacks</span></div>
-    <div id="cap-n24-2" class="cap" data-line="N24"><span>have run this whole loop, every answer kept.</span></div>
-    <div id="cap-n25-1" class="cap" data-line="N25"><span>For a one-person shop,</span></div>
-    <div id="cap-n25-2" class="cap" data-line="N25"><span>every dispute gets an answer with evidence ready,</span></div>
-    <div id="cap-n25-3" class="cap" data-line="N25"><span>not a loss by default.</span></div>
+    <div id="cap-n01a" class="cap" data-line="N01a"><span>A buyer files a chargeback.</span></div>
+    <div id="cap-n01b" class="cap" data-line="N01b"><span>The seller has days to answer.</span></div>
+    <div id="cap-n02" class="cap" data-line="N02"><span>Miss it, and PayPal rules for the buyer.</span></div>
+    <div id="cap-n03" class="cap" data-line="N03"><span>CaseClerk answers them for small PayPal sellers.</span></div>
+    <div id="cap-n04" class="cap" data-line="N04"><span>Here it is, live on PayPal&#x27;s sandbox.</span></div>
+    <div id="cap-n05" class="cap" data-line="N05"><span>One click opens a real sandbox chargeback on a test order.</span></div>
+    <div id="cap-n06" class="cap" data-line="N06"><span>Three minutes later, PayPal&#x27;s webhook arrives, and CaseClerk checks its signature.</span></div>
+    <div id="cap-n07" class="cap" data-line="N07"><span>A Claude agent reads the order and the tracking, then stops to ask the seller.</span></div>
+    <div id="cap-n08" class="cap" data-line="N08"><span>A harder one: a $412.00 camera the buyer says isn&#x27;t as described.</span></div>
+    <div id="cap-n09a" class="cap" data-line="N09a"><span>Tracking proves delivery, not condition.</span></div>
+    <div id="cap-n09b" class="cap" data-line="N09b"><span>It estimates a 35% chance.</span></div>
+    <div id="cap-n10" class="cap" data-line="N10"><span>It still recommends filing, because the expected loss is smaller.</span></div>
+    <div id="cap-n11" class="cap" data-line="N11"><span>Over the $250 line, it stops and asks, with the evidence already written.</span></div>
+    <div id="cap-n12a" class="cap" data-line="N12a"><span>The seller decides.</span></div>
+    <div id="cap-n12b" class="cap" data-line="N12b"><span>A yes files it, with five seconds to undo.</span></div>
+    <div id="cap-n13a" class="cap" data-line="N13a"><span>CaseClerk files through PayPal&#x27;s Disputes API.</span></div>
+    <div id="cap-n13b" class="cap" data-line="N13b"><span>PayPal returns success and its own debug ID.</span></div>
+    <div id="cap-n14" class="cap" data-line="N14"><span>We asked PayPal&#x27;s sandbox to rule for the seller.</span></div>
+    <div id="cap-n15" class="cap" data-line="N15"><span>It ruled for the seller and released the hold: $388.18 kept.</span></div>
+    <div id="cap-n16" class="cap" data-line="N16"><span>This amount comes from PayPal&#x27;s own hold and release records.</span></div>
+    <div id="cap-n17" class="cap" data-line="N17"><span>You can ask the sandbox to rule on your own test case, too.</span></div>
+    <div id="cap-n18" class="cap" data-line="N18"><span>The seller&#x27;s limits are enforced in code, not a prompt.</span></div>
+    <div id="cap-n19" class="cap" data-line="N19"><span>Evidence under $250 and refunds up to $15 go out on their own.</span></div>
+    <div id="cap-n20" class="cap" data-line="N20"><span>Anything bigger waits for a yes.</span></div>
+    <div id="cap-n21" class="cap" data-line="N21"><span>Under the hood, every PayPal webhook is verified first.</span></div>
+    <div id="cap-n22a" class="cap" data-line="N22a"><span>Claude Haiku sorts the case.</span></div>
+    <div id="cap-n22b" class="cap" data-line="N22b"><span>Claude Opus works it with tools, and writes the evidence.</span></div>
+    <div id="cap-n23" class="cap" data-line="N23"><span>Every action is checked against those limits<br>before reaching PayPal, and AI spend is capped.</span></div>
+    <div id="cap-n24" class="cap" data-line="N24"><span>Real sandbox chargebacks have run this whole loop, every answer kept.</span></div>
+    <div id="cap-n25" class="cap" data-line="N25"><span>For a one-person shop, every dispute gets an answer<br>with evidence ready, not a loss by default.</span></div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
     [
-      ["cap-n01-1", 0.3, 2.674],
-      ["cap-n01-2", 2.674, 5.45],
-      ["cap-n02-1", 5.5, 9.45],
-      ["cap-n03-1", 9.6, 13.55],
-      ["cap-n04-1", 13.9, 17.5],
-      ["cap-n05-1", 17.5, 20.179],
-      ["cap-n05-2", 20.179, 22.75],
-      ["cap-n06-1", 24.7, 27.583],
-      ["cap-n06-2", 27.583, 29.95],
-      ["cap-n07-1", 30.1, 34.314],
-      ["cap-n07-2", 34.314, 37.05],
-      ["cap-n08-1", 37.7, 41.729],
-      ["cap-n08-2", 41.729, 44.65],
-      ["cap-n09-1", 44.9, 47.732],
-      ["cap-n09-2", 47.732, 50.85],
-      ["cap-n10-1", 51.1, 52.972],
-      ["cap-n10-2", 52.972, 55.65],
-      ["cap-n11-1", 55.9, 60.539],
-      ["cap-n11-2", 60.539, 63.45],
-      ["cap-n12-1", 64.7, 66.482],
-      ["cap-n12-2", 66.482, 70.45],
-      ["cap-n13-1", 75.2, 78.967],
-      ["cap-n13-2", 78.967, 82.4],
-      ["cap-n14-1", 82.9, 87.35],
-      ["cap-n15-1", 87.5, 90.886],
-      ["cap-n15-2", 90.886, 95.35],
-      ["cap-n16-1", 95.5, 98.808],
-      ["cap-n16-2", 98.808, 101.35],
-      ["cap-n17-1", 102.7, 105.9],
-      ["cap-n17-2", 105.9, 108.6],
-      ["cap-n18-1", 109, 112.517],
-      ["cap-n18-2", 112.517, 113.85],
-      ["cap-n19-1", 114.3, 117.587],
-      ["cap-n19-2", 117.587, 122.25],
-      ["cap-n20-1", 122.5, 125.85],
-      ["cap-n21-1", 127.4, 132.15],
-      ["cap-n22-1", 132.3, 134.733],
-      ["cap-n22-2", 134.733, 137.4],
-      ["cap-n22-3", 137.4, 139.65],
-      ["cap-n23-1", 139.8, 143.152],
-      ["cap-n23-2", 143.152, 146.95],
-      ["cap-n24-1", 147.2, 149.029],
-      ["cap-n24-2", 149.029, 152.45],
-      ["cap-n25-1", 153.2, 155.051],
-      ["cap-n25-2", 155.051, 158.949],
-      ["cap-n25-3", 158.949, 160.95]
+      ["cap-n01a", 0.3, 2.65],
+      ["cap-n01b", 2.65, 5.45],
+      ["cap-n02", 5.5, 9.45],
+      ["cap-n03", 9.6, 13.55],
+      ["cap-n04", 13.9, 17.5],
+      ["cap-n05", 17.5, 22.75],
+      ["cap-n06", 24.7, 29.95],
+      ["cap-n07", 30.1, 37.05],
+      ["cap-n08", 37.7, 44.65],
+      ["cap-n09a", 44.9, 47.75],
+      ["cap-n09b", 47.75, 50.85],
+      ["cap-n10", 51.1, 55.65],
+      ["cap-n11", 55.9, 63.45],
+      ["cap-n12a", 64.7, 66.45],
+      ["cap-n12b", 66.45, 70.45],
+      ["cap-n13a", 75.2, 78.65],
+      ["cap-n13b", 78.65, 82.4],
+      ["cap-n14", 82.9, 87.35],
+      ["cap-n15", 87.5, 95.35],
+      ["cap-n16", 95.5, 101.35],
+      ["cap-n17", 102.7, 108.6],
+      ["cap-n18", 109, 113.85],
+      ["cap-n19", 114.3, 122.25],
+      ["cap-n20", 122.5, 125.85],
+      ["cap-n21", 127.4, 132.15],
+      ["cap-n22a", 132.3, 134.7],
+      ["cap-n22b", 134.7, 139.65],
+      ["cap-n23", 139.8, 146.95],
+      ["cap-n24", 147.2, 152.45],
+      ["cap-n25", 153.2, 160.95]
     ].forEach(([id, a, z]) => {
       const el = "#" + id;
       tl.set(el, { visibility: "visible" }, a);

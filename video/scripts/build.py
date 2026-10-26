@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Build the CaseClerk film from video/edit.json.
 
-Writes index.html, compositions/captions.html and compositions/overlays.html,
-and refuses to write anything if the cut breaks a rule: beats and shots that
-don't tile the film, lines that overlap or run faster than maxWps (counted in
-spoken words, so "$388.18" is seven), shots past their source, or a camera
-that would show past the frame's edge.
+Writes index.html, compositions/captions.html, compositions/overlays.html and
+captions.srt/.vtt, and refuses to write anything if the cut breaks a rule: beats
+and shots that don't tile the film, lines that overlap or run faster than maxWps
+(counted in spoken words, so "$388.18" is seven), a row that isn't one whole
+sentence, shots past their source, or a camera that would show past the frame's edge.
+
+Each row of "lines" is one sentence and gets one caption. A line of two sentences
+is two rows, N01a and N01b, that abut; the gap rule applies between lines.
 
 Overlay text may say {count}: the number of documented sandbox chargebacks that ran
 the whole loop, from video/live/real-cases.json (write it with scripts/count_cases.py
@@ -28,6 +31,11 @@ import wave
 
 VIDEO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EPS = 1e-6
+SENTENCE_BREAK = re.compile(r"(?<=[.?!])\s+(?=[A-Z])")
+# a caption longer than this (about 1,450 px at 40 px) is set on two lines
+WRAP_AT = 84
+# a caption's first line never ends on one of these
+WEAK_END = {"a", "an", "the", "to", "of", "and", "or", "its", "with", "on", "in", "for", "at", "by"}
 
 
 def fmt(t):
@@ -71,7 +79,7 @@ def check(edit):
     errs, rows = [], []
     W, H, spoken = edit["width"], edit["height"], edit["spoken"]
     t = 0.0
-    last_line_end = 0.0
+    last_line_end, last_id = 0.0, ""
     for b in edit["beats"]:
         if abs(b["start"] - t) > EPS:
             errs.append(f"{b['id']} starts at {b['start']}, the film is at {t}")
@@ -107,16 +115,27 @@ def check(edit):
         for l in b["lines"]:
             if l["start"] < b["start"] - EPS or l["end"] > b["end"] + EPS:
                 errs.append(f"{l['id']} {l['start']}-{l['end']} is outside {b['id']}")
-            if l["start"] < last_line_end + 0.3 - EPS:
+            if not re.fullmatch(r"N\d\d[a-z]?", l["id"]):
+                errs.append(f"{l['id']} isn't a line id (N01, or N01a for a line's sentences)")
+            if SENTENCE_BREAK.search(l["text"]) or not re.search(r"[.?!]$", l["text"]):
+                errs.append(f"{l['id']} isn't one whole sentence: {l['text']}")
+            if "cap" in l:
+                errs.append(f"{l['id']} has a cap; a row is one caption now")
+            if max(len(x) for x in caption_lines(l["text"])) > WRAP_AT:
+                errs.append(f"{l['id']} is too long for a two-line caption")
+            sibling = l["id"][-1].isalpha() and l["id"][-1] != "a"
+            if sibling and (last_id[:3] != l["id"][:3] or ord(last_id[-1]) + 1 != ord(l["id"][-1])):
+                errs.append(f"{l['id']} doesn't follow {l['id'][:3]}{chr(ord(l['id'][-1]) - 1)}")
+            if sibling and abs(l["start"] - last_line_end) > EPS:
+                errs.append(f"{l['id']} starts at {l['start']}; it continues a line that ended at {last_line_end}")
+            if not sibling and l["start"] < last_line_end + 0.3 - EPS:
                 errs.append(f"{l['id']} starts {l['start'] - last_line_end:.2f} s after the last line; leave 0.3 s")
-            last_line_end = l["end"]
+            last_line_end, last_id = l["end"], l["id"]
             secs = l["end"] - l["start"]
             words = spoken_words(l["text"], spoken)
             wps = words / secs
             if wps > edit["maxWps"] + EPS:
                 errs.append(f"{l['id']} is {wps:.2f} words a second ({words} in {secs:.1f} s)")
-            if "cap" in l and " ".join(g.strip() for g in l["cap"].split("|")) != l["text"]:
-                errs.append(f"{l['id']} caption breaks don't match its text")
             rows.append((b["id"], l["id"], l["start"], l["end"], secs, words, wps, l["text"]))
     if abs(t - edit["duration"]) > EPS:
         errs.append(f"beats end at {t}, the film is {edit['duration']}")
@@ -131,17 +150,57 @@ def check(edit):
     return errs, rows
 
 
-def caption_groups(line, spoken):
-    """A line's caption groups (its "cap", split at |), sharing the line's time by spoken length."""
-    texts = [g.strip() for g in line.get("cap", line["text"]).split("|")]
-    weight = [len(" ".join(spoken.get(w.strip(".,:;"), w) for w in g.split())) for g in texts]
-    total = sum(weight)
-    out, t = [], line["start"]
-    for i, (text, wt) in enumerate(zip(texts, weight)):
-        end = line["end"] if i == len(texts) - 1 else t + (line["end"] - line["start"]) * wt / total
-        out.append((text, t, end))
-        t = end
+def caption_times(edit):
+    """One caption per row (one sentence): (row, on, off) on the film clock, for every row.
+
+    A caption opens 0.1 s before its row. When the next row is the same line's next
+    sentence it hands over at the row's end; otherwise it may hang 0.25 s, but never
+    into the next line or past its beat's last frame."""
+    rows = [l for b in edit["beats"] for l in b["lines"]]
+    beat_end = {l["id"]: b["end"] for b in edit["beats"] for l in b["lines"]}
+    out = []
+    for i, l in enumerate(rows):
+        nxt = rows[i + 1] if i + 1 < len(rows) else None
+        a = l["start"] if l["id"][-1].isalpha() and l["id"][-1] != "a" else l["start"] - 0.1
+        if nxt and nxt["id"][:3] == l["id"][:3]:
+            z = l["end"]
+        else:
+            z = min(l["end"] + 0.25, (nxt["start"] if nxt else edit["duration"]) - 0.1, beat_end[l["id"]])
+        out.append((l, round(a, 3), round(z, 3)))
     return out
+
+
+def caption_lines(text):
+    """One line, or two balanced lines broken between words (never after a weak word)."""
+    if len(text) <= WRAP_AT:
+        return [text]
+    words = text.split(" ")
+    best = None
+    for i in range(1, len(words)):
+        if words[i - 1].lower() in WEAK_END:
+            continue
+        a, b = " ".join(words[:i]), " ".join(words[i:])
+        if best is None or max(len(a), len(b)) < max(len(x) for x in best):
+            best = [a, b]
+    return best
+
+
+def stamp(t, sep):
+    ms = round(t * 1000)
+    return f"{ms // 3600000:02}:{ms // 60000 % 60:02}:{ms // 1000 % 60:02}{sep}{ms % 1000:03}"
+
+
+def write_subtitles(edit):
+    """captions.srt and captions.vtt: the same sentence captions, on the same clock (N26 too)."""
+    cues = caption_times(edit)
+    srt = "".join(f"{i}\n{stamp(a, ',')} --> {stamp(z, ',')}\n{l['text']}\n\n"
+                  for i, (l, a, z) in enumerate(cues, 1))
+    vtt = "WEBVTT\n\n" + "".join(f"{l['id']}\n{stamp(a, '.')} --> {stamp(z, '.')}\n{l['text']}\n\n"
+                                  for l, a, z in cues)
+    for name, text in (("captions.srt", srt), ("captions.vtt", vtt)):
+        with open(os.path.join(VIDEO, name), "w") as f:
+            f.write(text.rstrip("\n") + "\n")
+    return cues
 
 
 def esc(s):
@@ -153,21 +212,11 @@ FONT = ("@font-face{font-family:Archivo;src:url('assets/fonts/Archivo.ttf') form
 
 
 def write_captions(edit):
-    spoken = edit["spoken"]
-    groups = []
-    lines = [l for b in edit["beats"] for l in b["lines"]]
-    beat_end = {l["id"]: b["end"] for b in edit["beats"] for l in b["lines"]}
-    for i, l in enumerate(lines):
-        if l.get("captionOnCard"):
-            continue
-        # a caption may hang 0.25 s after its line, but never past its beat's last frame
-        nxt = min(lines[i + 1]["start"] if i + 1 < len(lines) else edit["duration"], beat_end[l["id"]] + 0.1)
-        for j, (text, a, z) in enumerate(caption_groups(l, spoken)):
-            a = a - 0.1 if j == 0 else a
-            z = min(z + 0.25, nxt - 0.1) if z == l["end"] else z
-            groups.append((f"cap-{l['id'].lower()}-{j + 1}", l["id"], text, round(a, 3), round(z, 3)))
+    # N26 is on the end card itself, so it has no burned caption (it is in the .srt/.vtt)
+    groups = [(f"cap-{l['id'].lower()}", l["id"], l["text"], a, z)
+              for l, a, z in caption_times(edit) if not l.get("captionOnCard")]
     divs = "\n".join(
-        f'    <div id="{gid}" class="cap" data-line="{lid}"><span>{esc(text)}</span></div>'
+        f'    <div id="{gid}" class="cap" data-line="{lid}"><span>{"<br>".join(esc(t) for t in caption_lines(text))}</span></div>'
         for gid, lid, text, a, z in groups)
     times = ",\n      ".join(f'["{gid}", {fmt(a)}, {fmt(z)}]' for gid, _, _, a, z in groups)
     doc = f"""<!-- Generated by scripts/build.py from edit.json. Edit the lines there, not here. -->
@@ -177,7 +226,8 @@ def write_captions(edit):
     #root {{ position: absolute; inset: 0; }}
     .cap {{ position: absolute; left: 0; right: 0; bottom: 112px; text-align: center; opacity: 0; visibility: hidden; }}
     .cap span {{
-      display: inline-block; padding: 9px 22px 11px; background: rgba(21, 21, 20, 0.92); color: #f2f1ec;
+      display: inline-block; white-space: nowrap;
+      padding: 9px 22px 11px; background: rgba(21, 21, 20, 0.92); color: #f2f1ec;
       font-family: Archivo; font-size: 40px; font-weight: 500; line-height: 1.2; letter-spacing: -0.2px;
       font-feature-settings: "tnum"; font-variation-settings: "wdth" 100;
     }}
@@ -369,7 +419,14 @@ html, body {{ margin: 0; width: {W}px; height: {H}px; overflow: hidden; backgrou
 
 
 def mmss(t):
-    return f"{int(t // 60)}:{t % 60:04.1f}"
+    # a sentence split can fall between tenths (0:02.65); show it exactly
+    s = t % 60
+    return f"{int(t // 60)}:{s:05.2f}" if abs(round(t * 10) - t * 10) > EPS else f"{int(t // 60)}:{s:04.1f}"
+
+
+def secs2(x):
+    s = f"{x:.2f}"
+    return s[:-1] if s.endswith("0") else s
 
 
 def print_md(edit, rows):
@@ -395,7 +452,7 @@ def print_md(edit, rows):
     print("| Id | Beat | Start–end | Secs | Words | wps | Line |")
     print("|---|---|---|---|---|---|---|")
     for beat, lid, a, z, secs, n, wps, text in rows:
-        print(f"| {lid} | {beat} | {mmss(a)}–{mmss(z)} | {secs:.1f} | {n} | {wps:.2f} | {text} |")
+        print(f"| {lid} | {beat} | {mmss(a)}–{mmss(z)} | {secs2(secs)} | {n} | {wps:.2f} | {text} |")
 
 
 def main():
@@ -411,14 +468,17 @@ def main():
     words = 0
     for beat, lid, a, z, secs, n, wps, text in rows:
         words += n
-        print(f"{beat:4} {lid} {a:6.1f}-{z:6.1f} {secs:4.1f}s {n:3}w {wps:4.2f}  {text}")
-    print(f"{len(rows)} lines, {words} spoken words, film {edit['duration']} s")
+        print(f"{beat:4} {lid:4} {a:6.2f}-{z:6.2f} {secs:4.2f}s {n:3}w {wps:4.2f}  {text}")
+    lines = len({r[1][:3] for r in rows})
+    print(f"{len(rows)} sentences in {lines} lines, {words} spoken words, film {edit['duration']} s")
     if "--check" in sys.argv:
         return
     groups = write_captions(edit)
+    cues = write_subtitles(edit)
     write_overlays(edit)
     write_index(edit)
-    print(f"wrote index.html, compositions/captions.html ({len(groups)} groups), compositions/overlays.html")
+    print(f"wrote index.html, compositions/captions.html ({len(groups)} captions), compositions/overlays.html, "
+          f"captions.srt/.vtt ({len(cues)} cues)")
 
 
 if __name__ == "__main__":
