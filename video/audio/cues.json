@@ -1,5 +1,5 @@
 {
- "about": "Sound cues for cut A. Times are on the film clock with B5J in; edit.json is the source of truth (build.py places them). No music anywhere. Every sound is CC0 from Kenney, decoded from the pack's .ogg to 48 kHz mono wav and peak-normalised to -3 dBFS.",
+ "about": "The film's sound from rehearsal D: the owner's narration, a music bed we synthesized in code, and six CC0 cues. Times are on the film clock; edit.json is the source of truth and scripts/mix.py mixes all three into assets/audio/mix.wav (not in git), the one sound track index.html plays from 0. Every cue sound is CC0 from Kenney, decoded from the pack's .ogg to 48 kHz mono wav and peak-normalised to -3 dBFS.",
  "packs": {
   "interface-sounds": {
    "name": "Kenney Interface Sounds 1.0",
@@ -16,6 +16,15 @@
    "zipSha256": "946fc23a63d535d693eb31b2eabb80c8c28d6351e2186b344ceb71b2cb1d5eb6",
    "license": "CC0 1.0 (License.txt in the zip)",
    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "rpg-audio": {
+   "name": "Kenney RPG Audio",
+   "page": "https://kenney.nl/assets/rpg-audio",
+   "zip": "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip",
+   "zipSha256": "6dbeaf8544da958d8f2adcb4a4a4b76c1ade34a05f8ab9edccd327da7375f38b",
+   "license": "CC0 1.0 (License.txt in the zip)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "fetched": "2026-10-27"
   }
  },
  "sounds": {
@@ -31,7 +40,8 @@
    "pack": "ui-audio",
    "original": "Audio/click1.ogg",
    "seconds": 0.091,
-   "sha256": "0dac685526427675fb3031b04d2b911f32e98fb5f290d22ac5657a71bf03b1b7"
+   "sha256": "0dac685526427675fb3031b04d2b911f32e98fb5f290d22ac5657a71bf03b1b7",
+   "note": "not cued since rehearsal D"
   },
   "pop": {
    "file": "assets/sfx/pop.wav",
@@ -46,6 +56,20 @@
    "original": "Audio/tick_002.ogg",
    "seconds": 0.02,
    "sha256": "1fb9670c87a8e72725238bc76922b818558ab0bee46353693fd68711c107cd60"
+  },
+  "page": {
+   "file": "assets/sfx/page.wav",
+   "pack": "rpg-audio",
+   "original": "Audio/bookFlip2.ogg (left channel)",
+   "seconds": 0.43,
+   "sha256": "18b37b45650a52dad579ea373391215a2fd0c932e733c630d7c4afe5c972bf70"
+  },
+  "land": {
+   "file": "assets/sfx/land.wav",
+   "pack": "rpg-audio",
+   "original": "Audio/bookPlace3.ogg (left channel)",
+   "seconds": 0.261,
+   "sha256": "0bbbd85b933b17b613e01fa8ce07f1ce480a39d862fd7703225a55d439cf1b1b"
   }
  },
  "cues": [
@@ -68,67 +92,54 @@
    "license": "CC0 1.0"
   },
   {
-   "id": "sfx-03",
-   "at": 38.96,
-   "sound": "click-b",
-   "volume": 0.5,
-   "why": "vpy: click on the Chargeback in stop",
-   "file": "assets/sfx/click-b.wav",
-   "license": "CC0 1.0"
-  },
-  {
-   "id": "sfx-04",
-   "at": 43.8,
-   "sound": "click-a",
-   "volume": 0.5,
-   "why": "vpy: click on the Asked you stop",
-   "file": "assets/sfx/click-a.wav",
-   "license": "CC0 1.0"
-  },
-  {
-   "id": "sfx-05",
-   "at": 65.53,
-   "sound": "click-b",
-   "volume": 0.5,
-   "why": "stand-in: File the evidence",
-   "file": "assets/sfx/click-b.wav",
-   "license": "CC0 1.0"
-  },
-  {
    "id": "sfx-06",
-   "at": 68.43,
+   "at": 66.525,
    "sound": "click-a",
    "volume": 0.55,
-   "why": "stand-in: Yes, file it",
+   "why": "vpy-approve: the click on Yes, file it (src 5.225)",
    "file": "assets/sfx/click-a.wav",
    "license": "CC0 1.0"
   },
   {
    "id": "sfx-07",
-   "at": 79.1,
+   "at": 79.23,
    "sound": "pop",
    "volume": 0.4,
-   "why": "stand-in: PayPal's 200 settles (src 15.5)",
+   "why": "vpy-approve: PayPal's 200 settles (src 17.93)",
    "file": "assets/sfx/pop.wav",
    "license": "CC0 1.0"
   },
   {
-   "id": "sfx-08",
-   "at": 88.16,
-   "sound": "click-b",
+   "id": "sfx-10",
+   "at": 126.95,
+   "sound": "page",
    "volume": 0.5,
-   "why": "vab: click on the Closed for you stop",
-   "file": "assets/sfx/click-b.wav",
+   "why": "the diagram comes in (arch)",
+   "file": "assets/sfx/page.wav",
    "license": "CC0 1.0"
   },
   {
-   "id": "sfx-09",
-   "at": 93.95,
-   "sound": "click-a",
-   "volume": 0.5,
-   "why": "vab: click on the You said yes stop",
-   "file": "assets/sfx/click-a.wav",
+   "id": "sfx-11",
+   "at": 160.8,
+   "sound": "land",
+   "volume": 0.6,
+   "why": "the end card's mark lands",
+   "file": "assets/sfx/land.wav",
    "license": "CC0 1.0"
   }
- ]
+ ],
+ "narration": {
+  "who": "The owner, one take recorded against rehearsal C on 2026-10-27",
+  "file": "s4/video/narration/caseclerk-owner-take1.m4a (outside git; never committed)",
+  "use": "Each sentence cut at its row's 'take' span in edit.json and moved to the row's start: time shifts only, no stretch, no pitch change. Light chain: high-pass 80 Hz, -3 dB at 150 Hz, +1.5 dB at 2.8 kHz, -2 dB shelf from 8 kHz, de-esser, 2.5:1 compression (about 3 dB on average)."
+ },
+ "music": {
+  "title": "CaseClerk bed (untitled)",
+  "source": "Own work: synthesized in code by video/scripts/mix.py (ffmpeg aevalsrc sine voices, felt-piano-like plucks and a synthesized noise room). No samples, no recordings, no model.",
+  "license": "Ours outright: no third-party rights, no attribution owed, no Content ID registration.",
+  "date": "2026-10-27",
+  "what": "A slow vi-IV-I-V pad in D major (Bm9, Gmaj9, Dmaj9, A add9, 8.02 s a chord) with three soft notes a chord, resolving to Dmaj9 with a low D on the end card.",
+  "level": "Unducked about -26.5 LUFS before the master; under speech it dips 10 dB, about 20 dB under the voice; +4 dB over the title's brand (7.6-10.4 s) and +5 dB on the end card, fading out over the last 3.6 s."
+ },
+ "cuesNote": "Sparse, on real picture events only: the arrival click, the +3 min plate, the click on Yes, file it, PayPal's 200, the diagram coming in, the end card's mark. None sits on a key spoken word: the Yes click lands between 'A yes' and 'files' (56 ms, about 14 dB under the voice), the others in pauses. Rehearsal C's other clicks (sfx-03 to 05, 08, 09) were dropped."
 }

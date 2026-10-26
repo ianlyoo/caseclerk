@@ -1,7 +1,7 @@
 {
  "about": "N24's on-screen count. Written by scripts/count_cases.py from production GETs; only the ids documented in docs/REAL-CASES.md are read.",
- "readAt": "2026-10-26T14:07:02Z",
- "count": 10,
+ "readAt": "2026-10-26T16:14:22Z",
+ "count": 11,
  "counted": [
   {
    "id": "PP-R-AAJ-10194495",
@@ -72,6 +72,13 @@
    "status": "resolved",
    "filed": true,
    "kept": "388.18"
+  },
+  {
+   "id": "PP-R-VPY-10194485",
+   "amount": "412.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "400.84"
   }
  ],
  "leftOut": [
@@ -95,13 +102,6 @@
    "status": "resolved",
    "filed": false,
    "kept": "26.74"
-  },
-  {
-   "id": "PP-R-VPY-10194485",
-   "amount": "412.00",
-   "status": "awaiting_approval",
-   "filed": false,
-   "kept": null
   },
   {
    "id": "PP-R-YDQ-10194582",

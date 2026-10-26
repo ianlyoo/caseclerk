@@ -22,18 +22,18 @@
   },
   "vpy": {
    "file": "assets/footage/vpy.mp4",
-   "take": "footage/vpy.webm",
+   "take": "footage/vpy-b3-waiting.webm",
    "case": "PP-R-VPY-10194485",
    "videoOffset": 0.41,
    "dur": 41.83
   },
-  "standin": {
-   "file": "assets/footage/standin-approve.mp4",
-   "take": "docs/design/d2/stage2/approve-1440.mp4",
-   "case": "PP-R-VAB-10194570",
+  "vpy-approve": {
+   "file": "assets/footage/vpy-approve.mp4",
+   "take": "footage/vpy.webm",
+   "case": "PP-R-VPY-10194485",
    "videoOffset": 0,
-   "note": "Stand-in for phase B: the VAB approval recorded 10/25 at 1440x900, pillarboxed on metal. Phase B replaces it with the VPY approval take.",
-   "dur": 18.8
+   "dur": 25.4,
+   "note": "D2's approval take (2026-10-26 15:47Z, production): File the evidence (5 s undo), Sending to PayPal, PayPal's 200 with debug id f411956448116, then the sandbox ruling band."
   },
   "vab": {
    "file": "assets/footage/vab.mp4",
@@ -83,24 +83,41 @@
      "id": "N01a",
      "start": 0.4,
      "end": 2.65,
-     "text": "A buyer files a chargeback."
+     "take": [
+      2.38,
+      3.98
+     ],
+     "text": "The buyer files a chargeback.",
+     "script": "A buyer files a chargeback."
     },
     {
      "id": "N01b",
      "start": 2.65,
-     "end": 5.2,
+     "end": 4.2,
+     "take": [
+      4.08,
+      5.63
+     ],
      "text": "The seller has days to answer."
     },
     {
      "id": "N02",
      "start": 5.6,
-     "end": 9.2,
+     "end": 7.79,
+     "take": [
+      6.68,
+      8.87
+     ],
      "text": "Miss it, and PayPal rules for the buyer."
     },
     {
      "id": "N03",
      "start": 9.7,
-     "end": 13.3,
+     "end": 12.39,
+     "take": [
+      10.92,
+      13.61
+     ],
      "text": "CaseClerk answers them for small PayPal sellers."
     }
    ]
@@ -133,7 +150,8 @@
        0,
        2.2
       ]
-     ]
+     ],
+     "dissolve": 0.4
     },
     {
      "id": "arrival-plate",
@@ -150,7 +168,8 @@
        -150,
        0
       ]
-     ]
+     ],
+     "dissolve": 0.3
     },
     {
      "id": "arrival-webhook",
@@ -167,7 +186,8 @@
        -150,
        0
       ]
-     ]
+     ],
+     "dissolve": 0.3
     },
     {
      "id": "rsl-asked",
@@ -184,32 +204,50 @@
        -275.6,
        0
       ]
-     ]
+     ],
+     "dissolve": 0.3
     }
    ],
    "lines": [
     {
      "id": "N04",
      "start": 14.0,
-     "end": 17.3,
+     "end": 16.26,
+     "take": [
+      15.57,
+      17.83
+     ],
      "text": "Here it is, live on PayPal's sandbox."
     },
     {
      "id": "N05",
-     "start": 17.6,
-     "end": 22.5,
+     "start": 17.7,
+     "end": 20.95,
+     "take": [
+      19.23,
+      22.48
+     ],
      "text": "One click opens a real sandbox chargeback on a test order."
     },
     {
      "id": "N06",
      "start": 24.8,
-     "end": 29.7,
-     "text": "Three minutes later, PayPal's webhook arrives, and CaseClerk checks its signature."
+     "end": 28.74,
+     "take": [
+      26.57,
+      30.51
+     ],
+     "text": "Three minutes later, PayPal's webhook arrives, and CaseClerk checks the signature.",
+     "script": "Three minutes later, PayPal's webhook arrives, and CaseClerk checks its signature."
     },
     {
      "id": "N07",
      "start": 30.2,
-     "end": 36.8,
+     "end": 33.9,
+     "take": [
+      31.88,
+      35.58
+     ],
      "text": "A Claude agent reads the order and the tracking, then stops to ask the seller."
     }
    ]
@@ -242,7 +280,8 @@
        -550,
        1.0
       ]
-     ]
+     ],
+     "dissolve": 0.35
     },
     {
      "id": "vpy-evidence",
@@ -269,38 +308,59 @@
        0,
        0
       ]
-     ]
+     ],
+     "dissolve": 0.3
     }
    ],
    "lines": [
     {
      "id": "N08",
      "start": 37.8,
-     "end": 44.4,
+     "end": 42.53,
+     "take": [
+      39.71,
+      44.44
+     ],
      "text": "A harder one: a $412.00 camera the buyer says isn't as described."
     },
     {
      "id": "N09a",
      "start": 45.0,
      "end": 47.75,
+     "take": [
+      46.76,
+      48.87
+     ],
      "text": "Tracking proves delivery, not condition."
     },
     {
      "id": "N09b",
      "start": 47.75,
-     "end": 50.6,
+     "end": 50.21,
+     "take": [
+      49.53,
+      51.99
+     ],
      "text": "It estimates a 35% chance."
     },
     {
      "id": "N10",
      "start": 51.2,
-     "end": 55.4,
+     "end": 54.63,
+     "take": [
+      53.02,
+      56.45
+     ],
      "text": "It still recommends filing, because the expected loss is smaller."
     },
     {
      "id": "N11",
      "start": 56.0,
-     "end": 63.2,
+     "end": 60.12,
+     "take": [
+      57.9,
+      62.02
+     ],
      "text": "Over the $250 line, it stops and asks, with the evidence already written."
     }
    ]
@@ -310,68 +370,82 @@
    "name": "The seller's yes",
    "start": 64.2,
    "end": 82.4,
-   "phaseB": "Replace the stand-in with the VPY approval take (1920x1080). Retime N12a-N13b to it, with N13b on the 200.",
    "shots": [
     {
      "id": "approve",
-     "src": "standin",
-     "in": 0.6,
      "start": 64.2,
      "end": 82.4,
-     "standin": true,
-     "shows": "File the evidence, Yes file it, Filing in 4 s / Undo, Sending, then PayPal's answer: 200 accepted, with PayPal's debug id. Cropped below the item headline; the crop opens 34 px while the panel is blank, so PayPal's answer shows whole.",
+     "src": "vpy-approve",
+     "in": 2.9,
      "cam": [
       [
        64.2,
        1.15,
-       -130,
-       -162,
+       -160,
+       -120,
        0
       ]
      ],
      "window": [
       [
        64.2,
-       120,
        0,
        0,
+       280,
        0,
        0
-      ],
-      [
-       78.25,
-       86,
-       0,
-       0,
-       0,
-       0.15
       ]
-     ]
+     ],
+     "covers": [
+      [
+       0,
+       0,
+       1226,
+       92
+      ]
+     ],
+     "dissolve": 0.35
     }
    ],
    "lines": [
     {
      "id": "N12a",
      "start": 64.8,
-     "end": 66.45,
+     "end": 65.69,
+     "take": [
+      66.77,
+      67.62
+     ],
      "text": "The seller decides."
     },
     {
      "id": "N12b",
-     "start": 66.45,
-     "end": 70.2,
+     "start": 65.69,
+     "end": 68.5,
+     "take": [
+      67.64,
+      70.45
+     ],
      "text": "A yes files it, with five seconds to undo."
     },
     {
      "id": "N13a",
-     "start": 75.3,
-     "end": 78.65,
+     "start": 74.6,
+     "end": 79.4,
+     "take": [
+      77.15,
+      80.08
+     ],
      "text": "CaseClerk files through PayPal's Disputes API."
     },
     {
      "id": "N13b",
-     "start": 78.65,
-     "end": 82.4,
+     "start": 79.4,
+     "end": 82.33,
+     "take": [
+      80.52,
+      83.45
+     ],
      "text": "PayPal returns success and its own debug ID."
     }
    ]
@@ -397,26 +471,40 @@
        -228.8,
        0
       ]
-     ]
+     ],
+     "dissolve": 0.35
     }
    ],
    "lines": [
     {
      "id": "N14",
      "start": 83.0,
-     "end": 87.1,
+     "end": 85.54,
+     "take": [
+      84.75,
+      87.29
+     ],
      "text": "We asked PayPal's sandbox to rule for the seller."
     },
     {
      "id": "N15",
      "start": 87.6,
-     "end": 95.1,
-     "text": "It ruled for the seller and released the hold: $388.18 kept."
+     "end": 92.15,
+     "take": [
+      89.21,
+      93.76
+     ],
+     "text": "It ruled for a seller and released the hold: $388 kept.",
+     "script": "It ruled for the seller and released the hold: $388.18 kept."
     },
     {
      "id": "N16",
      "start": 95.6,
-     "end": 101.1,
+     "end": 98.85,
+     "take": [
+      97.38,
+      100.63
+     ],
      "text": "This amount comes from PayPal's own hold and release records."
     }
    ]
@@ -426,22 +514,54 @@
    "name": "Judge loop (phase B slot)",
    "start": 102.4,
    "end": 108.6,
-   "conditional": "Keep only if the judge-loop control ships on production. If it doesn't, delete this beat and N17 and pull everything after it 6.2 s earlier (film 2:42.3).",
+   "conditional": "The ruling band shipped on production (it is on the VPY approval take, 10/26). If the judge-loop control is pulled, delete this beat and N17 and pull everything after it 6.2 s earlier.",
    "shots": [
     {
      "id": "judge",
-     "scene": "compositions/judge.html",
      "start": 102.4,
      "end": 108.6,
-     "slot": true
+     "src": "vpy-approve",
+     "in": 19.1,
+     "cam": [
+      [
+       102.4,
+       1.5,
+       -960,
+       -530,
+       0
+      ],
+      [
+       102.4,
+       1.58,
+       -1113.6,
+       -588,
+       6.2
+      ]
+     ],
+     "window": [
+      [
+       102.4,
+       0,
+       0,
+       400,
+       0,
+       0
+      ]
+     ],
+     "dissolve": 0.35
     }
    ],
    "lines": [
     {
      "id": "N17",
      "start": 102.8,
-     "end": 108.6,
-     "text": "You can ask the sandbox to rule on your own test case, too.",
+     "end": 105.63,
+     "take": [
+      104.55,
+      107.38
+     ],
+     "text": "You can ask the sandbox to rule for your own test case, too.",
+     "script": "You can ask the sandbox to rule on your own test case, too.",
      "conditional": true
     }
    ]
@@ -474,26 +594,39 @@
        -74,
        1.0
       ]
-     ]
+     ],
+     "dissolve": 0.35
     }
    ],
    "lines": [
     {
      "id": "N18",
      "start": 109.1,
-     "end": 113.6,
+     "end": 112.03,
+     "take": [
+      110.79,
+      113.72
+     ],
      "text": "The seller's limits are enforced in code, not a prompt."
     },
     {
      "id": "N19",
      "start": 114.4,
-     "end": 122.0,
+     "end": 119.54,
+     "take": [
+      116.15,
+      121.29
+     ],
      "text": "Evidence under $250 and refunds up to $15 go out on their own."
     },
     {
      "id": "N20",
      "start": 122.6,
-     "end": 125.6,
+     "end": 124.65,
+     "take": [
+      124.29,
+      126.34
+     ],
      "text": "Anything bigger waits for a yes."
     }
    ]
@@ -508,7 +641,8 @@
      "id": "arch",
      "scene": "compositions/arch.html",
      "start": 127.0,
-     "end": 148.0
+     "end": 148.0,
+     "dissolve": 0.35
     },
     {
      "id": "cases",
@@ -535,39 +669,63 @@
        0,
        0
       ]
-     ]
+     ],
+     "dissolve": 0.35
     }
    ],
    "lines": [
     {
      "id": "N21",
      "start": 127.5,
-     "end": 131.9,
+     "end": 130.81,
+     "take": [
+      129.29,
+      132.6
+     ],
      "text": "Under the hood, every PayPal webhook is verified first."
     },
     {
      "id": "N22a",
      "start": 132.4,
      "end": 134.7,
+     "take": [
+      134.03,
+      135.78
+     ],
      "text": "Claude Haiku sorts the case."
     },
     {
      "id": "N22b",
      "start": 134.7,
-     "end": 139.4,
-     "text": "Claude Opus works it with tools, and writes the evidence."
+     "end": 137.43,
+     "take": [
+      136.4,
+      139.13
+     ],
+     "text": "Claude Opus works with tools, and writes the evidence.",
+     "script": "Claude Opus works it with tools, and writes the evidence."
     },
     {
      "id": "N23",
      "start": 139.9,
-     "end": 146.7,
-     "text": "Every action is checked against those limits before reaching PayPal, and AI spend is capped."
+     "end": 145.04,
+     "take": [
+      141.59,
+      146.73
+     ],
+     "text": "Every action is checked against the limits before reaching PayPal, and AI spend is capped.",
+     "script": "Every action is checked against those limits before reaching PayPal, and AI spend is capped."
     },
     {
      "id": "N24",
      "start": 147.3,
-     "end": 152.2,
-     "text": "Real sandbox chargebacks have run this whole loop, every answer kept."
+     "end": 152.42,
+     "take": [
+      149.15,
+      154.27
+     ],
+     "text": "Real sandbox chargebacks have run this whole loop — every answer is kept.",
+     "script": "Real sandbox chargebacks have run this whole loop, every answer kept."
     }
    ]
   },
@@ -592,21 +750,28 @@
        0,
        0
       ]
-     ]
+     ],
+     "dissolve": 0.35
     },
     {
      "id": "end",
      "scene": "compositions/end.html",
      "start": 160.4,
-     "end": 168.5
+     "end": 168.5,
+     "dissolve": 0.4
     }
    ],
    "lines": [
     {
      "id": "N25",
      "start": 153.3,
-     "end": 160.7,
-     "text": "For a one-person shop, every dispute gets an answer with evidence ready, not a loss by default."
+     "end": 159.41,
+     "take": [
+      155.38,
+      161.49
+     ],
+     "text": "For a one-person shop, every dispute gets an answer with every evidence ready, not a loss by default.",
+     "script": "For a one-person shop, every dispute gets an answer with evidence ready, not a loss by default."
     },
     {
      "id": "N26a",
@@ -633,7 +798,8 @@
   "35%": "thirty-five percent",
   "API": "A P I",
   "ID": "I D",
-  "AI": "A I"
+  "AI": "A I",
+  "$388": "three hundred eighty-eight dollars"
  },
  "overlays": [
   {
@@ -642,13 +808,6 @@
    "end": 28.8,
    "text": "+3 min",
    "sub": "Real wait, cut. The page's own clock keeps counting."
-  },
-  {
-   "id": "ov-standin",
-   "start": 64.2,
-   "end": 82.4,
-   "text": "Stand-in: the $399.00 case, Oct 25",
-   "sub": "Phase B records the $412.00 case."
   },
   {
    "id": "ov-earlier",
@@ -681,55 +840,55 @@
    "why": "the +3 min plate lands"
   },
   {
-   "id": "sfx-03",
-   "at": 38.96,
-   "sound": "click-b",
-   "volume": 0.5,
-   "why": "vpy: click on the Chargeback in stop"
-  },
-  {
-   "id": "sfx-04",
-   "at": 43.8,
-   "sound": "click-a",
-   "volume": 0.5,
-   "why": "vpy: click on the Asked you stop"
-  },
-  {
-   "id": "sfx-05",
-   "at": 65.53,
-   "sound": "click-b",
-   "volume": 0.5,
-   "why": "stand-in: File the evidence"
-  },
-  {
    "id": "sfx-06",
-   "at": 68.43,
+   "at": 66.525,
    "sound": "click-a",
    "volume": 0.55,
-   "why": "stand-in: Yes, file it"
+   "why": "vpy-approve: the click on Yes, file it (src 5.225)"
   },
   {
    "id": "sfx-07",
-   "at": 79.1,
+   "at": 79.23,
    "sound": "pop",
    "volume": 0.4,
-   "why": "stand-in: PayPal's 200 settles (src 15.5)"
+   "why": "vpy-approve: PayPal's 200 settles (src 17.93)"
   },
   {
-   "id": "sfx-08",
-   "at": 88.16,
-   "sound": "click-b",
+   "id": "sfx-10",
+   "at": 126.95,
+   "sound": "page",
    "volume": 0.5,
-   "why": "vab: click on the Closed for you stop"
+   "why": "the diagram comes in (arch)"
   },
   {
-   "id": "sfx-09",
-   "at": 93.95,
-   "sound": "click-a",
-   "volume": 0.5,
-   "why": "vab: click on the You said yes stop"
+   "id": "sfx-11",
+   "at": 160.8,
+   "sound": "land",
+   "volume": 0.6,
+   "why": "the end card's mark lands"
   }
  ],
  "camNote": "cam: [film time, scale, x, y, move seconds]; the source pixel (px,py) lands at (x + scale*px, y + scale*py). Moves ease power2.inOut; 0 s is a cut. A shot's \"window\" keys [film time, top, right, bottom, left, move seconds] crop the footage to the rest of the frame (insets in px); the crop resets when the shot ends.",
- "capNote": "lines: one row per sentence, and one caption per row. A line of two sentences is two rows with suffixed ids (N01a, N01b) that abut; build.py writes the captions and captions.srt/.vtt from these rows."
+ "capNote": "lines: one row per sentence, and one caption per row. A line of two sentences is two rows with suffixed ids (N01a, N01b) that abut. 'take' is the sentence's span in the narration take; a voiced row starts where its voice starts and lasts at least as long. build.py writes the captions and captions.srt/.vtt from these rows.",
+ "audio": {
+  "mix": "assets/audio/mix.wav",
+  "take": "s4/video/narration/caseclerk-owner-take1.m4a",
+  "note": "scripts/mix.py builds mix.wav (the one sound track, from 0): each row's sentence cut from the take at its 'take' span and placed at the row's start (time shifts only), the voice chain, the synthesized bed (bedLufs unducked, down by duckDb under speech, which sits it about 20 dB under the voice; lifts at the title's brand and on the end card), and the cues. Captions are the words spoken; 'script' keeps the written line where they differ.",
+  "duckDb": -10,
+  "bedLufs": -26.5,
+  "lifts": [
+   [
+    7.6,
+    10.4,
+    4
+   ],
+   [
+    159.4,
+    168.5,
+    5
+   ]
+  ],
+  "targetLufs": -14,
+  "ceilingDbtp": -1
+ }
 }

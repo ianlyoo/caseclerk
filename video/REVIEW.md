@@ -104,3 +104,32 @@ I snapshotted the middle of all 30 burned captions, every a/b handover, and the 
 - N25's two lines sit over the landing's Record row (the webhook id and "Replay the case"), which isn't being talked about.
 - N26a and N26b stay off the picture (the end card shows their words); they are in the .srt and .vtt.
 - Rehearsal B's notes still apply.
+
+# Review: rehearsal D (PM delta v3/v3b/v3c: the owner's take, sound, VPY)
+
+Same picture pipeline as rehearsal C, now with sound. What changed: the owner's narration (one take, each sentence moved in time to its row, nothing stretched), a bed synthesized by `scripts/mix.py`, six CC0 cues, a short dissolve at each of the 14 cuts, and D2's real VPY approval in B4 and B5J. Captions are the words as spoken, one per sentence, 30 of them; N26a and N26b aren't in the take, so they are off the .srt and .vtt until the re-record. `LISTEN.md` has the sound, the take review and the five places to listen.
+
+## Snapshots before rendering (HyperFrames, 10/27)
+
+I snapshotted the middle of every dissolve, B4 from Yes, file it through the 200 (1:04, 1:06, 1:10, 1:19.6, 1:21.8), B5J under N17, and the end card as it lands. All 14 dissolves read as one shot handing over to the next. B4's headline stays under its cover; "200 accepted" and debug id f411956448116 are on screen when N13b starts. B5J shows the sandbox ruling control (Seller wins, Buyer wins, Ask for the ruling), never clicked. Lint flagged the cover div for having no id; covers now get `k-SHOT-N` ids, 0 warnings.
+
+## Render (10/27 01:16–01:25 KST, capture 8 min 12 s)
+
+`s4/video/rehearsal-d.mp4`, sha256 b4b870ade4aaa931404817a01ca3f0a05847a5bb37206154e6fdcbcc443dfef8, 52.3 MB, with `rehearsal-d.srt`, `rehearsal-d.vtt` and `rehearsal-d-contact-sheet.png` beside it. Rendered on win-guest as rehearsal C was, not on the Mac. The on-screen count was read at 2026-10-26T16:14:22Z (11 of 15 documented cases, VPY now among them).
+
+- ffprobe: h264 High, yuv420p, 1920×1080, 30/1, 5055 frames, 168.5 s (2:48.5), 2.49 Mb/s, AAC LC.
+- A full decode with `-xerror` logged 0 error lines. Atom order is ftyp moov free mdat (fast-start).
+- Sound: −14.3 LUFS, −1.5 dBTP, LRA 8.7 LU on the AAC track. Voice onsets match their rows (silencedetect on the voice stem: 0.39, 2.66, 5.59 …) and the cues land on their frames (18.23, 24.68, 66.525, 79.23, 126.95, 160.8).
+- I looked at the nine beat midpoints (B8 now on the settled end card, 2:44.5), the before/after pair at each of the 14 cuts, N23 and N25 on two lines, and the end card at 2:44.5 and 2:48.3. For the sound I went through the whole mix by its spectrogram and waveform, a small-speaker and an earbud simulation, a mono fold-down, loudness and peak meters, and a fresh transcription; I can't hear it, so the five places in `LISTEN.md` are for an ear. Nothing to fix turned up.
+
+## Known and accepted (rehearsal D)
+
+- N26a and N26b aren't voiced yet: the end card shows their words under the bed's lift. Five rows to re-record are listed in `LISTEN.md`; the take as it is carries the film.
+- Captions are clean verbatim: N15 is captioned "$388 kept" and "a seller" as said, N23 "the limits", N25 "every evidence". They change with the re-record.
+- B4's headline is under a flat plate-coloured cover (y 0–92) for the whole shot.
+- B5 stays on VAB (rehearsal C's footage): N15 as spoken names VAB's $388.
+- The bed's room is wide; folded to mono the bed loses 2.9 dB (median), the voice nothing.
+- The limiter takes up to 3.2 dB off a few sentence onsets; under 1 dB on most of the 4% of blocks it touches.
+- N19's caption sits over the rules page's "Chance PayPal sides with you" heading, as in rehearsal C.
+- At each a/b handover the caption still dips for 0.1 s.
+- Rehearsal C's note on N13b no longer applies: it now starts on the settled 200 (1:19.4).

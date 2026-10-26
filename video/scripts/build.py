@@ -8,7 +8,19 @@ and shots that don't tile the film, lines that overlap or run faster than maxWps
 sentence, shots past their source, or a camera that would show past the frame's edge.
 
 Each row of "lines" is one sentence and gets one caption. A line of two sentences
-is two rows, N01a and N01b, that abut; the gap rule applies between lines.
+is two rows, N01a and N01b, that abut; the gap rule applies between lines. A row
+with a "take" span is voiced: it starts where its sentence starts in the mix and
+lasts at least as long as the sentence, and its pace is the speaker's, so maxWps
+only holds rows still waiting for a voice.
+
+A shot's "dissolve" is a cross-dissolve from the shot before, in seconds. Into
+footage it runs before the cut (the new footage starts that much early, on top);
+into a scene it runs after the cut (the footage before is held that much longer).
+"covers" are boxes of plate laid over a shot, in frame pixels, that the camera
+doesn't move: a brand headline the crop can't take without cutting the panel.
+
+With "audio" set, index.html plays one track from 0, the mix scripts/mix.py
+makes (narration, bed and cues), instead of a clip per cue.
 
 Overlay text may say {count}: the number of documented sandbox chargebacks that ran
 the whole loop, from video/live/real-cases.json (write it with scripts/count_cases.py
@@ -80,6 +92,25 @@ def check(edit):
     W, H, spoken = edit["width"], edit["height"], edit["spoken"]
     t = 0.0
     last_line_end, last_id = 0.0, ""
+    shots = [s for b in edit["beats"] for s in b["shots"]]
+    for i, s in enumerate(shots):
+        d = s.get("dissolve", 0)
+        if not d:
+            continue
+        prev = shots[i - 1] if i else None
+        if prev is None or not 0 < d <= 0.5:
+            errs.append(f"{s['id']} dissolve {d}: it needs a shot before it and 0-0.5 s")
+        elif "src" in s and s["in"] - d < -EPS:
+            errs.append(f"{s['id']} dissolve {d} starts before its clip (in {s['in']})")
+        elif "src" not in s and "src" not in prev:
+            errs.append(f"{s['id']} dissolve {d}: scene to scene isn't supported")
+        elif "src" not in s:
+            out = prev["in"] + prev["end"] - prev["start"] + d
+            if out > edit["sources"][prev["src"]]["dur"] + EPS:
+                errs.append(f"{prev['id']} held {d} s into {s['id']} reads past its clip ({out:.2f} s)")
+        for x, y, w, h in s.get("covers", []):
+            if x < 0 or y < 0 or x + w > W or y + h > H:
+                errs.append(f"{s['id']} cover {x},{y} {w}x{h} is outside the frame")
     for b in edit["beats"]:
         if abs(b["start"] - t) > EPS:
             errs.append(f"{b['id']} starts at {b['start']}, the film is at {t}")
@@ -134,7 +165,11 @@ def check(edit):
             secs = l["end"] - l["start"]
             words = spoken_words(l["text"], spoken)
             wps = words / secs
-            if wps > edit["maxWps"] + EPS:
+            if "take" in l:
+                said = l["take"][1] - l["take"][0]
+                if secs < said - EPS:
+                    errs.append(f"{l['id']} lasts {secs:.2f} s; its sentence in the take lasts {said:.2f} s")
+            elif wps > edit["maxWps"] + EPS:
                 errs.append(f"{l['id']} is {wps:.2f} words a second ({words} in {secs:.1f} s)")
             rows.append((b["id"], l["id"], l["start"], l["end"], secs, words, wps, l["text"]))
     if abs(t - edit["duration"]) > EPS:
@@ -147,6 +182,8 @@ def check(edit):
     for c in edit["cues"]:
         if not os.path.exists(os.path.join(VIDEO, "assets", "sfx", c["sound"] + ".wav")):
             errs.append(f"cue {c['id']} has no assets/sfx/{c['sound']}.wav")
+    if edit.get("audio") and not all("take" in l for b in edit["beats"] for l in b["lines"] if not l.get("captionOnCard")):
+        errs.append("with a narration mix, every row with a burned caption needs its take span")
     return errs, rows
 
 
@@ -191,8 +228,11 @@ def stamp(t, sep):
 
 
 def write_subtitles(edit):
-    """captions.srt and captions.vtt: the same sentence captions, on the same clock (N26 too)."""
-    cues = caption_times(edit)
+    """captions.srt and captions.vtt: the same sentence captions, on the same clock.
+
+    With a narration mix they carry only the sentences the mix speaks (a row with a take);
+    before it, every row (N26 too)."""
+    cues = [(l, a, z) for l, a, z in caption_times(edit) if not edit.get("audio") or "take" in l]
     srt = "".join(f"{i}\n{stamp(a, ',')} --> {stamp(z, ',')}\n{l['text']}\n\n"
                   for i, (l, a, z) in enumerate(cues, 1))
     vtt = "WEBVTT\n\n" + "".join(f"{l['id']}\n{stamp(a, '.')} --> {stamp(z, '.')}\n{l['text']}\n\n"
@@ -329,55 +369,83 @@ def write_overlays(edit):
 
 def write_index(edit):
     W, H, D = edit["width"], edit["height"], edit["duration"]
-    videos, scenes = [], []
-    # the crop starts open; a window's fromTo must not paint its start before its own time
-    cams = ['tl.set("#camwin", { clipPath: "inset(0px 0px 0px 0px)" }, 0);']
-    prev = None
-    for b in edit["beats"]:
-        for s in b["shots"]:
-            dur = fmt(round(s["end"] - s["start"], 3))
-            if "window" in s:
-                # crop the footage to a rectangle of the frame (a brand headline, or rows not talked about)
-                was = None
-                for at, *box, mv in s["window"]:
-                    inset = '{ clipPath: "inset(' + " ".join(f"{v:g}px" for v in box) + ')" }'
-                    if mv == 0 or was is None:
-                        cams.append(f'tl.set("#camwin", {inset}, {fmt(at)});')
-                    else:
-                        cams.append(f'tl.fromTo("#camwin", {was}, {{ ...{inset}, duration: {mv}, ease: "power2.inOut", immediateRender: false }}, {fmt(at)});')
-                    was = inset
-                cams.append(f'tl.set("#camwin", {{ clipPath: "inset(0px 0px 0px 0px)" }}, {fmt(s["end"])});')
-            if "src" in s:
-                src = edit["sources"][s["src"]]
-                videos.append(
-                    f'      <video id="v-{s["id"]}" class="clip" data-start="{fmt(s["start"])}" data-duration="{dur}" '
-                    f'data-media-start="{fmt(s["in"])}" data-track-index="1" src="{src["file"]}" muted playsinline></video>')
-            else:
-                sid = s["id"]
-                scenes.append(
-                    f'    <div id="{sid}" class="scene" data-composition-id="{sid}" data-composition-src="{s["scene"]}" '
-                    f'data-start="{fmt(s["start"])}" data-duration="{dur}" data-track-index="2" data-track-kind="graphics" '
-                    f'data-width="{W}" data-height="{H}"></div>')
+    shots = [s for b in edit["beats"] for s in b["shots"]]
+    videos, scenes, tl = [], [], []
+    ease = 'ease: "power1.inOut", immediateRender: false'
+    for i, s in enumerate(shots):
+        sid, d = s["id"], s.get("dissolve", 0)
+        prev = shots[i - 1] if i else None
+        nxt = shots[i + 1] if i + 1 < len(shots) else None
+        if "src" in s:
+            src = edit["sources"][s["src"]]
+            # footage starts early by its own dissolve, and is held into a scene that dissolves in over it
+            a = s["start"] - d
+            z = s["end"] + (nxt.get("dissolve", 0) if nxt and "src" not in nxt else 0)
+            span = f'data-start="{fmt(round(a, 3))}" data-duration="{fmt(round(z - a, 3))}"'
+            covers = "".join(
+                f'\n        <div id="k-{sid}-{k + 1}" class="cover clip" {span} '
+                f'style="left: {x}px; top: {y}px; width: {w}px; height: {h}px;"></div>'
+                for k, (x, y, w, h) in enumerate(s.get("covers", [])))
+            videos.append(
+                f'      <div id="w-{sid}" class="shot" style="z-index: {i + 1};">\n'
+                f'        <div id="c-{sid}" class="cam"><video id="v-{sid}" class="clip" {span} '
+                f'data-media-start="{fmt(round(s["in"] - d, 3))}" data-track-index="{1 + 2 * (i % 2)}" src="{src["file"]}" '
+                f'muted playsinline></video></div>{covers}\n'
+                f'      </div>')
+            # each shot has its own camera and crop, so two shots can share the frame in a dissolve
+            was = None
+            for at, *box, mv in s.get("window", []):
+                inset = '{ clipPath: "inset(' + " ".join(f"{v:g}px" for v in box) + ')" }'
+                if was is None:
+                    tl.append(f'tl.set("#w-{sid}", {inset}, 0);')
+                elif mv == 0:
+                    tl.append(f'tl.set("#w-{sid}", {inset}, {fmt(at)});')
+                else:
+                    tl.append(f'tl.fromTo("#w-{sid}", {was}, {{ ...{inset}, duration: {mv}, ease: "power2.inOut", immediateRender: false }}, {fmt(at)});')
+                was = inset
+            was = None
             for at, sc, x, y, mv in s.get("cam", []):
                 to = f'{{ scale: {sc}, x: {x}, y: {y} }}'
-                if mv == 0 or prev is None:
-                    cams.append(f'tl.set("#cam", {to}, {fmt(at)});')
+                if was is None:
+                    tl.append(f'tl.set("#c-{sid}", {to}, 0);')
+                elif mv == 0:
+                    tl.append(f'tl.set("#c-{sid}", {to}, {fmt(at)});')
                 else:
-                    cams.append(f'tl.fromTo("#cam", {prev}, {{ scale: {sc}, x: {x}, y: {y}, duration: {mv}, '
-                                f'ease: "power2.inOut" }}, {fmt(at)});')
-                prev = to
+                    tl.append(f'tl.fromTo("#c-{sid}", {was}, {{ scale: {sc}, x: {x}, y: {y}, duration: {mv}, '
+                              f'ease: "power2.inOut", immediateRender: false }}, {fmt(at)});')
+                was = to
+            if d and "src" in prev:
+                tl.append(f'tl.set("#w-{sid}", {{ opacity: 0 }}, 0);')
+                tl.append(f'tl.fromTo("#w-{sid}", {{ opacity: 0 }}, {{ opacity: 1, duration: {d}, {ease} }}, {fmt(round(a, 3))});')
+            elif d:
+                # the scene before sits over the footage: it fades out while this shot runs under it
+                tl.append(f'tl.fromTo("#{prev["id"]}", {{ opacity: 1 }}, {{ opacity: 0, duration: {d}, {ease} }}, {fmt(round(a, 3))});')
+        else:
+            dur = fmt(round(s["end"] - s["start"], 3))
+            scenes.append(
+                f'    <div id="{sid}" class="scene" data-composition-id="{sid}" data-composition-src="{s["scene"]}" '
+                f'data-start="{fmt(s["start"])}" data-duration="{dur}" data-track-index="2" data-track-kind="graphics" '
+                f'data-width="{W}" data-height="{H}"></div>')
+            if d:
+                tl.append(f'tl.set("#{sid}", {{ opacity: 0 }}, 0);')
+                tl.append(f'tl.fromTo("#{sid}", {{ opacity: 0 }}, {{ opacity: 1, duration: {d}, {ease} }}, {fmt(s["start"])});')
     audio = []
-    for c in edit["cues"]:
-        with wave.open(os.path.join(VIDEO, "assets", "sfx", c["sound"] + ".wav")) as w:
-            length = round(w.getnframes() / w.getframerate(), 3)
-        audio.append(f'    <audio id="{c["id"]}" class="clip" data-start="{fmt(c["at"])}" data-duration="{fmt(length)}" '
-                     f'data-track-index="8" data-volume="{c["volume"]}" src="assets/sfx/{c["sound"]}.wav"></audio>')
+    if edit.get("audio"):
+        # one track from timeline zero: the owner's narration, the bed and the cues, mixed by scripts/mix.py
+        audio.append(f'    <audio id="mix" class="clip" data-start="0" data-duration="{fmt(D)}" data-track-index="8" '
+                     f'data-volume="1" src="{edit["audio"]["mix"]}"></audio>')
+    else:
+        for c in edit["cues"]:
+            with wave.open(os.path.join(VIDEO, "assets", "sfx", c["sound"] + ".wav")) as w:
+                length = round(w.getnframes() / w.getframerate(), 3)
+            audio.append(f'    <audio id="{c["id"]}" class="clip" data-start="{fmt(c["at"])}" data-duration="{fmt(length)}" '
+                         f'data-track-index="8" data-volume="{c["volume"]}" src="assets/sfx/{c["sound"]}.wav"></audio>')
     doc = f"""<!doctype html>
 <!-- Generated by scripts/build.py from edit.json. Edit the cut there, not here. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>CaseClerk, demo film (cut A)</title>
+<title>CaseClerk, demo film</title>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <style>
 {FONT}
@@ -385,9 +453,11 @@ def write_index(edit):
 html, body {{ margin: 0; width: {W}px; height: {H}px; overflow: hidden; background: #dde0e3; }}
 #root {{ position: relative; width: {W}px; height: {H}px; overflow: hidden; }}
 #backdrop {{ position: absolute; inset: 0; background: #dde0e3; }}
-#camwin {{ position: absolute; inset: 0; z-index: 1; clip-path: inset(0px 0px 0px 0px); }}
-#cam {{ position: absolute; left: 0; top: 0; width: {W}px; height: {H}px; transform-origin: 0 0; }}
-#cam video {{ position: absolute; left: 0; top: 0; width: {W}px; height: {H}px; object-fit: contain; }}
+#footage {{ position: absolute; inset: 0; z-index: 1; }}
+.shot {{ position: absolute; inset: 0; clip-path: inset(0px 0px 0px 0px); }}
+.cam {{ position: absolute; left: 0; top: 0; width: {W}px; height: {H}px; transform-origin: 0 0; }}
+.cam video {{ position: absolute; left: 0; top: 0; width: {W}px; height: {H}px; object-fit: contain; }}
+.cover {{ position: absolute; background: #dde0e3; }}
 .scene {{ z-index: 2; }}
 #overlays {{ z-index: 5; }}
 #captions {{ z-index: 6; }}
@@ -396,10 +466,8 @@ html, body {{ margin: 0; width: {W}px; height: {H}px; overflow: hidden; backgrou
 <body>
   <div id="root" data-composition-id="main" data-start="0" data-duration="{fmt(D)}" data-width="{W}" data-height="{H}" data-fps="{edit['fps']}">
     <div id="backdrop"></div>
-    <div id="camwin">
-    <div id="cam">
+    <div id="footage">
 {chr(10).join(videos)}
-    </div>
     </div>
 {chr(10).join(scenes)}
     <div id="overlays" data-composition-id="overlays" data-composition-src="compositions/overlays.html" data-start="0" data-duration="{fmt(D)}" data-track-index="5" data-track-kind="graphics" data-width="{W}" data-height="{H}"></div>
@@ -408,7 +476,7 @@ html, body {{ margin: 0; width: {W}px; height: {H}px; overflow: hidden; backgrou
   </div>
   <script>
     const tl = gsap.timeline({{ paused: true }});
-    {chr(10) + "    ".join([""] + cams)}
+    {chr(10) + "    ".join([""] + tl)}
     window.__timelines["main"] = tl;
   </script>
 </body>
@@ -445,14 +513,21 @@ def print_md(edit, rows):
                     crops.append(box + (f" over {mv:g} s" if mv else ""))
                 if crops:
                     cam += ", cropped to " + ", then ".join(crops)
+                if s.get("covers"):
+                    cam += ", the headline covered"
             else:
                 what, cam = f"`video/{s['scene']}`", "none"
+            if s.get("dissolve"):
+                cam += f"; dissolves in over {s['dissolve']:g} s"
             print(f"| {b['id']} | {s['id']} | {mmss(s['start'])}–{mmss(s['end'])} | {what} | {cam} |")
     print()
-    print("| Id | Beat | Start–end | Secs | Words | wps | Line |")
-    print("|---|---|---|---|---|---|---|")
+    takes = {l["id"]: l.get("take") for b in edit["beats"] for l in b["lines"]}
+    print("| Id | Beat | Start–end | Secs | Take | Words | wps | Line |")
+    print("|---|---|---|---|---|---|---|---|")
     for beat, lid, a, z, secs, n, wps, text in rows:
-        print(f"| {lid} | {beat} | {mmss(a)}–{mmss(z)} | {secs2(secs)} | {n} | {wps:.2f} | {text} |")
+        tk = takes[lid]
+        said = f"{tk[0]:.2f}–{tk[1]:.2f}" if tk else "not in the take"
+        print(f"| {lid} | {beat} | {mmss(a)}–{mmss(z)} | {secs2(secs)} | {said} | {n} | {wps:.2f} | {text} |")
 
 
 def main():

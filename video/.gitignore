@@ -10,3 +10,6 @@ assets/footage/
 *.m4a
 *.png
 *.jpg
+# the mix carries the owner's voice: rebuilt by scripts/mix.py, never committed
+assets/audio/
+narration/
