@@ -12,7 +12,7 @@ Everything in the film's picture and sound, with its source and licence. `audio/
 
 | What | Source | Licence | Date |
 |---|---|---|---|
-| Narration | The owner, one take (`caseclerk-owner-take1.m4a`, outside git). Cut per sentence and moved in time only. | Ours | 2026-10-27 |
+| Narration | The owner: one take (`caseclerk-owner-take1.m4a`) and ten re-recorded rows (`retake-N10.m4a` … `retake-N26b.m4a`), all outside git. Cut per sentence and placed at the rows; the retakes are matched in tone and level, and two are sped up 3–4% (no pitch change). | Ours | 2026-10-27 |
 | Music bed | Own work, synthesized in code by `scripts/mix.py`: sine voices, soft plucked notes and a synthesized room, rendered with ffmpeg. No samples, recordings or generative models. | Ours outright; no attribution owed, nothing registered with Content ID | 2026-10-27 |
 | Clicks (`click-a`, `click-b`) | Kenney, UI Audio: https://kenney.nl/assets/ui-audio | CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/ | fetched 2026-10-26 |
 | Tick, pop (`tick`, `pop`) | Kenney, Interface Sounds: https://kenney.nl/assets/interface-sounds | CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/ | fetched 2026-10-26 |

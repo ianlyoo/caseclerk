@@ -1,12 +1,12 @@
-# Demo video script: CaseClerk, locked cut A (revised for PM deltas v1–v3: the owner's narration, rehearsal D)
+# Demo video script: CaseClerk, locked cut A (revised for PM deltas v1–v3: the owner's narration, rehearsal E)
 
 This is the locked cut and the source of truth for the film. The machine copy is `video/edit.json`. The two tables below are printed from it by `python3 -I video/scripts/build.py --md`, and `build.py` refuses any cut that breaks the rules below. To change a time or a line, edit `edit.json`, rebuild, and paste the tables back here.
 
 - **Length:** 2:48.5. B5J plays the approval take's sandbox ruling control, so it stays.
-- **Voice:** 영인 님 reads the 26 English lines (N01–N26) as 32 sentences: a line of two sentences is two rows, N01a and N01b. One take, recorded against rehearsal C (`s4/video/narration/caseclerk-owner-take1.m4a`, outside git). Each sentence is cut from the take at its row's Take span and moved to the row's start: time shifts only, no stretch, no pitch change. N26a and N26b are not in the take yet. The recording guide is `docs/submission/narration-guide.md`. No TTS.
+- **Voice:** 영인 님 reads the 26 English lines (N01–N26) as 32 sentences: a line of two sentences is two rows, N01a and N01b. One take, recorded against rehearsal C (`s4/video/narration/caseclerk-owner-take1.m4a`), and ten rows re-recorded after rehearsal D (N10, N11, N15, N17, N20, N23, N24, N25, N26a, N26b, as `retake-<ID>.m4a` beside it), all outside git. Each sentence is cut at its row's Take span and placed at the row's start: take-1 rows by time shifts only; retakes matched to take 1 in tone and level by `video/scripts/retakes.py`, N10 and N24 sped up 4% and 3.3% to fit (no pitch change). The recording guide is `docs/submission/narration-guide.md`. No TTS.
 - **Sound:** the narration; a quiet music bed we synthesize in code (`video/scripts/mix.py`, our own work), about 20 dB under the voice while it speaks; and six short CC0 cues on real picture events. Sources and licences are in `video/audio/cues.json` and `video/CREDITS.md`, loudness in `video/LISTEN.md`.
 - **Picture:** the live product at https://caseclerk.vercel.app, recorded 10/26 at 1920×1080 against production with the real clock. The takes are listed in `video/footage.md`; the originals are in `s4/video/footage/`. B4 and B5J play D2's take of the real approval of the $412.00 case (10/26, production). Cuts between shots are short dissolves (0.3–0.4 s).
-- **Pace:** the voice sets it. A voiced row lasts as long as its sentence does in the take; the plan's limit of 2.4 spoken words a second (amounts said in full, "API" as three words) still holds rows not yet voiced. The owner reads faster than the plan in places (N07 at about 4 words a second), and every caption stays at or under 19.3 characters a second. The film has 310 spoken words.
+- **Pace:** the voice sets it. A voiced row lasts as long as its sentence does in the take; the plan's limit of 2.4 spoken words a second (amounts said in full, "API" as three words) held the rows before they were voiced; since rehearsal E every row is. The owner reads faster than the plan in places (N07 at about 4 words a second), and every caption stays at or under 19.3 characters a second. The film has 310 spoken words.
 - **Text on screen:** one caption per sentence, never a sentence split across two; each shows the words the owner actually said (where they differ from the written line, `edit.json` keeps the written one as `script`), sits 112 px above the bottom edge (the two longest, N23 and N25, on two lines), and never covers the part of the page being talked about. No caption, title or text of ours names a camera brand or a carrier. Where a take's headline names one (the case pages lead with the item), the shot is cropped below it or, in B4, the headline is covered with a plate-coloured block; small incidental text in rows stays. PayPal and Claude appear as words, never as logos.
 
 ## Beats
@@ -36,7 +36,7 @@ A band adds "Ruling: PayPal's webhooks bring it back, checked the same way." and
 
 The real enforcement (the panel's "Over your $250 evidence line, so CaseClerk asks first" and the record "Rule A $412.00 dispute is at or above your $250 review level for evidence") is already on screen in B2 and B3, so B7 adds no extra insert: five stops, two band rows and three lines already fill its 21 s.
 
-**B8 · 2:32.8–2:48.5 · Close.** The landing replays PP-R-SGV-10194507: $397.00 disputed, $386.23 kept, 12 min 31 s from chargeback to closed. The landing's own hero copy still reads "asks before it moves money"; that is app text (`src/`), not ours. The end card follows: ▼ CaseClerk, "It answers your PayPal disputes, within the limits you set.", then caseclerk.vercel.app and "Built for the PayPal AI Hackathon. Runs on PayPal's sandbox." N26a and N26b belong over the card, which already shows their words, so they have no burned caption. They are not in the take yet (re-record asked); until they are, the card plays under the bed alone and the two sentences are left out of `captions.srt` and `captions.vtt`.
+**B8 · 2:32.8–2:48.5 · Close.** The landing replays PP-R-SGV-10194507: $397.00 disputed, $386.23 kept, 12 min 31 s from chargeback to closed. The landing's own hero copy still reads "asks before it moves money"; that is app text (`src/`), not ours. The end card follows: ▼ CaseClerk, "It answers your PayPal disputes, within the limits you set.", then caseclerk.vercel.app and "Built for the PayPal AI Hackathon. Runs on PayPal's sandbox." N26a and N26b, re-recorded, are spoken over the card (2:41.2 and 2:42.44), which already shows their words, so they have no burned caption; they are in `captions.srt` and `captions.vtt`.
 
 ## Shots
 
@@ -77,31 +77,31 @@ Words are spoken words, with amounts read in full. The guide spells out how to s
 | N08 | B3 | 0:37.8–0:42.53 | 4.73 | 39.71–44.44 | 15 | 3.17 | A harder one: a $412.00 camera the buyer says isn't as described. |
 | N09a | B3 | 0:45.0–0:47.75 | 2.75 | 46.76–48.87 | 5 | 1.82 | Tracking proves delivery, not condition. |
 | N09b | B3 | 0:47.75–0:50.21 | 2.46 | 49.53–51.99 | 6 | 2.44 | It estimates a 35% chance. |
-| N10 | B3 | 0:51.2–0:54.63 | 3.43 | 53.02–56.45 | 10 | 2.92 | It still recommends filing, because the expected loss is smaller. |
-| N11 | B3 | 0:56.0–1:00.12 | 4.12 | 57.90–62.02 | 16 | 3.88 | Over the $250 line, it stops and asks, with the evidence already written. |
+| N10 | B3 | 0:51.2–0:55.7 | 4.5 | retake 0.54–5.22 at 1.04x | 10 | 2.22 | It still recommends filing, because the expected loss is smaller. |
+| N11 | B3 | 0:56.0–1:01.29 | 5.29 | retake 0.83–6.12 | 16 | 3.02 | Over the $250 line, it stops and asks, with the evidence already written. |
 | N12a | B4 | 1:04.8–1:05.69 | 0.89 | 66.77–67.62 | 3 | 3.37 | The seller decides. |
 | N12b | B4 | 1:05.69–1:08.5 | 2.81 | 67.64–70.45 | 9 | 3.20 | A yes files it, with five seconds to undo. |
 | N13a | B4 | 1:14.6–1:19.4 | 4.8 | 77.15–80.08 | 8 | 1.67 | CaseClerk files through PayPal's Disputes API. |
 | N13b | B4 | 1:19.4–1:22.33 | 2.93 | 80.52–83.45 | 9 | 3.07 | PayPal returns success and its own debug ID. |
 | N14 | B5 | 1:23.0–1:25.54 | 2.54 | 84.75–87.29 | 9 | 3.54 | We asked PayPal's sandbox to rule for the seller. |
-| N15 | B5 | 1:27.6–1:32.15 | 4.55 | 89.21–93.76 | 14 | 3.08 | It ruled for a seller and released the hold: $388 kept. |
+| N15 | B5 | 1:27.6–1:33.35 | 5.75 | retake 0.94–6.69 | 17 | 2.96 | It ruled for the seller and released the hold: $388.18 kept. |
 | N16 | B5 | 1:35.6–1:38.85 | 3.25 | 97.38–100.63 | 10 | 3.08 | This amount comes from PayPal's own hold and release records. |
-| N17 | B5J | 1:42.8–1:45.63 | 2.83 | 104.55–107.38 | 13 | 4.59 | You can ask the sandbox to rule for your own test case, too. |
+| N17 | B5J | 1:42.8–1:46.25 | 3.45 | retake 0.81–4.26 | 13 | 3.77 | You can ask the sandbox to rule on your own test case, too. |
 | N18 | B6 | 1:49.1–1:52.03 | 2.93 | 110.79–113.72 | 10 | 3.41 | The seller's limits are enforced in code, not a prompt. |
 | N19 | B6 | 1:54.4–1:59.54 | 5.14 | 116.15–121.29 | 17 | 3.31 | Evidence under $250 and refunds up to $15 go out on their own. |
-| N20 | B6 | 2:02.6–2:04.65 | 2.05 | 124.29–126.34 | 6 | 2.93 | Anything bigger waits for a yes. |
+| N20 | B6 | 2:02.6–2:05.18 | 2.58 | retake 0.34–2.92 | 5 | 1.94 | Anything bigger waits for yes. |
 | N21 | B7 | 2:07.5–2:10.81 | 3.31 | 129.29–132.60 | 9 | 2.72 | Under the hood, every PayPal webhook is verified first. |
 | N22a | B7 | 2:12.4–2:14.7 | 2.3 | 134.03–135.78 | 5 | 2.17 | Claude Haiku sorts the case. |
 | N22b | B7 | 2:14.7–2:17.43 | 2.73 | 136.40–139.13 | 9 | 3.30 | Claude Opus works with tools, and writes the evidence. |
-| N23 | B7 | 2:19.9–2:25.04 | 5.14 | 141.59–146.73 | 16 | 3.11 | Every action is checked against the limits before reaching PayPal, and AI spend is capped. |
-| N24 | B7 | 2:27.3–2:32.42 | 5.12 | 149.15–154.27 | 12 | 2.34 | Real sandbox chargebacks have run this whole loop — every answer is kept. |
-| N25 | B8 | 2:33.3–2:39.41 | 6.11 | 155.38–161.49 | 18 | 2.95 | For a one-person shop, every dispute gets an answer with every evidence ready, not a loss by default. |
-| N26a | B8 | 2:41.2–2:42.0 | 0.8 | not in the take | 1 | 1.25 | CaseClerk. |
-| N26b | B8 | 2:42.0–2:46.8 | 4.8 | not in the take | 10 | 2.08 | It answers your PayPal disputes, within the limits you set. |
+| N23 | B7 | 2:19.9–2:26.05 | 6.15 | retake 0.62–6.77 | 16 | 2.60 | Every action is checked against those limits before reaching PayPal, and AI spend is capped. |
+| N24 | B7 | 2:27.3–2:32.8 | 5.5 | retake 0.97–6.65 at 1.033x | 11 | 2.00 | Real sandbox chargebacks have run this whole loop, every answer kept. |
+| N25 | B8 | 2:33.3–2:39.82 | 6.52 | retake 0.80–7.32 | 17 | 2.61 | For a one-person shop, every dispute gets an answer with evidence ready, not a loss by default. |
+| N26a | B8 | 2:41.2–2:42.44 | 1.24 | retake 0.92–1.71 | 1 | 0.81 | CaseClerk. |
+| N26b | B8 | 2:42.44–2:46.26 | 3.82 | retake 0.88–4.70 | 10 | 2.62 | It answers your PayPal disputes, within the limits you set. |
 
-Each row is one sentence and one caption; `build.py` refuses a row that holds two sentences. A caption opens 0.1 s before its sentence and hands over to the next sentence of the same line at the split; a line's last caption may hang 0.25 s, but never into the next line or past its beat. A sentence of more than 84 characters (N23, N25) is set on two balanced lines. The 30 voiced sentences, on the same clock, are in `video/captions.srt` and `video/captions.vtt` (cue ids in the .vtt are the row ids); N26a and N26b join them once they are recorded.
+Each row is one sentence and one caption; `build.py` refuses a row that holds two sentences. A caption opens 0.1 s before its sentence and hands over to the next sentence of the same line at the split; a line's last caption may hang 0.25 s, but never into the next line or past its beat. A sentence of more than 84 characters (N23, N25) is set on two balanced lines. All 32 sentences, on the same clock, are in `video/captions.srt` and `video/captions.vtt` (cue ids in the .vtt are the row ids); N26a and N26b are there too, though the end card carries their words instead of a burned caption.
 
-A voiced row starts where the owner's sentence starts on the film clock and ends where it ends; the Take column is the same sentence's span in the raw take. Where a line splits, the split is the owner's own pause between its sentences.
+A voiced row starts where the owner's sentence starts on the film clock and ends where it ends; the Take column is the same sentence's span in the raw take (or, for a re-recorded row, in its retake, with its speed if it was sped up). Where a line splits, the split is the owner's own pause between its sentences.
 
 ## Facts on screen and in the lines, and where each was checked
 
@@ -114,17 +114,17 @@ A voiced row starts where the owner's sentence starts on the film clock and ends
 | $250 evidence line, $15 refund line | N11, N19 | `rules.webm` (production policy) |
 | Five seconds to undo | N12b | `src/app/d2/_ui/Decide.tsx`: `UNDO_MS = 5000` |
 | Filing through the Disputes API; PayPal answers with success (200) and its own debug id | N13a, N13b, B4, B5 | `vpy.webm` (B4): POST provide-evidence, Status 200, debug id f411956448116, "200 accepted"; `vab.webm` (B5): the same call, 200, debug id f95638041ab53 |
-| $388.18 kept of $399.00, held then released (said as "$388") | N15 | `vab.webm` (VAB only, never VPY) |
+| $388.18 kept of $399.00, held then released | N15 | `vab.webm` (VAB only, never VPY) |
 | The sandbox can be asked to rule on a test case | N17, B5J | `vpy.webm` from 19 s: the filed panel's "Sandbox control, test disputes only · Ask PayPal's sandbox to rule" with Seller wins, Buyer wins and Ask for the ruling |
 | The amount comes from PayPal's own hold and release records | N16 | `GET /api/cases/PP-R-VAB-10194570` on 10/26: money.source `paypal_fund_movements`; the page row "Held, then released: $388.18, 6:56 pm to 9:56 pm PT" |
 | The seller's limits enforced in code | N18, N23, B7 | `src/lib/agent/policy.ts` (`policyGate`: "every write action passes here before PayPal is called"); on screen as RSL's "Over your $250 evidence line" (B2) and VPY's record "Rule A $412.00 dispute is at or above your $250 review level" (B3) |
 | Haiku sorts, Opus works with tools; spend caps | N22a, N22b, N23, B7 | `src/lib/agent/config.ts` (claude-haiku-5-5, claude-opus-5-5), `src/lib/spend/` |
 | Webhooks verified first | N06, N21 | `src/lib/paypal/webhook.ts` (`/v1/notifications/verify-webhook-signature`) |
-| Real sandbox chargebacks through the whole loop, every answer kept ("11 so far") | N24, B7 chip | `video/live/real-cases.json`, written by `video/scripts/count_cases.py` from production GETs at 2026-10-26T16:14:22Z. It reads only the ids in `docs/REAL-CASES.md` and counts a case when it is resolved by PayPal, CaseClerk's provide_evidence executed, and money from PayPal's fund movements shows a kept amount: 11 of 15 (AAJ, EGZ, IHX, IMW, LTK, NJA, SGV, TZD, UDP, VAB, VPY). Left out: GDS and RCJ (not filed by CaseClerk), MFL (waiting for a yes), YDQ (waiting on PayPal) |
+| Real sandbox chargebacks through the whole loop, every answer kept ("11 so far") | N24, B7 chip | `video/live/real-cases.json`, written by `video/scripts/count_cases.py` from production GETs at 2026-10-26T17:10:55Z. It reads only the ids in `docs/REAL-CASES.md` and counts a case when it is resolved by PayPal, CaseClerk's provide_evidence executed, and money from PayPal's fund movements shows a kept amount: 11 of 15 (AAJ, EGZ, IHX, IMW, LTK, NJA, SGV, TZD, UDP, VAB, VPY). Left out: GDS and RCJ (not filed by CaseClerk), MFL (waiting for a yes), YDQ (waiting on PayPal) |
 | $397.00 disputed, $386.23 kept, 12 min 31 s | B8 | `landing.webm` |
 
 N24 carries no number, so nothing in the lines changes when VPY is ruled on. Run `count_cases.py` right before each render; the chip shows whatever production says then.
 
 ## Phase B
 
-Done in rehearsal D: the owner's narration (one take, synced sentence by sentence), the music bed, six cues, dissolves at the hard cuts, and the VPY approval take in B4 and B5J. Left: the re-recorded rows (N26a, N26b, N25, N23, N15; see `video/LISTEN.md`). When they land, set each row's `take` span (and its text to the words spoken), run `mix.py` on the new take, rebuild, check and render.
+Done in rehearsal D: the owner's narration (one take, synced sentence by sentence), the music bed, six cues, dissolves at the hard cuts, and the VPY approval take in B4 and B5J. Done in rehearsal E: the ten re-recorded rows (N15, N23, N25, N26a, N26b, then N10, N11, N17, N20, N24), spliced by `video/scripts/retakes.py`; see `video/LISTEN.md`. For any further retake, put `retake-<ID>.m4a` beside the take and rerun `retakes.py`, then `build.py`, `mix.py`, check and render (`video/SPEC.md`).

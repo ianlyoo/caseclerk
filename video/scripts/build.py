@@ -11,7 +11,8 @@ Each row of "lines" is one sentence and gets one caption. A line of two sentence
 is two rows, N01a and N01b, that abut; the gap rule applies between lines. A row
 with a "take" span is voiced: it starts where its sentence starts in the mix and
 lasts at least as long as the sentence, and its pace is the speaker's, so maxWps
-only holds rows still waiting for a voice.
+only holds rows still waiting for a voice. A row with a "source" was re-recorded:
+its span is in that file (scripts/retakes.py splices it in, mix.py plays it).
 
 A shot's "dissolve" is a cross-dissolve from the shot before, in seconds. Into
 footage it runs before the cut (the new footage starts that much early, on top);
@@ -166,7 +167,7 @@ def check(edit):
             words = spoken_words(l["text"], spoken)
             wps = words / secs
             if "take" in l:
-                said = l["take"][1] - l["take"][0]
+                said = (l["take"][1] - l["take"][0]) / l.get("tempo", 1.0)
                 if secs < said - EPS:
                     errs.append(f"{l['id']} lasts {secs:.2f} s; its sentence in the take lasts {said:.2f} s")
             elif wps > edit["maxWps"] + EPS:
@@ -521,12 +522,15 @@ def print_md(edit, rows):
                 cam += f"; dissolves in over {s['dissolve']:g} s"
             print(f"| {b['id']} | {s['id']} | {mmss(s['start'])}–{mmss(s['end'])} | {what} | {cam} |")
     print()
-    takes = {l["id"]: l.get("take") for b in edit["beats"] for l in b["lines"]}
+    takes = {l["id"]: l for b in edit["beats"] for l in b["lines"]}
     print("| Id | Beat | Start–end | Secs | Take | Words | wps | Line |")
     print("|---|---|---|---|---|---|---|---|")
     for beat, lid, a, z, secs, n, wps, text in rows:
-        tk = takes[lid]
+        l = takes[lid]
+        tk = l.get("take")
         said = f"{tk[0]:.2f}–{tk[1]:.2f}" if tk else "not in the take"
+        if tk and l.get("source"):
+            said = f"retake {said}" + (f" at {l['tempo']:g}x" if l.get("tempo") else "")
         print(f"| {lid} | {beat} | {mmss(a)}–{mmss(z)} | {secs2(secs)} | {said} | {n} | {wps:.2f} | {text} |")
 
 

@@ -43,11 +43,11 @@ Tracking proves delivery, not condition.
 It estimates a 35% chance.
 
 12
-00:00:51,100 --> 00:00:54,880
+00:00:51,100 --> 00:00:55,900
 It still recommends filing, because the expected loss is smaller.
 
 13
-00:00:55,900 --> 00:01:00,370
+00:00:55,900 --> 00:01:01,540
 Over the $250 line, it stops and asks, with the evidence already written.
 
 14
@@ -71,16 +71,16 @@ PayPal returns success and its own debug ID.
 We asked PayPal's sandbox to rule for the seller.
 
 19
-00:01:27,500 --> 00:01:32,400
-It ruled for a seller and released the hold: $388 kept.
+00:01:27,500 --> 00:01:33,600
+It ruled for the seller and released the hold: $388.18 kept.
 
 20
 00:01:35,500 --> 00:01:39,100
 This amount comes from PayPal's own hold and release records.
 
 21
-00:01:42,700 --> 00:01:45,880
-You can ask the sandbox to rule for your own test case, too.
+00:01:42,700 --> 00:01:46,500
+You can ask the sandbox to rule on your own test case, too.
 
 22
 00:01:49,000 --> 00:01:52,280
@@ -91,8 +91,8 @@ The seller's limits are enforced in code, not a prompt.
 Evidence under $250 and refunds up to $15 go out on their own.
 
 24
-00:02:02,500 --> 00:02:04,900
-Anything bigger waits for a yes.
+00:02:02,500 --> 00:02:05,430
+Anything bigger waits for yes.
 
 25
 00:02:07,400 --> 00:02:11,060
@@ -107,13 +107,21 @@ Claude Haiku sorts the case.
 Claude Opus works with tools, and writes the evidence.
 
 28
-00:02:19,800 --> 00:02:25,290
-Every action is checked against the limits before reaching PayPal, and AI spend is capped.
+00:02:19,800 --> 00:02:26,300
+Every action is checked against those limits before reaching PayPal, and AI spend is capped.
 
 29
-00:02:27,200 --> 00:02:32,670
-Real sandbox chargebacks have run this whole loop — every answer is kept.
+00:02:27,200 --> 00:02:32,800
+Real sandbox chargebacks have run this whole loop, every answer kept.
 
 30
-00:02:33,200 --> 00:02:39,660
-For a one-person shop, every dispute gets an answer with every evidence ready, not a loss by default.
+00:02:33,200 --> 00:02:40,070
+For a one-person shop, every dispute gets an answer with evidence ready, not a loss by default.
+
+31
+00:02:41,100 --> 00:02:42,440
+CaseClerk.
+
+32
+00:02:42,440 --> 00:02:46,510
+It answers your PayPal disputes, within the limits you set.

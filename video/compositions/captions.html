@@ -30,18 +30,18 @@
     <div id="cap-n13a" class="cap" data-line="N13a"><span>CaseClerk files through PayPal&#x27;s Disputes API.</span></div>
     <div id="cap-n13b" class="cap" data-line="N13b"><span>PayPal returns success and its own debug ID.</span></div>
     <div id="cap-n14" class="cap" data-line="N14"><span>We asked PayPal&#x27;s sandbox to rule for the seller.</span></div>
-    <div id="cap-n15" class="cap" data-line="N15"><span>It ruled for a seller and released the hold: $388 kept.</span></div>
+    <div id="cap-n15" class="cap" data-line="N15"><span>It ruled for the seller and released the hold: $388.18 kept.</span></div>
     <div id="cap-n16" class="cap" data-line="N16"><span>This amount comes from PayPal&#x27;s own hold and release records.</span></div>
-    <div id="cap-n17" class="cap" data-line="N17"><span>You can ask the sandbox to rule for your own test case, too.</span></div>
+    <div id="cap-n17" class="cap" data-line="N17"><span>You can ask the sandbox to rule on your own test case, too.</span></div>
     <div id="cap-n18" class="cap" data-line="N18"><span>The seller&#x27;s limits are enforced in code, not a prompt.</span></div>
     <div id="cap-n19" class="cap" data-line="N19"><span>Evidence under $250 and refunds up to $15 go out on their own.</span></div>
-    <div id="cap-n20" class="cap" data-line="N20"><span>Anything bigger waits for a yes.</span></div>
+    <div id="cap-n20" class="cap" data-line="N20"><span>Anything bigger waits for yes.</span></div>
     <div id="cap-n21" class="cap" data-line="N21"><span>Under the hood, every PayPal webhook is verified first.</span></div>
     <div id="cap-n22a" class="cap" data-line="N22a"><span>Claude Haiku sorts the case.</span></div>
     <div id="cap-n22b" class="cap" data-line="N22b"><span>Claude Opus works with tools, and writes the evidence.</span></div>
-    <div id="cap-n23" class="cap" data-line="N23"><span>Every action is checked against the limits<br>before reaching PayPal, and AI spend is capped.</span></div>
-    <div id="cap-n24" class="cap" data-line="N24"><span>Real sandbox chargebacks have run this whole loop — every answer is kept.</span></div>
-    <div id="cap-n25" class="cap" data-line="N25"><span>For a one-person shop, every dispute gets an answer<br>with every evidence ready, not a loss by default.</span></div>
+    <div id="cap-n23" class="cap" data-line="N23"><span>Every action is checked against those limits<br>before reaching PayPal, and AI spend is capped.</span></div>
+    <div id="cap-n24" class="cap" data-line="N24"><span>Real sandbox chargebacks have run this whole loop, every answer kept.</span></div>
+    <div id="cap-n25" class="cap" data-line="N25"><span>For a one-person shop, every dispute gets an answer<br>with evidence ready, not a loss by default.</span></div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
@@ -57,25 +57,25 @@
       ["cap-n08", 37.7, 42.78],
       ["cap-n09a", 44.9, 47.75],
       ["cap-n09b", 47.75, 50.46],
-      ["cap-n10", 51.1, 54.88],
-      ["cap-n11", 55.9, 60.37],
+      ["cap-n10", 51.1, 55.9],
+      ["cap-n11", 55.9, 61.54],
       ["cap-n12a", 64.7, 65.69],
       ["cap-n12b", 65.69, 68.75],
       ["cap-n13a", 74.5, 79.4],
       ["cap-n13b", 79.4, 82.4],
       ["cap-n14", 82.9, 85.79],
-      ["cap-n15", 87.5, 92.4],
+      ["cap-n15", 87.5, 93.6],
       ["cap-n16", 95.5, 99.1],
-      ["cap-n17", 102.7, 105.88],
+      ["cap-n17", 102.7, 106.5],
       ["cap-n18", 109, 112.28],
       ["cap-n19", 114.3, 119.79],
-      ["cap-n20", 122.5, 124.9],
+      ["cap-n20", 122.5, 125.43],
       ["cap-n21", 127.4, 131.06],
       ["cap-n22a", 132.3, 134.7],
       ["cap-n22b", 134.7, 137.68],
-      ["cap-n23", 139.8, 145.29],
-      ["cap-n24", 147.2, 152.67],
-      ["cap-n25", 153.2, 159.66]
+      ["cap-n23", 139.8, 146.3],
+      ["cap-n24", 147.2, 152.8],
+      ["cap-n25", 153.2, 160.07]
     ].forEach(([id, a, z]) => {
       const el = "#" + id;
       tl.set(el, { visibility: "visible" }, a);

@@ -133,3 +133,29 @@ I snapshotted the middle of every dissolve, B4 from Yes, file it through the 200
 - N19's caption sits over the rules page's "Chance PayPal sides with you" heading, as in rehearsal C.
 - At each a/b handover the caption still dips for 0.1 s.
 - Rehearsal C's note on N13b no longer applies: it now starts on the settled 200 (1:19.4).
+
+# Review: rehearsal E (PM 01:55, 01:58, 02:06: ten re-recorded rows)
+
+Rehearsal D's picture and cut, with ten sentences re-recorded by the owner: N15, N23, N25, N26a and N26b, then N10, N11, N17, N20 and N24, folded into one render. `scripts/retakes.py` splices them (row id → file → trim, level, place) and `mix.py` mixes them through the same voice chain; N26a and N26b are now spoken over the end card and back in the .srt and .vtt (32 cues). Two rows are sped up to fit (N10 4%, N24 3.3%; atempo, no pitch change); every other row keeps its start and the cut doesn't move. `LISTEN.md` has the retake review and the five places to listen.
+
+## Snapshots before rendering (HyperFrames, 10/27)
+
+I snapshotted every re-recorded row's caption (0:53, 0:58.5, 1:30.5, 1:44.5, 2:03.8, 2:30, 2:37) and the end card under N26b (2:44). Each caption reads as the row's sentence, N25 on two balanced lines, all clear of the bands and the parts of the page being talked about; the end card carries N26's words with no burned caption. Lint: 0 errors, 0 warnings.
+
+## Render (10/27 02:12–02:20 KST, capture 8 min 27 s)
+
+`s4/video/rehearsal-e.mp4`, sha256 aad53c357185cebb9471434259089bab4bbfc5458224fe9363c8fcfdf5b3e3bf, 52.3 MB, with `rehearsal-e.srt`, `rehearsal-e.vtt` (32 cues) and `rehearsal-e-contact-sheet.png` beside it, and a copy at `board/narration/rehearsal-e.mp4` (same sha256). Rendered on win-guest, not on the Mac. The first E render (the first five retakes only) was stopped part-way when the second five arrived, and its partial output deleted, so E is one render with all ten. The on-screen count was read at 2026-10-26T17:10:55Z (11 of 15 documented cases, unchanged).
+
+- ffprobe: h264 High, yuv420p, 1920×1080, 30/1, 5055 frames, 168.5 s (2:48.5), 2.49 Mb/s, AAC LC.
+- A full decode with `-xerror` logged 0 error lines. Atom order is ftyp moov free mdat (fast-start).
+- Sound: −14.2 LUFS, −1.7 dBTP, LRA 6.5 LU on the AAC track; the bed 20.1 dB under the voice. The ten retake rows sit at −14.1 to −14.7 LUFS in the voice stem, inside take 1's own range, and start within 17 ms of their rows.
+- I looked at the nine beat midpoints (B8 on the settled end card, 2:44.5), the before/after pair at each of the 14 cuts (N11's caption across the 0:56.4 cut, N24's ending on the 2:32.8 cut), and the sound by spectrogram, waveform, small-speaker and earbud simulations, a mono fold-down, meters and fresh transcriptions; I can't hear it, so the five places in `LISTEN.md` are for an ear. N20 still drops the "a" (below); nothing else to fix turned up.
+
+## Known and accepted (rehearsal E)
+
+- N20 says "waits for yes" without the "a" (seven of eight transcriptions); captioned as said, the written line kept as `script`.
+- N15 ("the hold" comes out as "a hold" in all seven transcriptions) and N24 ("kept", heard right on its own, "caps" in whole-film transcriptions) are worth an ear; their captions follow the written lines.
+- B4's headline is under a flat plate-coloured cover (y 0–92) for the whole shot.
+- The bed's room is wide; folded to mono the bed loses 2.9 dB (median), the voice nothing.
+- N19's caption sits over the rules page's "Chance PayPal sides with you" heading, as in rehearsals C and D.
+- At each a/b handover the caption still dips for 0.1 s.

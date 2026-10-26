@@ -4,9 +4,10 @@ A HyperFrames 0.8.201 project, 1920×1080, 30 fps, CSS and 2D only. The cut live
 
 | Path | What it is |
 |---|---|
-| `edit.json` | The cut: sources, beats, shots, camera keys, crop windows, covers, dissolves, lines (N01–N26, one row per sentence: a line of two sentences is two rows, N01a and N01b; each voiced row carries its `take` span in the narration), overlays, sound cues, and the `audio` block (mix file, ducking, lifts, loudness target). |
+| `edit.json` | The cut: sources, beats, shots, camera keys, crop windows, covers, dissolves, lines (N01–N26, one row per sentence: a line of two sentences is two rows, N01a and N01b; each voiced row carries its `take` span in the narration, and a re-recorded row its retake's `source`, `sourceSha`, `gainDb` and, if it needed one, `tempo`), overlays, sound cues, and the `audio` block (mix file, retake EQ, ducking, lifts, loudness target). |
 | `scripts/build.py` | Checks the cut (tiling, source ranges, camera bounds, dissolves, covers, ≤2.4 spoken words a second on rows not yet voiced, a voiced row long enough for its take, gaps, one sentence per row), then writes `index.html`, `compositions/captions.html`, `compositions/overlays.html` and `captions.srt`/`captions.vtt` (the same sentence captions on the same clock), filling `{count}` from `live/real-cases.json`. `--check` only checks; `--md` prints the script's tables. |
-| `scripts/mix.py` | Builds the one sound track, `assets/audio/mix.wav`: each sentence cut from the owner's take at its row's `take` span and moved to the row's start (time shifts only), the light voice chain, the music bed it synthesizes (ducked under speech, lifted at the title's brand and the end card), the cues; then gain to −14 LUFS and a limiter under −1 dBTP. Stems and `loudness.json` go to `out/audio/`. |
+| `scripts/retakes.py` | Splices re-recorded rows in: each `retake-<ID>.m4a` beside the take is row `<ID>`'s sentence. It transcribes it, trims it, levels it to take 1 (through `audio.retakeEq`), places it at its row (sped up at most 5% if it has to be, else it stops) and writes the row, printing the line beside what was heard. Rows whose file hasn't changed are left alone, so the next retakes drop in with one rerun. |
+| `scripts/mix.py` | Builds the one sound track, `assets/audio/mix.wav`: each sentence cut from the owner's take (or the row's retake, through the retake EQ and its gain, and its tempo if it has one) at its row's `take` span and placed at the row's start, the light voice chain, the music bed it synthesizes (ducked under speech, lifted at the title's brand and the end card in the pauses, faded after the last word), the cues; then gain to −14 LUFS and a limiter under −1 dBTP. Stems and `loudness.json` go to `out/audio/`. |
 | `scripts/count_cases.py` | Reads the case ids in `docs/REAL-CASES.md`, GETs each from production (read-only) and writes `live/real-cases.json`: the cases that were filed by CaseClerk, resolved by PayPal and kept money from PayPal's own fund movements. |
 | `live/real-cases.json` | The count the B7 cases shot shows (N24 itself says no number), with the time it was read and every case left out and why. |
 | `index.html` | Generated. Each footage shot in its own window (`#w-ID`, the crop and the dissolve) and camera (`#c-ID`, the move), stacked in cut order; then the scene hosts, overlays, captions and the one `<audio>` track, `mix.wav`, from 0. |
@@ -27,6 +28,10 @@ A HyperFrames 0.8.201 project, 1920×1080, 30 fps, CSS and 2D only. The cut live
 python3 -I video/scripts/count_cases.py   # right before a render: the on-screen count is read live
 python3 -I video/scripts/build.py
 rsync -a --exclude capture --exclude out video/ win-guest-wsl:g251/video/hf/
+# when retakes arrive: put them beside the take, splice, bring the rows back, rebuild and sync again
+scp ../s4/video/narration/retake-*.m4a win-guest-wsl:g251/video/narration/
+ssh win-guest-wsl 'cd ~/g251/video/hf && python3 -I scripts/retakes.py --take ~/g251/video/narration/caseclerk-owner-take1.m4a --ffmpeg ~/g251/video/ffmpeg-static/bin/ffmpeg --transcribe ~/g251/vscan/run-hf.sh'
+scp win-guest-wsl:g251/video/hf/edit.json video/edit.json   # then build.py and rsync as above
 ssh win-guest-wsl 'cd ~/g251/video/hf && python3 -I scripts/mix.py --take ~/g251/video/narration/caseclerk-owner-take1.m4a --ffmpeg ~/g251/video/ffmpeg-static/bin/ffmpeg'
 ssh win-guest-wsl '~/g251/vscan/run-hf.sh check hf'
 ssh win-guest-wsl 'cd ~/g251/video && ~/g251/vscan/run-hf.sh render hf --workers 1 --fps 30 --quality looks --no-browser-gpu --video-frame-format png --output out/NAME.raw.mp4'

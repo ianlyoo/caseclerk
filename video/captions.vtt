@@ -45,11 +45,11 @@ N09b
 It estimates a 35% chance.
 
 N10
-00:00:51.100 --> 00:00:54.880
+00:00:51.100 --> 00:00:55.900
 It still recommends filing, because the expected loss is smaller.
 
 N11
-00:00:55.900 --> 00:01:00.370
+00:00:55.900 --> 00:01:01.540
 Over the $250 line, it stops and asks, with the evidence already written.
 
 N12a
@@ -73,16 +73,16 @@ N14
 We asked PayPal's sandbox to rule for the seller.
 
 N15
-00:01:27.500 --> 00:01:32.400
-It ruled for a seller and released the hold: $388 kept.
+00:01:27.500 --> 00:01:33.600
+It ruled for the seller and released the hold: $388.18 kept.
 
 N16
 00:01:35.500 --> 00:01:39.100
 This amount comes from PayPal's own hold and release records.
 
 N17
-00:01:42.700 --> 00:01:45.880
-You can ask the sandbox to rule for your own test case, too.
+00:01:42.700 --> 00:01:46.500
+You can ask the sandbox to rule on your own test case, too.
 
 N18
 00:01:49.000 --> 00:01:52.280
@@ -93,8 +93,8 @@ N19
 Evidence under $250 and refunds up to $15 go out on their own.
 
 N20
-00:02:02.500 --> 00:02:04.900
-Anything bigger waits for a yes.
+00:02:02.500 --> 00:02:05.430
+Anything bigger waits for yes.
 
 N21
 00:02:07.400 --> 00:02:11.060
@@ -109,13 +109,21 @@ N22b
 Claude Opus works with tools, and writes the evidence.
 
 N23
-00:02:19.800 --> 00:02:25.290
-Every action is checked against the limits before reaching PayPal, and AI spend is capped.
+00:02:19.800 --> 00:02:26.300
+Every action is checked against those limits before reaching PayPal, and AI spend is capped.
 
 N24
-00:02:27.200 --> 00:02:32.670
-Real sandbox chargebacks have run this whole loop — every answer is kept.
+00:02:27.200 --> 00:02:32.800
+Real sandbox chargebacks have run this whole loop, every answer kept.
 
 N25
-00:02:33.200 --> 00:02:39.660
-For a one-person shop, every dispute gets an answer with every evidence ready, not a loss by default.
+00:02:33.200 --> 00:02:40.070
+For a one-person shop, every dispute gets an answer with evidence ready, not a loss by default.
+
+N26a
+00:02:41.100 --> 00:02:42.440
+CaseClerk.
+
+N26b
+00:02:42.440 --> 00:02:46.510
+It answers your PayPal disputes, within the limits you set.

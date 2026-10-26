@@ -3,13 +3,17 @@
 
   python3 -I video/scripts/mix.py --take PATH/caseclerk-owner-take1.m4a [--ffmpeg PATH]
 
+(after scripts/retakes.py, when there are retakes: their files sit beside the take)
+
 Writes assets/audio/mix.wav (48 kHz stereo; index.html plays it from 0) and, under
 out/audio/, the stems (voice, bed, cues), the bed's ducking curve and loudness.json.
 None of it goes in git: the take and the mix carry the owner's voice.
 
 - Narration: each voiced row's sentence is cut from the take at its "take" span, with a
   few ms of air that never reach the next sentence, and placed so that it starts at the
-  row's start. Time shifts only: no stretch, no pitch change. Then a light chain:
+  row's start. A row with a "source" is cut from that retake instead, through audio.retakeEq
+  and its gainDb (scripts/retakes.py sets both, to match take 1), and sped up by its "tempo"
+  if it has one (at most 5%, atempo: no pitch change). Otherwise time shifts only. Then a light chain:
   high-pass 80 Hz, -3 dB at 150 Hz (the phone's proximity boom), +1.5 dB at 2.8 kHz,
   a -2 dB shelf from 8 kHz, a de-esser and gentle 2.5:1 compression (about 3 dB on the
   loudest words).
@@ -17,7 +21,8 @@ None of it goes in git: the take and the mix carry the owner's voice.
   (Bm9, Gmaj9, Dmaj9, A add9, 8 s a chord), soft felt-piano notes from each chord,
   a synthesized room, resolving to Dmaj9 on the end card. Unducked it sits at audio.bedLufs;
   under every spoken span it dips by audio.duckDb, which puts it about 20 dB under the voice,
-  and audio.lifts raise it a little at the title's brand and on the end card.
+  and audio.lifts raise it a little at the title's brand and on the end card, in the pauses only
+  (a lift never rises under a word). It fades out over the end card's last seconds, after the last word.
 - Cues: edit.json "cues", the CC0 recordings in assets/sfx/.
 - Master: gain to audio.targetLufs integrated, then a limiter under audio.ceilingDbtp.
 
@@ -158,12 +163,17 @@ def make_bed(ff, edit, out):
     return raw, plan
 
 
+def said(l):
+    """How long a voiced row's sentence lasts in the mix."""
+    return (l["take"][1] - l["take"][0]) / l.get("tempo", 1.0)
+
+
 def speech_spans(edit):
     spans = []
     for b in edit["beats"]:
         for l in b["lines"]:
             if "take" in l:
-                spans.append([l["start"], l["start"] + l["take"][1] - l["take"][0]])
+                spans.append([l["start"], l["start"] + said(l)])
     spans.sort()
     merged = []
     for a, z in spans:
@@ -186,14 +196,17 @@ def envelope(edit, merged, rate=1000):
     D = edit["duration"]
     n = int(D * rate) + 1
     duck = au["duckDb"]
+    # the fade-out starts after the last word, and never before the film's last 3.7 s
+    fade_at = max(D - 3.7, (merged[-1][1] + 0.15) if merged else 0.0)
+    fade_len = max(1.0, D - 0.1 - fade_at)
     out = array.array("f")
     for i in range(n):
         t = i / rate
-        db = 0.0
+        lift = 0.0
         for a, z, g in au["lifts"]:
             up = ramp((t - a) / 0.8)
             down = 1.0 if z >= D - 1e-6 else 1 - ramp((t - (z - 0.8)) / 0.8)
-            db += g * min(up, down)
+            lift += g * min(up, down)
         depth = 0.0
         for a, z in merged:
             s0, e0 = a - 0.12, z + 0.15
@@ -204,39 +217,63 @@ def envelope(edit, merged, rate=1000):
                     depth = 1.0
                 else:
                     depth = max(depth, 1 - ramp((t - e0) / DUCK_UP))
-        db += duck * depth
+        db = lift * (1 - depth) + duck * depth  # a lift only where the bed isn't ducked
         gain = 10 ** (db / 20)
         gain *= ramp(t / 0.6)  # in from silence
-        gain *= 1 - ramp((t - (D - 3.7)) / 3.6)  # out over the end card's last seconds
+        gain *= 1 - ramp((t - fade_at) / fade_len)  # out over the end card's last seconds
         out.append(gain)
     return out
 
 
+def duration(ff, path):
+    err = subprocess.run([ff, "-hide_banner", "-nostdin", "-i", path], capture_output=True, text=True).stderr
+    h, m, sec = re.search(r"Duration: (\d+):(\d+):([\d.]+)", err).groups()
+    return int(h) * 3600 + int(m) * 60 + float(sec)
+
+
 def voice(ff, edit, take, out):
     rows = [l for b in edit["beats"] for l in b["lines"] if "take" in l]
-    by_take = sorted(rows, key=lambda l: l["take"][0])
+    here = os.path.dirname(os.path.abspath(take))
+    sources = [None] + sorted({l["source"] for l in rows if "source" in l})
+    eq = edit["audio"].get("retakeEq")
     D = edit["duration"]
-    chains, labels, plan = [], [], []
-    for k, l in enumerate(by_take):
-        a, z = l["take"]
-        prev_z = by_take[k - 1]["take"][1] if k else 0.0
-        next_a = by_take[k + 1]["take"][0] if k + 1 < len(by_take) else z + 1
-        pre = max(0.0, min(PRE, (a - prev_z) / 2))
-        post = max(0.0, min(POST, (next_a - z) / 2))
-        length = z + post - (a - pre)
-        fin, fout = max(0.005, min(0.03, pre)), max(0.01, min(0.06, post + 0.02))
-        delay = l["start"] - pre
-        chains.append(f"[s{k}]atrim=start={a - pre:.3f}:end={z + post:.3f},asetpts=PTS-STARTPTS,"
-                      f"afade=t=in:d={fin:.3f},afade=t=out:st={length - fout:.3f}:d={fout:.3f},"
-                      f"adelay=delays={round(delay * SR)}S:all=1[v{k}]")
-        labels.append(f"[v{k}]")
-        plan.append({"id": l["id"], "take": [a, z], "at": l["start"], "shift": round(l["start"] - a, 3)})
-    n = len(by_take)
-    split = "".join(f"[s{k}]" for k in range(n))
-    graph = (f"[0:a]pan=mono|c0=0.5*c0+0.5*c1,aresample={SR},asplit={n}{split};" + ";".join(chains) + ";" +
-             "".join(labels) + f"amix=inputs={n}:normalize=0:duration=longest,{RESTAMP},apad=whole_dur={D},atrim=0:{D}")
+    inputs, splits, chains, labels, plan = [], [], [], [], []
+    k = 0
+    for src in sources:
+        path = take if src is None else os.path.join(here, src)
+        mine = sorted((l for l in rows if l.get("source") == src), key=lambda l: l["take"][0])
+        if not mine:
+            continue
+        inputs += ["-i", path]
+        n_in = len(inputs) // 2 - 1
+        file_end = duration(ff, path)
+        first = k
+        for j, l in enumerate(mine):
+            a, z = l["take"]
+            prev_z = mine[j - 1]["take"][1] if j else 0.0
+            next_a = mine[j + 1]["take"][0] if j + 1 < len(mine) else z + 1
+            pre = max(0.0, min(PRE, (a - prev_z) / 2))
+            post = max(0.0, min(POST, (next_a - z) / 2, file_end - z - 0.01))
+            tempo = l.get("tempo", 1.0)
+            length = (z + post - (a - pre)) / tempo
+            fin, fout = max(0.005, min(0.03, pre)), max(0.01, min(0.06, post + 0.02))
+            delay = l["start"] - pre / tempo
+            shape = (f"{eq}," if src and eq else "") + (f"volume={l['gainDb']}dB," if l.get("gainDb") else "") + \
+                (f"atempo={tempo}," if tempo != 1.0 else "")
+            chains.append(f"[s{k}]atrim=start={a - pre:.3f}:end={z + post:.3f},asetpts=PTS-STARTPTS,{shape}"
+                          f"afade=t=in:d={fin:.3f},afade=t=out:st={length - fout:.3f}:d={fout:.3f},"
+                          f"adelay=delays={round(delay * SR)}S:all=1[v{k}]")
+            labels.append(f"[v{k}]")
+            plan.append({"id": l["id"], "source": src or os.path.basename(take), "take": [a, z], "at": l["start"],
+                         "shift": round(l["start"] - a, 3), "gainDb": l.get("gainDb", 0), "tempo": tempo})
+            k += 1
+        outs = "".join(f"[s{x}]" for x in range(first, k))
+        splits.append(f"[{n_in}:a]pan=mono|c0=0.5*c0+0.5*c1,aresample={SR},asplit={k - first}{outs}")
+    plan.sort(key=lambda p: p["at"])
+    graph = (";".join(splits) + ";" + ";".join(chains) + ";" +
+             "".join(labels) + f"amix=inputs={k}:normalize=0:duration=longest,{RESTAMP},apad=whole_dur={D},atrim=0:{D}")
     raw = os.path.join(out, "voice-raw.wav")
-    run(ff, ["-i", take, "-filter_complex", graph, "-c:a", "pcm_f32le", raw])
+    run(ff, inputs + ["-filter_complex", graph, "-c:a", "pcm_f32le", raw])
     # the compressor's threshold is set for speech at -23 LUFS, so bring the take there first
     pre_gain = -23 - loudness(ff, raw)["I"]
     chain = (f"volume={pre_gain:.2f}dB,highpass=f=80:p=2,equalizer=f=150:t=q:w=0.9:g=-3,equalizer=f=2800:t=q:w=1.2:g=1.5,"
@@ -346,6 +383,7 @@ def main():
     voice_speech, _ = rms_over(ff, vpath, spans, D)
     report = {
         "take": os.path.basename(args.take),
+        "retakes": sorted({p["source"] for p in vplan if p["source"] != os.path.basename(args.take)}),
         "voiceChain": "high-pass 80 Hz; -3 dB at 150 Hz; +1.5 dB at 2.8 kHz; -2 dB shelf from 8 kHz; de-esser; 2.5:1 compression",
         "voiceBeforeGain": v_in, "voiceGainDb": round(v_gain, 2), "compressorAvgGrDb": comp_db,
         "bedRaw": b_in, "bedLufsTarget": au["bedLufs"],
