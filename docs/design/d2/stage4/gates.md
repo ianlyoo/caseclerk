@@ -86,6 +86,8 @@ Receipts are in `s3/redesign/receipts/`.
 | `gate.sh` 1440x900, hydrated | the 13 above | 0, `gate-1440x900-1026-192553.json` |
 | `gate.sh` 390x844, hydrated | the same 13 | 0, `gate-390x844-1026-192823.json` |
 
+**v10, second item, "asks before it moves money":** not true (refunds and offers up to $15 go out on their own). Gone from the landing's lede, the rules heading on the landing and /policy, and both page descriptions (`src/app/layout.tsx`, its `description` only; `d2/_ui/Shell.tsx`). Now "CaseClerk answers your PayPal disputes, within the limits you set." and "Your lines decide when it asks.", over the body that names both lines. `check.sh` on `/` and `/policy` at the 7 sizes: 0 FAIL, 0 WARN. `gate.sh` on `/`, `/policy`, `/cases`: 0 at 1440x900 (`gate-1440x900-1026-230401.json`) and 390x844 (`gate-390x844-1026-230439.json`).
+
 `judge-asked-1440.png` is now XCS on the fixed scale with the asked band's current wording (dev, 10:32Z).
 
 ## Also in stage 4

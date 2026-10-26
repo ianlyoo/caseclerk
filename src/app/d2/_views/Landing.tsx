@@ -53,7 +53,7 @@ export async function Landing() {
             {kept && <span className="hero-l2">{kept} kept.</span>}
           </h1>
           <div className="hero-copy">
-            <p className="hero-lede">CaseClerk answers PayPal disputes for small sellers and asks before it moves money.</p>
+            <p className="hero-lede">CaseClerk answers your PayPal disputes, within the limits you set.</p>
             {m && (
               <p className="hero-fine">
                 Kept after PayPal&rsquo;s {usd(m.fee.value)} fee; unanswered, the seller loses {amount} and the fee.
@@ -107,7 +107,7 @@ export async function Landing() {
         <div className="wrap rules-grid">
           <div className="rules-copy">
             <h2 id="rules-title" className="h-section">
-              It asks before money moves.
+              Your lines decide when it asks.
             </h2>
             <p className="body">
               Small cases it answers on its own, under your rules. Over {usd(evidenceLine).replace(".00", "")} to file evidence, or over{" "}
