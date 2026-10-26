@@ -4,20 +4,28 @@ import { RESERVED_CASES } from "./routes";
 import { cap, day, dayClock, leftWords, reasonWords, stageWord } from "./format";
 
 export type Phase = "waiting" | "open" | "closed";
-export type StateKey = "ask" | "sending" | "review" | "buyer" | "read" | "received" | "error" | "kept" | "lost";
+export type StateKey = "ask" | "working" | "review" | "buyer" | "read" | "received" | "error" | "kept" | "lost";
 
 export type CaseState = { phase: Phase; key: StateKey; words: string };
 
 const SELLER_WON = new Set(["RESOLVED_WITH_PAYOUT", "RESOLVED_SELLER_FAVOUR", "RESOLVED_SELLER_FAVOR"]);
 export const sellerWon = (c: CaseRecord) => SELLER_WON.has(c.snapshot.outcome ?? "");
 
-export function caseState(c: CaseRecord): CaseState {
+/** While the agent runs, what it is about to do: over the evidence line it asks you; under it, it answers alone. */
+function workingWords(c: CaseRecord, line?: number): string {
+  if (c.decision) return "Reading PayPal’s update";
+  if (line === undefined) return "Reading the case";
+  return Number(c.snapshot.amount.value) >= line ? "Reading it, then asking you" : "Reading it, then answering on its own";
+}
+
+/** `line`: the seller's evidence line (policy), so a case the agent is working says which way it goes. */
+export function caseState(c: CaseRecord, line?: number): CaseState {
   const s = c.snapshot;
   if (c.status === "resolved" || s.status === "RESOLVED") {
     return sellerWon(c) ? { phase: "closed", key: "kept", words: "Closed for you" } : { phase: "closed", key: "lost", words: "Closed for the buyer" };
   }
   if (c.status === "awaiting_approval") return { phase: "waiting", key: "ask", words: "Waiting for your yes" };
-  if (c.status === "acting") return { phase: "open", key: "sending", words: "Sending to PayPal" };
+  if (c.status === "acting") return { phase: "open", key: "working", words: workingWords(c, line) };
   if (c.status === "error") return { phase: "open", key: "error", words: "Stopped on an error" };
   if (c.status === "waiting_on_buyer" || s.status === "WAITING_FOR_BUYER_RESPONSE") return { phase: "open", key: "buyer", words: "Waiting for the buyer" };
   if (c.status === "waiting_on_paypal") {

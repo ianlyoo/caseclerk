@@ -31,17 +31,18 @@ On a **test dispute** (`isTestDispute`), once the seller's yes has filed the evi
 
 Totals: 1 approve, 19 simulate POSTs (18 × 409, 1 × 200). That is 19 of the API's 120 checks an hour and 1 of its 20 actions. PayPal opened the ruling step 18 min 56 s after the filing. No other POST anywhere: every shot, check and gate ran GET-only (non-GET aborted). PP-R-VPY-10194485 and the spare MFL were not touched; no test dispute was opened (1 of 2 still unused).
 
-**RESOLVED: not arrived.** XCS was still under review at 09:18Z, 70 min after the ask; the GET-only recorder on win-guest that watched it (08:21Z to 09:18Z) was stopped for the report. The sandbox's timing varies: VAB resolved 47 min after its filing; JKB took about 24 h from adjudicate to RESOLVED. So the asked band now says the sandbox rules "from minutes to a day later" (it said "often minutes later").
+**RESOLVED: not arrived.** XCS was still under review at 14:00Z (23:00 KST), 5 h 52 min after the ask; PayPal's last update on it was 08:10Z. GET-only, I polled `/api/cases/PP-R-XCS-10194591` every 10 minutes and kept the case page open in a recorder on win-guest from 08:21Z to 09:18Z, 09:38Z to 10:32Z (production) and 10:32Z to 14:00Z (dev, the fixed scale); then I gave up, as the PM set. The sandbox's timing varies: VAB resolved 47 min after its filing; JKB took about 24 h from adjudicate to RESOLVED. So the asked band now says the sandbox rules "from minutes to a day later" (it said "often minutes later").
 
 ## The clip
 
-`judge-loop-1440.mp4`: 46.6 s, 1440×900, H.264 25 fps, two segments of the real run on XCS.
+`judge-loop-1440.mp4`: 44.4 s, 1440×900, H.264 25 fps, three segments of the real run on XCS.
 
 1. Take 1, 32.5 s: the waiting case, the yes (Approve and file), PayPal's 200 and "Filed. PayPal is reviewing." with the guide line, the band, Seller wins, Ask for the ruling, the 409 and "Asking the sandbox to rule for the seller" (Not open yet, Under review, 1 check).
 2. **Cut: about 18 minutes of waiting.** Take 1's page reloaded at 07:49:2x because I synced source to the dev server mid-recording (the recorder's context died); take 2 opened the same page and asked again at 07:50:35, and the band asked once a minute until PayPal opened the step.
-3. Take 2, 14.1 s: the last checks, the 200, "Ruling asked for the seller" and the new stop on the scale.
+3. Take 2, 7.0 s: the last checks, up to the frame before the 200 (after it, take 2 shows the asked band's earlier wording, "often minutes later").
+4. **Cut: 2 h 25 min.** Take 3, 5.0 s: the same page opened again at 10:32Z on the fixed scale: "Ruling asked for the seller" in the current wording ("from minutes to a day later") and the stop "You asked for a ruling". The 200 itself is not on screen; the scale's record line and the audit carry it (above).
 
-**Not in the clip:** the RESOLVED webhook and the money (see above). Takes 1 and 2 were recorded on the Mac (before PM delta v8). The clip and `judge-asked-1440.png` show the asked band's earlier wording ("often minutes later").
+**Not in the clip:** the RESOLVED webhook and the money (see above). Takes 1 and 2 were recorded on the Mac (before PM delta v8); take 3 on win-guest. No frame shows the earlier wording.
 
 ## Gates
 
@@ -70,6 +71,25 @@ Receipts are in `s3/redesign/receipts/`.
 
 **Copy:** the band says "sandbox" in its label, its heading and its message; amounts carry cents; no middots, numbering, arrows or emoji; the action and debug ids appear only in the scale's record lines (G7).
 
+## PM v9 and v10 (after the merge of 304a3d9)
+
+**v9, G3 at 768 on the landing:** the waiting case's Go ("Review the $289.00 case") was stretched to its column below 900px, which centres its label, so the label's start moved with the item and amount and landed 2.9px off the facts' second column. The Go now keeps its label's width on the column's edge at every size (the inbox's phone rows the same), so it holds for any name and amount.
+
+**Found on the way, the scale's labels on production:** XCS's "You said yes. Filed" and "You asked for a ruling" touched at 1440, and at 1280 the ruling's leader ran through "Now"; TZD had a leader clash at 1280. The labels now come from a small search over rows and sides (`src/app/d2/_lib/rows.ts`): two rows, a third only where two can't hold them, and last, "Now" gives up its label. A GET-only checker over the landing and every case page (overlaps, and leaders through labels): production 3 clashes over 70 pages (1440, 1280); dev 0 over 175 pages (1440, 1280, 1536, 1920, 2560), a third row on 2, "Now" never hidden. Production needs the deploy for this.
+
+**v10, the agent's working words:** a case the agent is working (status `acting`) said "Sending to PayPal". It now says which way it goes from the seller's evidence line: "Reading it, then asking you" (at or over, the visitor's $289 to $449 test disputes), "Reading it, then answering on its own" (under), "Reading PayPal's update" (already decided, PayPal changed the case). The test-dispute wait's third step, the inbox, the board, the scale's "Now" and the case plate all read it from `caseState(c, line)`. Checked by a unit run of the words (both sides of $250.00, a re-run, no line) and in the browser: the landing's wait with a saved wait and the page's own `/api/cases` answer replaced by a case in `acting` at $289.00 and $42.00 (nothing sent anywhere; no test dispute opened).
+
+| Check | Pages | Result |
+|---|---|---|
+| `check.sh`, 1440, 1920, 1536, 2560, 390, 768, 1280 | `/`, `/cases`, `/policy`, case VPY, XCS, MFL, SGV, VAB, YDQ, MOL, TZD | 0 FAIL; 1 WARN at 1280 on VPY and MFL (G2, "Don't file"; the same on production) |
+| `check.sh`, the 5 sizes | `/board`, `/board?span=hours` | 0 FAIL, 0 WARN, 1 exempt |
+| `gate.sh` 1440x900, hydrated | the 13 above | 0, `gate-1440x900-1026-192553.json` |
+| `gate.sh` 390x844, hydrated | the same 13 | 0, `gate-390x844-1026-192823.json` |
+
+**v10, second item, "asks before it moves money":** not true (refunds and offers up to $15 go out on their own). Gone from the landing's lede, the rules heading on the landing and /policy, and both page descriptions (`src/app/layout.tsx`, its `description` only; `d2/_ui/Shell.tsx`). Now "CaseClerk answers your PayPal disputes, within the limits you set." and "Your lines decide when it asks.", over the body that names both lines. `check.sh` on `/` and `/policy` at the 7 sizes: 0 FAIL, 0 WARN. `gate.sh` on `/`, `/policy`, `/cases`: 0 at 1440x900 (`gate-1440x900-1026-230401.json`) and 390x844 (`gate-390x844-1026-230439.json`).
+
+`judge-asked-1440.png` is now XCS on the fixed scale with the asked band's current wording (dev, 10:32Z).
+
 ## Also in stage 4
 
 - **P2 from the board critique, the phone board's inner scroll frame:** below 900px the board takes its rows' height (Bryntum `autoHeight`) and the page scrolls; the time header scrolls away with the page. `board-390.png` (first screen), `board-390-full.png` (the whole board).
@@ -80,7 +100,7 @@ Receipts are in `s3/redesign/receipts/`.
 - `judge-before-1440.png`: XCS waiting for your yes (take 1, before the approve).
 - `judge-filed-1440.png`: after the yes: Filed, the guide line and the band.
 - `judge-checking-1440.png`: Not open yet, Under review, 17 checks.
-- `judge-asked-1440.png`: Ruling asked for the seller, the new stop on the scale.
+- `judge-asked-1440.png`: Ruling asked for the seller, the new stop on the scale (retaken after v9: the fixed labels, the current wording).
 - `case-ydq-control-1440.png`, `case-ydq-control-390.png`: another test dispute in review, the band idle.
 - `case-mol-no-control-1440.png`: a live dispute in review, no band.
 - `board-390.png`, `board-390-full.png`: the phone board without its inner frame.
@@ -88,5 +108,5 @@ Receipts are in `s3/redesign/receipts/`.
 
 ## Open
 
-- XCS's RESOLVED webhook and money, to add as the clip's last take and a shot when it lands.
+- XCS's RESOLVED webhook and money, not arrived by 14:00Z: to add as the clip's last take and a shot if it lands.
 - The phone board's key still shows "Times in PT" (`.bd-key-fine` loses to `.bd-key li`); from stage 3, untouched.

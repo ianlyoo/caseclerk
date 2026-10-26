@@ -22,9 +22,8 @@ export type CaseModel = {
   filing: Filing;
 };
 
-const NOW_WORDS: Record<CaseState["key"], string> = {
+const NOW_WORDS: Record<Exclude<CaseState["key"], "working">, string> = {
   ask: "Waiting for your yes",
-  sending: "Sending to PayPal",
   review: "PayPal is reviewing",
   buyer: "Waiting for the buyer",
   read: "Nothing to answer yet",
@@ -34,9 +33,9 @@ const NOW_WORDS: Record<CaseState["key"], string> = {
   lost: "",
 };
 
-export function caseModel(b: CaseBundle, nowIso: string): CaseModel {
+export function caseModel(b: CaseBundle, nowIso: string, line?: number): CaseModel {
   const c = b.case;
-  const state = caseState(c);
+  const state = caseState(c, line);
   const pending = b.actions.find((a) => a.status === "awaiting_approval");
   const filed = filingOf(b);
   const filing = (pending?.params ?? b.actions.find((a) => a.kind === "provide_evidence")?.params ?? {}) as Filing;
@@ -67,7 +66,7 @@ export function caseModel(b: CaseBundle, nowIso: string): CaseModel {
     t: nowT,
     at: nowIso,
     title: "Now",
-    detail: NOW_WORDS[state.key],
+    detail: state.key === "working" ? state.words : NOW_WORDS[state.key],
     tone: state.key === "ask" ? "ask" : "done",
     proof: [
       { label: "PayPal status", value: c.snapshot.status },

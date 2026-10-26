@@ -10,7 +10,7 @@ const archivo = Archivo({ subsets: ["latin"], axes: ["wdth"], variable: "--font-
 export const SITE: Metadata = {
   title: "CaseClerk: PayPal disputes, answered",
   description:
-    "CaseClerk answers PayPal disputes for small sellers and asks before it moves money. Built on real PayPal sandbox disputes.",
+    "CaseClerk answers PayPal disputes for small sellers, within the limits they set. Built on real PayPal sandbox disputes.",
 };
 
 export function Shell({ children }: { children: ReactNode }) {

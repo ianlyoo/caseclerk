@@ -43,7 +43,7 @@ export async function Policy() {
         <div className="wrap rules-grid">
           <div className="rules-copy">
             <h2 id="money-title" className="h-section">
-              It asks before money moves.
+              Your lines decide when it asks.
             </h2>
             <p className="body">
               Over {short(evidence)} to file evidence, or over {short(asksFrom)} to refund or offer, it asks you first. Below those lines CaseClerk acts on

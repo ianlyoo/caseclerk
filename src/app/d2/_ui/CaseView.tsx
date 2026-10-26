@@ -55,7 +55,7 @@ export function CaseView({ initial, line, serverNow }: { initial: CaseBundle; li
   const reduce = useReducedMotion();
 
   const b = useMemo(() => withAnswer(polled, answer), [polled, answer]);
-  const m: CaseModel = useMemo(() => caseModel(b, now), [b, now]);
+  const m: CaseModel = useMemo(() => caseModel(b, now, line), [b, now, line]);
   const c = b.case;
   const s = c.snapshot;
   const closed = m.state.phase === "closed";
@@ -499,7 +499,7 @@ function Plate({
     read: "Nothing to answer yet.",
     received: "Received, not worked yet.",
     error: "Stopped on an error.",
-    sending: "Sending to PayPal.",
+    working: c.decision ? "Reading PayPal’s update." : "Reading the case.",
   };
   const why: Record<string, string> = {
     review: "No action is open to you right now. CaseClerk picks the case up again when PayPal updates it.",
@@ -507,7 +507,11 @@ function Plate({
     read: "PayPal hasn’t opened an action to you. CaseClerk picks the case up again when PayPal updates it.",
     received: "PayPal’s webhooks arrived, but CaseClerk’s agent hasn’t run on this case.",
     error: "CaseClerk’s agent stopped before answering, so nothing was sent to PayPal.",
-    sending: "CaseClerk is sending its answer to PayPal now.",
+    working: c.decision
+      ? "PayPal updated the case. CaseClerk is reading what changed."
+      : Number(c.snapshot.amount.value) >= line
+        ? `Over your ${lineWord(line)} evidence line, so CaseClerk asks you before it files.`
+        : `Under your ${lineWord(line)} evidence line, so CaseClerk answers on its own.`,
   };
   return (
     <>

@@ -53,7 +53,7 @@ export async function Landing() {
             {kept && <span className="hero-l2">{kept} kept.</span>}
           </h1>
           <div className="hero-copy">
-            <p className="hero-lede">CaseClerk answers PayPal disputes for small sellers and asks before it moves money.</p>
+            <p className="hero-lede">CaseClerk answers your PayPal disputes, within the limits you set.</p>
             {m && (
               <p className="hero-fine">
                 Kept after PayPal&rsquo;s {usd(m.fee.value)} fee; unanswered, the seller loses {amount} and the fee.
@@ -78,7 +78,7 @@ export async function Landing() {
                 No case is waiting for you right now
               </p>
               <p className="hero-wait-body">Open a real PayPal sandbox chargeback and watch CaseClerk work it. PayPal takes a few minutes to deliver it.</p>
-              <TestDispute tone="go" on="leather" />
+              <TestDispute tone="go" on="leather" line={evidenceLine} />
             </aside>
           )}
         </section>
@@ -107,7 +107,7 @@ export async function Landing() {
         <div className="wrap rules-grid">
           <div className="rules-copy">
             <h2 id="rules-title" className="h-section">
-              It asks before money moves.
+              Your lines decide when it asks.
             </h2>
             <p className="body">
               Small cases it answers on its own, under your rules. Over {usd(evidenceLine).replace(".00", "")} to file evidence, or over{" "}
@@ -184,7 +184,7 @@ export async function Landing() {
                 Watch one arrive.
               </h2>
               <p className="body">Open a real PayPal sandbox chargeback of your own. PayPal takes a few minutes to deliver it; then CaseClerk works it under these rules.</p>
-              <TestDispute />
+              <TestDispute line={evidenceLine} />
             </div>
           </div>
         </section>

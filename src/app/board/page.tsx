@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCase, listCases, type CaseBundle } from "../d2/_lib/api";
+import { getCase, getPolicy, listCases, type CaseBundle } from "../d2/_lib/api";
 import { boardOf } from "../d2/_lib/board";
 import { TopBar } from "../d2/_ui/Chrome";
 import BoardClient from "./BoardClient";
@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Deadlines: CaseClerk" };
 
 export default async function BoardPage({ searchParams }: { searchParams: Promise<{ span?: string }> }) {
   const span = (await searchParams).span === "hours" ? "hours" : "deadlines";
-  const list = await listCases();
+  const [list, policy] = await Promise.all([listCases(), getPolicy()]);
   if (!list) {
     return (
       <div className="metal page-error">
@@ -23,7 +23,7 @@ export default async function BoardPage({ searchParams }: { searchParams: Promis
   }
   // every case's own record (audit and wire), for the moments on its bar
   const bundles = new Map<string, CaseBundle | null>(await Promise.all(list.map(async (c) => [c.id, await getCase(c.id)] as const)));
-  const board = boardOf(list, bundles, new Date().toISOString());
+  const board = boardOf(list, bundles, new Date().toISOString(), policy?.evidenceApprovalAtUsd ?? 250);
   const { waiting, open, closed } = board.counts;
 
   return (

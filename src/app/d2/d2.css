@@ -561,6 +561,21 @@
   top: calc(-64px - var(--lead));
   height: calc(64px + var(--lead));
 }
+/* a third row only where two can't hold a crowd of stops without a leader crossing a label */
+.sc-stops[data-rows="3"] {
+  height: 192px;
+}
+.sc-stop[data-row="3"] {
+  top: 128px;
+}
+.sc-stop[data-row="3"]::before {
+  top: calc(-128px - var(--lead));
+  height: calc(128px + var(--lead));
+}
+/* "now" when nothing else fits: the index and the readout mark it; the label keeps its box to be measured */
+.sc-stop[data-hidden] {
+  visibility: hidden;
+}
 .sc-stop[data-end="right"] {
   left: auto;
   right: calc((1 - var(--x)) * 100%);
@@ -792,6 +807,8 @@
   row-gap: var(--space-7);
   align-items: start;
 }
+/* its Go keeps its label's width at every size, on the column's edge (stretched, the label's start would move with
+   the amount and land near the facts' second column) */
 .waiting-head {
   grid-column: 1 / span 5;
   display: flex;
@@ -1178,13 +1195,15 @@
     align-items: flex-start;
     text-align: left;
   }
-  .sc-stops {
+  .sc-stops,
+  .sc-stops[data-rows="3"] {
     height: auto;
     display: flex;
     flex-direction: column;
   }
   .sc-stop,
   .sc-stop[data-row="2"],
+  .sc-stop[data-row="3"],
   .sc-stop[data-end="right"] {
     position: static;
     max-width: none;
@@ -1224,9 +1243,6 @@
   .facts-dark,
   .try-copy {
     grid-column: 1;
-  }
-  .waiting-head .btn {
-    width: 100%;
   }
   .foot-grid {
     flex-direction: column;
@@ -2131,12 +2147,11 @@
   .wrow-amount {
     font-size: 28px;
   }
+  /* the button stays the width of its label, on the column's edge: a stretched button centres its label, and where
+     that label starts then moves with the amount in it, off every other line's start */
   .wrow-act {
-    align-items: stretch;
+    align-items: flex-start;
     text-align: left;
-  }
-  .wrow-act .btn {
-    width: 100%;
   }
   .rows,
   .rows tbody {
