@@ -864,42 +864,77 @@
    "id": "sfx-01",
    "at": 18.23,
    "sound": "click-a",
-   "volume": 0.55,
+   "volume": 0.78,
    "why": "arrival: the real click on Open a test dispute (src 6.2)"
   },
   {
    "id": "sfx-02",
    "at": 24.68,
    "sound": "tick",
-   "volume": 0.45,
+   "volume": 0.64,
    "why": "the +3 min plate lands"
+  },
+  {
+   "id": "sfx-12",
+   "at": 36.82,
+   "sound": "flip",
+   "volume": 0.5,
+   "why": "the page changes: the $289.00 case dissolves into the $412.00 one (36.85-37.2)"
+  },
+  {
+   "id": "sfx-13",
+   "at": 43.77,
+   "sound": "mouse",
+   "volume": 0.78,
+   "why": "vpy: the click on Asked you, 98 s after it arrived (src 10.57)"
+  },
+  {
+   "id": "sfx-14",
+   "at": 64.255,
+   "sound": "mouse",
+   "volume": 0.78,
+   "why": "vpy-approve: the click on File the evidence (src 2.955)"
   },
   {
    "id": "sfx-06",
    "at": 66.525,
    "sound": "click-a",
-   "volume": 0.55,
+   "volume": 0.78,
    "why": "vpy-approve: the click on Yes, file it (src 5.225)"
   },
   {
    "id": "sfx-07",
    "at": 79.23,
    "sound": "pop",
-   "volume": 0.4,
+   "volume": 0.56,
    "why": "vpy-approve: PayPal's 200 settles (src 17.93)"
+  },
+  {
+   "id": "sfx-15",
+   "at": 93.917,
+   "sound": "mouse",
+   "volume": 0.78,
+   "why": "vab: the click on You said yes. Filed (src 12.42)"
+  },
+  {
+   "id": "sfx-16",
+   "at": 108.22,
+   "sound": "flip",
+   "volume": 0.5,
+   "why": "the page changes: the filed panel dissolves into Your rules (108.25-108.6)"
   },
   {
    "id": "sfx-10",
    "at": 126.95,
    "sound": "page",
-   "volume": 0.5,
+   "volume": 0.71,
    "why": "the diagram comes in (arch)"
   },
   {
    "id": "sfx-11",
    "at": 160.8,
    "sound": "land",
-   "volume": 0.6,
+   "volume": 0.85,
    "why": "the end card's mark lands"
   }
  ],
@@ -912,7 +947,7 @@
   "retakeEq": "lowshelf=f=160:g=1.5,equalizer=f=2500:t=o:w=2:g=-2,highshelf=f=7000:g=-0.5",
   "note": "scripts/mix.py builds mix.wav (the one sound track, from 0): each row's sentence cut from the take (or its retake) at its 'take' span and placed at the row's start (time shifts only, unless a row has a tempo), the voice chain, the synthesized bed (bedLufs unducked, down by duckDb under speech, which sits it about 20 dB under the voice; lifts at the title's brand and on the end card, in the pauses only), and the cues. Captions are the words spoken; 'script' keeps the written line where they differ. retakeEq matches the retakes' tone to take 1's (measured on N15, N23 and N25 in both: within 0.3 dB an octave band after it).",
   "duckDb": -10,
-  "bedLufs": -26.5,
+  "bedLufs": -27.0,
   "lifts": [
    [
     7.6,
@@ -926,9 +961,9 @@
    ]
   ],
   "targetLufs": -14,
-  "voiceTrim": 0.9,
+  "voiceTrim": 0.765,
   "masterGainDb": 0.8,
-  "finalNote": "The final cut (owner, 10/27): the narration stem at 0.9x (-0.92 dB) over the whole film, the bed and cues unchanged. masterGainDb pins rehearsal E's master gain, so nothing normalizes the voice back up to targetLufs; the mix lands about 1 dB under it, as intended.",
+  "finalNote": "The final cut (the owner, 10/27: #541, then #542): the narration stem at 0.765x (0.9, then 0.85 more; -2.33 dB from rehearsal E) over the whole film. masterGainDb pins rehearsal E's master gain, so nothing normalizes the voice back up to targetLufs; the mix lands under it, as intended. The bed is 0.5 dB lower (bedLufs -27) so it stays about 18-19 dB under the quieter voice, and its ducking is slower (scripts/mix.py: down over 0.8 s, up over 2 s, held through pauses under 1.5 s). The cues are 3 dB louder, with five more on real on-screen actions: three clicks and two page changes.",
   "ceilingDbtp": -1
  }
 }

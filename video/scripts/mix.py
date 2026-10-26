@@ -20,12 +20,15 @@ None of it goes in git: the take and the mix carry the owner's voice.
 - Bed: synthesized here, so we own it outright. A slow vi-IV-I-V pad in D major
   (Bm9, Gmaj9, Dmaj9, A add9, 8 s a chord), soft felt-piano notes from each chord,
   a synthesized room, resolving to Dmaj9 on the end card. Unducked it sits at audio.bedLufs;
-  under every spoken span it dips by audio.duckDb, which puts it about 20 dB under the voice,
-  and audio.lifts raise it a little at the title's brand and on the end card, in the pauses only
-  (a lift never rises under a word). It fades out over the end card's last seconds, after the last word.
+  under every spoken span it dips by audio.duckDb, which puts it about 18-20 dB under the voice.
+  The dip is slow: down over 0.8 s before a sentence, back up over 2 s after it, held through
+  pauses under 1.5 s and rising only part way in pauses under 3 s (a 2 s pause lets it up about
+  2.5 dB of its 10), on a raised-cosine curve with its corners rounded. audio.lifts raise it a
+  little at the title's brand and on the end card, in the pauses only (a lift never rises under a
+  word). It fades out over the end card's last seconds, after the last word.
 - Cues: edit.json "cues", the CC0 recordings in assets/sfx/.
 - Master: gain to audio.targetLufs integrated, then a limiter under audio.ceilingDbtp.
-  audio.voiceTrim scales the voice stem (the final cut's 0.9x); audio.masterGainDb, when set,
+  audio.voiceTrim scales the voice stem (the final cut's 0.765x); audio.masterGainDb, when set,
   replaces the gain to targetLufs, so a trim isn't normalized away.
 
 Needs an ffmpeg with aevalsrc, afir, deesser, amultiply, alimiter and ebur128.
@@ -48,7 +51,9 @@ SR = 48000
 BED_SR = 16000  # the bed has nothing above 3.4 kHz before its low-pass; 48k only after
 PRE, POST = 0.08, 0.15  # air kept before and after a sentence, when the take has it
 SPEECH_GAP = 1.5  # the bed stays down through pauses shorter than this
-DUCK_DOWN, DUCK_UP = 0.35, 1.0  # ramp times into and out of a duck (s)
+DUCK_DOWN, DUCK_UP = 0.8, 2.0  # ramp times into and out of a duck (s); E's 0.35 and 1.0 sounded abrupt (#542)
+DUCK_ROUND = 0.15  # the duck's corners are rounded by two moving averages this long (s)
+FULL_SWELL = 3.0  # a pause this long lets the bed all the way up; a shorter one (over SPEECH_GAP) only part way
 
 # the bed: MIDI notes, low to high
 CHORDS = {
@@ -192,6 +197,18 @@ def ramp(x):
     return 0.5 - 0.5 * math.cos(math.pi * x)
 
 
+def smooth(xs, rate, width):
+    """Two passes of a centred moving average `width` s long: a triangle that rounds a curve's corners."""
+    k = max(1, int(width * rate)) // 2
+    n = len(xs)
+    for _ in range(2):
+        pre = [0.0]
+        for v in xs:
+            pre.append(pre[-1] + v)
+        xs = [(pre[min(n, i + k + 1)] - pre[max(0, i - k)]) / (min(n, i + k + 1) - max(0, i - k)) for i in range(n)]
+    return xs
+
+
 def envelope(edit, merged, rate=1000):
     """The bed's gain on the film clock, linear, sampled at rate Hz."""
     au = edit["audio"]
@@ -201,15 +218,15 @@ def envelope(edit, merged, rate=1000):
     # the fade-out starts after the last word, and never before the film's last 3.7 s
     fade_at = max(D - 3.7, (merged[-1][1] + 0.15) if merged else 0.0)
     fade_len = max(1.0, D - 0.1 - fade_at)
-    out = array.array("f")
+    # how far the bed may rise in each pause: none at SPEECH_GAP, all of it at FULL_SWELL
+    pauses = [(z0, a1, ramp((a1 - z0 - SPEECH_GAP) / (FULL_SWELL - SPEECH_GAP))) for (_, z0), (a1, _) in zip(merged, merged[1:])]
+    depths = []
     for i in range(n):
         t = i / rate
-        lift = 0.0
-        for a, z, g in au["lifts"]:
-            up = ramp((t - a) / 0.8)
-            down = 1.0 if z >= D - 1e-6 else 1 - ramp((t - (z - 0.8)) / 0.8)
-            lift += g * min(up, down)
         depth = 0.0
+        for z0, a1, room in pauses:
+            if z0 < t < a1:
+                depth = 1 - room
         for a, z in merged:
             s0, e0 = a - 0.12, z + 0.15
             if s0 - DUCK_DOWN <= t <= e0 + DUCK_UP:
@@ -219,6 +236,17 @@ def envelope(edit, merged, rate=1000):
                     depth = 1.0
                 else:
                     depth = max(depth, 1 - ramp((t - e0) / DUCK_UP))
+        depths.append(depth)
+    # where a rise meets the next dip the curve turns sharply; round it
+    depths = smooth(depths, rate, DUCK_ROUND)
+    out = array.array("f")
+    for i, depth in enumerate(depths):
+        t = i / rate
+        lift = 0.0
+        for a, z, g in au["lifts"]:
+            up = ramp((t - a) / 0.8)
+            down = 1.0 if z >= D - 1e-6 else 1 - ramp((t - (z - 0.8)) / 0.8)
+            lift += g * min(up, down)
         db = lift * (1 - depth) + duck * depth  # a lift only where the bed isn't ducked
         gain = 10 ** (db / 20)
         gain *= ramp(t / 0.6)  # in from silence

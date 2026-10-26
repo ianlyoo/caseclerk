@@ -176,3 +176,31 @@ The new mix against E's: bit-identical in every pause (bed and cues only); under
 - A full decode with `-xerror` logged 0 error lines. Atom order is ftyp moov free mdat (fast-start).
 - Sound: −15.3 LUFS, −1.8 dBTP, LRA 6.4 LU on the AAC track (E: −14.2 LUFS, −1.7 dBTP); the bed 19.2 dB under the voice (E: 20.1).
 - I looked at the nine beat midpoints and the before/after pair at each of the 14 cuts; the picture is E's, with N20's caption restored. For the sound: spectrogram, waveform, small-speaker and earbud simulations, a mono fold-down, meters, the null test against E and fresh transcriptions. Nothing to fix turned up.
+
+# Review: the final cut, the owner's notes on the sound (PM 03:00, #542)
+
+The owner's last notes: the narration 15% quieter again, the cues a little louder and a few more, from a proper open-source library, and the bed's rise and fall under the narration less abrupt. So the final cut is the first final's picture, takes and captions (N20 "waits for a yes"), with four changes to the sound:
+- the voice stem at 0.765× (0.9 × 0.85; −2.33 dB from E), the master gain still pinned at E's +0.8 dB;
+- the bed 0.5 dB lower (18.3 dB under the voice);
+- the bed's dip slower (down over 0.8 s, up over 2 s, held through pauses under 1.5 s, rising only part way in pauses under 3 s);
+- every cue 3 dB louder, with five new ones on real on-screen actions: the clicks on Asked you, File the evidence and You said yes. Filed, and page flips into the $412.00 case and into Your rules.
+
+The sounds are all Kenney CC0 recordings: the UI Audio and RPG Audio packs already in `audio/cues.json`, their zip hashes checked again before use. `mouse.wav` joins UI Audio's press and release; `flip.wav` is RPG Audio's `bookFlip3.ogg`. Freesound's CC0 packs need an account to download, and this work uses none, so nothing came from there. `LISTEN.md` has the numbers and the cue list.
+
+## Before rendering (10/27)
+
+Mix: voice stem −16.8 LUFS (first final −15.4), the bed 18.3 dB under it, the mix −16.4 LUFS and −2.0 dBTP. The limiter went over its level in 4 of 16,850 blocks, the most 0.82 dB. The duck checks out: the bed is fully down at every sentence's start, middle and end, and its fastest change is 19 dB a second (E: 45). Every cue was measured against the voice stem. Nine land in silence. The arrival click and the Yes click land in the 50 ms and 30 ms gaps between words, as they did in D and E. Footage clicks left silent: Chargeback in (on "$412.00"), Closed for you (on "ruled for"), and the exact-text toggle, which the shot crops out. Lint: 0 errors, 0 warnings.
+
+## Render (10/27 03:07–03:16 KST, 8 min 49 s)
+
+`s4/video/final.mp4` (replaces the first final), sha256 6726d89ddfb6a2e5f557b59b1b2103830c29c1347cf937d3bc11d1c678669199, 52.3 MB. Beside it: `final.srt` and `final.vtt` (32 cues, unchanged) and `final-contact-sheet.png`. A copy is at `board/narration/final.mp4` (same sha256). Rendered on win-guest, not on the Mac.
+
+- ffprobe: h264 High, yuv420p, 1920×1080, 30/1, 5055 frames, 168.5 s (2:48.5), 2.48 Mb/s, AAC LC.
+- A full decode with `-xerror` logged 0 error lines. Atom order is ftyp moov free mdat (fast-start).
+- Sound: −16.5 LUFS, −2.0 dBTP, LRA 6.4 LU on the AAC track (first final: −15.3 LUFS, −1.8 dBTP; E: −14.2, −1.7).
+- Picture: against the first final, 4,602 of 5,055 frames are identical and the rest are at PSNR 51 dB or more. I looked at the nine beat midpoints and frames at each new click. For the sound I checked:
+  - the spectrogram, the waveform and the bed stem's waveform;
+  - small-speaker and earbud simulations, and a mono fold-down;
+  - the meters and fresh transcriptions: 28 caption words differ from the mix's (first final: 30).
+
+  Nothing to fix turned up.

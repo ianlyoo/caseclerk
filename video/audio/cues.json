@@ -1,5 +1,5 @@
 {
- "about": "The film's sound since rehearsal D (re-recorded rows from rehearsal E): the owner's narration, a music bed we synthesized in code, and six CC0 cues. Times are on the film clock; edit.json is the source of truth and scripts/mix.py mixes all three into assets/audio/mix.wav (not in git), the one sound track index.html plays from 0. Every cue sound is CC0 from Kenney, decoded from the pack's .ogg to 48 kHz mono wav and peak-normalised to -3 dBFS.",
+ "about": "The film's sound since rehearsal D (re-recorded rows from rehearsal E): the owner's narration, a music bed we synthesized in code, and eleven CC0 cues. Times are on the film clock; edit.json is the source of truth and scripts/mix.py mixes all three into assets/audio/mix.wav (not in git), the one sound track index.html plays from 0. Every cue sound is CC0 from Kenney, decoded from the pack's .ogg to 48 kHz mono wav and peak-normalised to -3 dBFS (mouse.wav joins two of the pack's recordings, a press and a release).",
  "packs": {
   "interface-sounds": {
    "name": "Kenney Interface Sounds 1.0",
@@ -70,6 +70,29 @@
    "original": "Audio/bookPlace3.ogg (left channel)",
    "seconds": 0.261,
    "sha256": "0bbbd85b933b17b613e01fa8ce07f1ce480a39d862fd7703225a55d439cf1b1b"
+  },
+  "mouse": {
+   "file": "assets/sfx/mouse.wav",
+   "pack": "ui-audio",
+   "original": "Audio/mouseclick1.ogg, then Audio/mouserelease1.ogg 60 ms later (their clicks ~70 ms apart), each the mean of its two channels",
+   "originalSha256": {
+    "mouseclick1.ogg": "ece1210c62ccae6c9ea4f4c59466d9d453d6b357c7d4b1a6c31196e5e6fea1bf",
+    "mouserelease1.ogg": "23cb78cea76d8f1bb1266af228101a09b5d62063f4ac87ead15b1d395c6181f0"
+   },
+   "seconds": 0.126,
+   "sha256": "2fe42b05fe45850726de2650944ecefbf0129c9a3376d85f0657b90d8382eaa3",
+   "added": "final cut, 2026-10-27 (#542): a whole mouse click, press and release, for the clicks that sit in pauses"
+  },
+  "flip": {
+   "file": "assets/sfx/flip.wav",
+   "pack": "rpg-audio",
+   "original": "Audio/bookFlip3.ogg (left channel)",
+   "originalSha256": {
+    "bookFlip3.ogg": "c85db5dceb3f1df073e960630277eaa88a5afda0477c1ddd68dad707621767be"
+   },
+   "seconds": 0.231,
+   "sha256": "97a9a7397b33f8c8dec766bb4173b038450bd3f3feb03bbcec74afe2a84b560b",
+   "added": "final cut, 2026-10-27 (#542): a short page turn for page changes, softer than page.wav on the diagram"
   }
  },
  "cues": [
@@ -77,7 +100,7 @@
    "id": "sfx-01",
    "at": 18.23,
    "sound": "click-a",
-   "volume": 0.55,
+   "volume": 0.78,
    "why": "arrival: the real click on Open a test dispute (src 6.2)",
    "file": "assets/sfx/click-a.wav",
    "license": "CC0 1.0"
@@ -86,16 +109,43 @@
    "id": "sfx-02",
    "at": 24.68,
    "sound": "tick",
-   "volume": 0.45,
+   "volume": 0.64,
    "why": "the +3 min plate lands",
    "file": "assets/sfx/tick.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-12",
+   "at": 36.82,
+   "sound": "flip",
+   "volume": 0.5,
+   "why": "the page changes: the $289.00 case dissolves into the $412.00 one (36.85-37.2)",
+   "file": "assets/sfx/flip.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-13",
+   "at": 43.77,
+   "sound": "mouse",
+   "volume": 0.78,
+   "why": "vpy: the click on Asked you, 98 s after it arrived (src 10.57)",
+   "file": "assets/sfx/mouse.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-14",
+   "at": 64.255,
+   "sound": "mouse",
+   "volume": 0.78,
+   "why": "vpy-approve: the click on File the evidence (src 2.955)",
+   "file": "assets/sfx/mouse.wav",
    "license": "CC0 1.0"
   },
   {
    "id": "sfx-06",
    "at": 66.525,
    "sound": "click-a",
-   "volume": 0.55,
+   "volume": 0.78,
    "why": "vpy-approve: the click on Yes, file it (src 5.225)",
    "file": "assets/sfx/click-a.wav",
    "license": "CC0 1.0"
@@ -104,16 +154,34 @@
    "id": "sfx-07",
    "at": 79.23,
    "sound": "pop",
-   "volume": 0.4,
+   "volume": 0.56,
    "why": "vpy-approve: PayPal's 200 settles (src 17.93)",
    "file": "assets/sfx/pop.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-15",
+   "at": 93.917,
+   "sound": "mouse",
+   "volume": 0.78,
+   "why": "vab: the click on You said yes. Filed (src 12.42)",
+   "file": "assets/sfx/mouse.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-16",
+   "at": 108.22,
+   "sound": "flip",
+   "volume": 0.5,
+   "why": "the page changes: the filed panel dissolves into Your rules (108.25-108.6)",
+   "file": "assets/sfx/flip.wav",
    "license": "CC0 1.0"
   },
   {
    "id": "sfx-10",
    "at": 126.95,
    "sound": "page",
-   "volume": 0.5,
+   "volume": 0.71,
    "why": "the diagram comes in (arch)",
    "file": "assets/sfx/page.wav",
    "license": "CC0 1.0"
@@ -122,7 +190,7 @@
    "id": "sfx-11",
    "at": 160.8,
    "sound": "land",
-   "volume": 0.6,
+   "volume": 0.85,
    "why": "the end card's mark lands",
    "file": "assets/sfx/land.wav",
    "license": "CC0 1.0"
@@ -173,7 +241,7 @@
     "sha256": "de6fab347ca63215431c09cf99fb32c0fa9fbbd6083e505cbaaaebe58b9ce050"
    }
   },
-  "use": "Each sentence cut at its row's 'take' span in edit.json (from the take, or from the row's 'source' retake) and placed at the row's start. Take-1 rows: time shifts only. Retakes (scripts/retakes.py): trimmed at -45 dBFS, through audio.retakeEq (lowshelf +1.5 dB at 160 Hz, -2 dB at 2.5 kHz, highshelf -0.5 dB at 7 kHz: the retakes are about 1.5 dB brighter at 2-4 kHz and 1 dB thinner under 250 Hz), then the row's gainDb (+0.7 to +3.9 dB) to take 1's -12.1 LUFS; N10 and N24 sped up 4% and 3.3% to fit their slots (atempo, no pitch change). Then the same light chain for all: high-pass 80 Hz, -3 dB at 150 Hz, +1.5 dB at 2.8 kHz, -2 dB shelf from 8 kHz, de-esser, 2.5:1 compression (about 3 dB on average). The final cut scales the voice stem by 0.9 (-0.92 dB, the owner's call) and keeps rehearsal E's +0.8 dB master gain, so the bed and cues sound as in E."
+  "use": "Each sentence cut at its row's 'take' span in edit.json (from the take, or from the row's 'source' retake) and placed at the row's start. Take-1 rows: time shifts only. Retakes (scripts/retakes.py): trimmed at -45 dBFS, through audio.retakeEq (lowshelf +1.5 dB at 160 Hz, -2 dB at 2.5 kHz, highshelf -0.5 dB at 7 kHz: the retakes are about 1.5 dB brighter at 2-4 kHz and 1 dB thinner under 250 Hz), then the row's gainDb (+0.7 to +3.9 dB) to take 1's -12.1 LUFS; N10 and N24 sped up 4% and 3.3% to fit their slots (atempo, no pitch change). Then the same light chain for all: high-pass 80 Hz, -3 dB at 150 Hz, +1.5 dB at 2.8 kHz, -2 dB shelf from 8 kHz, de-esser, 2.5:1 compression (about 3 dB on average). The final cut scales the voice stem by 0.765 (0.9 after rehearsal E, then 0.85 more: -2.33 dB, the owner's calls in #541 and #542) and keeps rehearsal E's +0.8 dB master gain, so nothing normalizes it back up."
  },
  "music": {
   "title": "CaseClerk bed (untitled)",
@@ -181,7 +249,7 @@
   "license": "Ours outright: no third-party rights, no attribution owed, no Content ID registration.",
   "date": "2026-10-27",
   "what": "A slow vi-IV-I-V pad in D major (Bm9, Gmaj9, Dmaj9, A add9, 8.02 s a chord) with three soft notes a chord, resolving to Dmaj9 with a low D on the end card.",
-  "level": "Unducked about -26.5 LUFS before the master; under speech it dips 10 dB, about 20 dB under the voice (19.2 dB in the final cut, with the voice at 0.9x); +4 dB over the title's brand (7.6-10.4 s) and +5 dB on the end card, in the pauses only; it fades out after the last word, over the last 2 s (166.4-168.4 s)."
+  "level": "Unducked about -27 LUFS before the master (0.5 dB under rehearsal E's -26.5, so it stays about 18 dB under the quieter voice: 18.3 dB in the final cut); under speech it dips 10 dB, down over 0.8 s before a sentence and back up over 2 s after it, held through pauses under 1.5 s and rising only part way in pauses under 3 s; +4 dB over the title's brand (7.6-10.4 s) and +5 dB on the end card, in the pauses only; it fades out after the last word, over the last 2 s (166.4-168.4 s)."
  },
- "cuesNote": "Sparse, on real picture events only: the arrival click, the +3 min plate, the click on Yes, file it, PayPal's 200, the diagram coming in, the end card's mark. None sits on a key spoken word: the Yes click lands between 'A yes' and 'files' (56 ms, about 14 dB under the voice), the others in pauses. Rehearsal C's other clicks (sfx-03 to 05, 08, 09) were dropped."
+ "cuesNote": "On real picture events only: the arrival click, the page change to the $412.00 case, the clicks on Asked you, File the evidence and Yes, file it, PayPal's 200, the click on You said yes. Filed, the page change to Your rules, the diagram coming in, the end card's mark. The final cut (#542) adds five (sfx-12 to 16) and plays every cue 3 dB louder than rehearsal E. None sits on a key spoken word: the arrival click and the Yes click land in the 30-50 ms gaps between words ('click' / 'opens', 'A yes' / 'files'), the others in pauses. The clicks at 0:38.9 (Chargeback in, on '$412.00') and 1:28.1 (Closed for you, on 'ruled for') stay silent, and the exact-text toggle (1:02.2) is cropped out of the shot. Rehearsal C's other clicks (sfx-03 to 05, 08, 09) were dropped."
 }
