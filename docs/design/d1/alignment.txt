@@ -1,0 +1,22 @@
+
+== http://localhost:4111/d1 @ 1440x900: 0 FAIL, 0 WARN, 0 exempt  (buttons 2, text blocks 68, scale [4,8,12,16,20,24,32,40,48,64])
+
+== http://localhost:4111/d1 @ 1920x1080: 0 FAIL, 0 WARN, 0 exempt  (buttons 2, text blocks 68, scale [4,8,12,16,20,24,32,40,48,64])
+
+== http://localhost:4111/d1 @ 1536x864: 0 FAIL, 0 WARN, 0 exempt  (buttons 2, text blocks 68, scale [4,8,12,16,20,24,32,40,48,64])
+
+== http://localhost:4111/d1 @ 2560x1440: 0 FAIL, 0 WARN, 0 exempt  (buttons 2, text blocks 68, scale [4,8,12,16,20,24,32,40,48,64])
+
+== http://localhost:4111/d1 @ 390x844: 0 FAIL, 0 WARN, 0 exempt  (buttons 2, text blocks 53, scale [4,8,12,16,20,24,32,40,48,64])
+
+== http://localhost:4111/d1/case/PP-R-VPY-10194485 @ 1440x900: 0 FAIL, 0 WARN, 0 exempt  (buttons 2, text blocks 46, scale [4,8,12,16,20,24,32,40,48,64])
+
+== http://localhost:4111/d1/case/PP-R-VPY-10194485 @ 1920x1080: 0 FAIL, 0 WARN, 0 exempt  (buttons 2, text blocks 46, scale [4,8,12,16,20,24,32,40,48,64])
+
+== http://localhost:4111/d1/case/PP-R-VPY-10194485 @ 1536x864: 0 FAIL, 0 WARN, 0 exempt  (buttons 2, text blocks 46, scale [4,8,12,16,20,24,32,40,48,64])
+
+== http://localhost:4111/d1/case/PP-R-VPY-10194485 @ 2560x1440: 0 FAIL, 0 WARN, 0 exempt  (buttons 2, text blocks 46, scale [4,8,12,16,20,24,32,40,48,64])
+
+== http://localhost:4111/d1/case/PP-R-VPY-10194485 @ 390x844: 0 FAIL, 0 WARN, 0 exempt  (buttons 2, text blocks 48, scale [4,8,12,16,20,24,32,40,48,64])
+
+TOTAL FAIL 0

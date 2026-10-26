@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-26T02:10:36.429270+00:00",
+  "title": "Design System: CaseClerk \u2014 the desk",
+  "extensions": {
+    "motion": [
+      {
+        "name": "document-unfold",
+        "value": "220ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Reveal evidence at its point of use; clip-path and opacity."
+      },
+      {
+        "name": "disclosure-chevron",
+        "value": "200ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Show native disclosure state."
+      },
+      {
+        "name": "feedback",
+        "value": "150ms",
+        "purpose": "Hover and active response."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-desktop",
+        "value": "1199px"
+      },
+      {
+        "name": "header-navigation",
+        "value": "900px"
+      },
+      {
+        "name": "phone",
+        "value": "650px"
+      }
+    ],
+    "shadows": []
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "description": "Primary action as implemented in /d1.",
+      "html": "<button class=\"ds-action\">Review case</button>",
+      "css": ".ds-action{font-family:\"Public Sans\",sans-serif;background:#2058b4;color:#fff;border:0;border-radius:6px;height:44px;padding:0 20px;font-size:13px;font-weight:600;cursor:pointer;transition:background 150ms}.ds-action:hover{background:#184994}.ds-action:focus-visible{outline:3px solid #4d83c3;outline-offset:4px}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Reserved action",
+      "kind": "button",
+      "description": "Reserved action as implemented in /d1.",
+      "html": "<button class=\"ds-disabled\" aria-disabled=\"true\">Approve &amp; file evidence</button>",
+      "css": ".ds-disabled{font-family:\"Public Sans\",sans-serif;background:#d8e2f0;color:#455d7b;border:0;border-radius:6px;height:44px;padding:0 20px;font-size:13px;cursor:not-allowed}.ds-disabled:focus-visible{outline:3px solid #4d83c3;outline-offset:4px}",
+      "refersTo": "button-disabled"
+    },
+    {
+      "name": "Selected navigation",
+      "kind": "nav",
+      "description": "Selected navigation as implemented in /d1.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" aria-current=\"page\">Dispute desk</a></nav>",
+      "css": ".ds-nav{font-family:\"Public Sans\",sans-serif;background:#153548;padding:16px}.ds-nav a{display:flex;align-items:center;background:#294b60;color:white;padding:0 12px;height:44px;border-radius:6px;text-decoration:none;font-size:14px}.ds-nav a:focus-visible{outline:3px solid #4d83c3;outline-offset:4px}",
+      "refersTo": "navigation-selected"
+    },
+    {
+      "name": "Pending status",
+      "kind": "chip",
+      "description": "Pending status as implemented in /d1.",
+      "html": "<span class=\"ds-status\">Needs approval</span>",
+      "css": ".ds-status{font-family:\"Public Sans\",sans-serif;display:inline-flex;align-items:center;gap:8px;background:#fff4df;color:#8a591b;border-radius:5px;padding:4px 10px;font-size:12px;line-height:20px}.ds-status:before{content:\"\";width:6px;height:6px;background:currentColor;border-radius:50%}",
+      "refersTo": "status-pending"
+    },
+    {
+      "name": "Evidence disclosure",
+      "kind": "custom",
+      "description": "Evidence disclosure as implemented in /d1.",
+      "html": "<details class=\"ds-disclosure\"><summary>Draft response</summary><p>The evidence draft appears here.</p></details>",
+      "css": ".ds-disclosure{font-family:\"Public Sans\",sans-serif;color:#1d2d3a;border-bottom:1px solid #e0e7ec;font-size:14px}.ds-disclosure summary{padding:20px 0;cursor:pointer}.ds-disclosure summary:hover,.ds-disclosure[open] summary{color:#2058b4}.ds-disclosure summary:focus-visible{outline:3px solid #4d83c3;outline-offset:4px}.ds-disclosure p{line-height:1.75;max-width:58ch}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The desk",
+    "overview": "A white working surface, maritime navigation and precise financial typography. Flat tonal separation, evidence before action, no decorative proof.",
+    "keyCharacteristics": [
+      "One family",
+      "Tabular amounts",
+      "State carries color",
+      "Native disclosures"
+    ],
+    "rules": [
+      {
+        "name": "The meaning rule",
+        "body": "Do not add color without a state, location or action to explain.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do align control edges and text to their actual content columns.",
+      "Do preserve readable 12px supporting labels and visible focus."
+    ],
+    "donts": [
+      "Do not add shadowed card grids, uppercase eyebrows or oversized narrative headlines."
+    ]
+  }
+}

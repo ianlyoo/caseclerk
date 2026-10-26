@@ -1,0 +1,78 @@
+[
+  {
+    "width": 1440,
+    "state": "Draft response\nPrepared",
+    "open": true,
+    "fail": []
+  },
+  {
+    "width": 1440,
+    "state": "Order & delivery\nSource details",
+    "open": true,
+    "fail": []
+  },
+  {
+    "width": 1440,
+    "state": "Buyer’s claim\nNot as described",
+    "open": true,
+    "fail": []
+  },
+  {
+    "width": 1440,
+    "state": "PayPal record\n12 entries",
+    "open": true,
+    "fail": []
+  },
+  {
+    "width": 1440,
+    "state": "reserved approval",
+    "disabled": "true",
+    "writes": 0,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "state": "reduced motion",
+    "animation": "none"
+  },
+  {
+    "width": 390,
+    "state": "Draft response\nPrepared",
+    "open": true,
+    "fail": []
+  },
+  {
+    "width": 390,
+    "state": "Order & delivery\nSource details",
+    "open": true,
+    "fail": []
+  },
+  {
+    "width": 390,
+    "state": "Buyer’s claim\nNot as described",
+    "open": true,
+    "fail": []
+  },
+  {
+    "width": 390,
+    "state": "PayPal record\n12 entries",
+    "open": true,
+    "fail": []
+  },
+  {
+    "width": 390,
+    "state": "reserved approval",
+    "disabled": "true",
+    "writes": 0,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "state": "reduced motion",
+    "animation": "none"
+  },
+  {
+    "state": "API outage and retry",
+    "result": "recovered"
+  }
+]

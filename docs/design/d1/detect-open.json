@@ -1,0 +1,58 @@
+[
+  {
+    "width": 1440,
+    "state": "Draft response\nPrepared",
+    "exit": 0,
+    "stdout": "[]\n",
+    "stderr": ""
+  },
+  {
+    "width": 1440,
+    "state": "Order & delivery\nSource details",
+    "exit": 0,
+    "stdout": "[]\n",
+    "stderr": ""
+  },
+  {
+    "width": 1440,
+    "state": "Buyer’s claim\nNot as described",
+    "exit": 0,
+    "stdout": "[]\n",
+    "stderr": ""
+  },
+  {
+    "width": 1440,
+    "state": "PayPal record\n12 entries",
+    "exit": 0,
+    "stdout": "[]\n",
+    "stderr": ""
+  },
+  {
+    "width": 390,
+    "state": "Draft response\nPrepared",
+    "exit": 0,
+    "stdout": "[]\n",
+    "stderr": ""
+  },
+  {
+    "width": 390,
+    "state": "Order & delivery\nSource details",
+    "exit": 0,
+    "stdout": "[]\n",
+    "stderr": ""
+  },
+  {
+    "width": 390,
+    "state": "Buyer’s claim\nNot as described",
+    "exit": 0,
+    "stdout": "[]\n",
+    "stderr": ""
+  },
+  {
+    "width": 390,
+    "state": "PayPal record\n12 entries",
+    "exit": 0,
+    "stdout": "[]\n",
+    "stderr": ""
+  }
+]

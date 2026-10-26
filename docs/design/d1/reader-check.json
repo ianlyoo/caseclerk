@@ -1,0 +1,42 @@
+[
+  {
+    "width": 1440,
+    "title": "Draft response",
+    "height": 360,
+    "scroll": 612,
+    "top": 0,
+    "overflow": "auto",
+    "keyboardScrollTop": 252,
+    "passed": true
+  },
+  {
+    "width": 1440,
+    "title": "PayPal record",
+    "height": 360,
+    "scroll": 1743,
+    "top": 0,
+    "overflow": "auto",
+    "keyboardScrollTop": 320,
+    "passed": true
+  },
+  {
+    "width": 390,
+    "title": "Draft response",
+    "height": 360,
+    "scroll": 714,
+    "top": 0,
+    "overflow": "auto",
+    "keyboardScrollTop": 320,
+    "passed": true
+  },
+  {
+    "width": 390,
+    "title": "PayPal record",
+    "height": 360,
+    "scroll": 1762,
+    "top": 0,
+    "overflow": "auto",
+    "keyboardScrollTop": 320,
+    "passed": true
+  }
+]

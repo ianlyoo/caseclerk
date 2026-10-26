@@ -1,0 +1,298 @@
+[
+  {
+    "width": 1440,
+    "route": "/d1",
+    "label": "Skip to workspace",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    }
+  },
+  {
+    "width": 1440,
+    "route": "/d1",
+    "label": "CaseClerk",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1",
+    "label": "Dispute desk",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1",
+    "label": "Pending review",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1",
+    "label": "Review case",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1",
+    "label": "Your approval rules\nEvidence $250.00+",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Skip to workspace",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    }
+  },
+  {
+    "width": 1440,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "CaseClerk",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Dispute desk",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Pending review",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Disputes",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Draft response\nPrepared",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Order & delivery\nSource details",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Buyer’s claim\nNot as described",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "PayPal record\n12 entries",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 1440,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Approve & file evidence",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1",
+    "label": "Skip to workspace",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    }
+  },
+  {
+    "width": 390,
+    "route": "/d1",
+    "label": "CaseClerk",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1",
+    "label": "Dispute desk",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1",
+    "label": "Review case",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1",
+    "label": "Your approval rules\nEvidence $250.00+",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Skip to workspace",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    }
+  },
+  {
+    "width": 390,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "CaseClerk",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Pending review",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Disputes",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Draft response\nPrepared",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Order & delivery\nSource details",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Buyer’s claim\nNot as described",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "PayPal record\n12 entries",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  },
+  {
+    "width": 390,
+    "route": "/d1/case/PP-R-VPY-10194485",
+    "label": "Approve & file evidence",
+    "focus": {
+      "outline": "3px",
+      "focus": true
+    },
+    "sizeStable": true
+  }
+]

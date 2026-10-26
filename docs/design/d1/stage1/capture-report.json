@@ -1,0 +1,26 @@
+[
+  {
+    "name": "landing",
+    "width": 1440,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "name": "landing",
+    "width": 390,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "name": "case-pending",
+    "width": 1440,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "name": "case-pending",
+    "width": 390,
+    "errors": [],
+    "overflow": false
+  }
+]
