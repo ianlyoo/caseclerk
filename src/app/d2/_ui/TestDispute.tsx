@@ -68,6 +68,7 @@ export function TestDispute({ tone = "quiet", lede, on = "metal" }: { tone?: "go
       <Wait
         opened={flow.opened}
         plate={on === "metal"}
+        go={tone === "go"}
         onDone={() => {
           localStorage.removeItem(KEY);
           setFlow({ at: "idle" });
@@ -102,7 +103,8 @@ export function TestDispute({ tone = "quiet", lede, on = "metal" }: { tone?: "go
 
 type Found = Pick<CaseRecord, "id" | "status" | "snapshot" | "decision">;
 
-function Wait({ opened, plate, onDone }: { opened: Opened; plate: boolean; onDone: () => void }) {
+/** `go`: this control is the page's one action, so the arrived case gets the Go button; otherwise it stays Quiet. */
+function Wait({ opened, plate, go, onDone }: { opened: Opened; plate: boolean; go: boolean; onDone: () => void }) {
   const [now, setNow] = useState(() => Date.now());
   const [rows, setRows] = useState<WireEntry[]>([]);
   const [found, setFound] = useState<Found | null>(null);
@@ -201,7 +203,7 @@ function Wait({ opened, plate, onDone }: { opened: Opened; plate: boolean; onDon
       )}
       <div className="td-row">
         {arrived ? (
-          <Link className={`btn ${worked ? "btn-go" : "btn-quiet"}`} href={href.case(arrived.id)}>
+          <Link className={`btn ${worked && go ? "btn-go" : "btn-quiet"}`} href={href.case(arrived.id)}>
             Open the {usd(arrived.snapshot.amount.value)} case
           </Link>
         ) : null}

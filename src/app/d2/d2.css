@@ -1495,7 +1495,7 @@
   grid-template-columns: repeat(12, minmax(0, 1fr));
   column-gap: var(--gutter);
   row-gap: var(--space-5);
-  align-items: end;
+  align-items: start;
   padding-top: var(--space-7);
   padding-bottom: var(--space-7);
 }
@@ -1507,6 +1507,10 @@
 }
 .inbox-head > .td {
   grid-column: 9 / -1;
+}
+/* the control sits on the headline's baseline; a wait grows downward, so the headline never moves */
+.inbox-head > .td:not(.td-wait) {
+  align-self: end;
 }
 .inbox-title {
   font-size: clamp(36px, 4.4vw, 64px);

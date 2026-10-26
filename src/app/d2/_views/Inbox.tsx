@@ -53,7 +53,7 @@ export async function Inbox() {
   const closed = rows
     .filter((r) => r.st.phase === "closed")
     .sort((x, y) => Date.parse(y.c.snapshot.updateTime) - Date.parse(x.c.snapshot.updateTime) || byNewest(x.c, y.c));
-  const shared = [...sharedListings(list)];
+  const shared = [...sharedListings(list)].sort((x, y) => y[1] - x[1]);
 
   return (
     <div className="inbox">
@@ -66,12 +66,12 @@ export async function Inbox() {
             <p className="inbox-counts">
               {waiting.length} waiting for your yes, {open.length} open, {closed.length} closed.
             </p>
-            {shared.map(([name, n]) => (
-              <p key={name} className="inbox-note">
-                {n} of them use one test listing, the {name}. Each is a separate sandbox test dispute at its own amount, not one sale disputed {n}{" "}
-                times.
+            {shared.length > 0 && (
+              <p className="inbox-note">
+                {shared.map(([name, n], i) => `${n} ${i === 0 ? "cases share one test listing" : "share another"} (${name})`).join(", ")}. Each is a
+                separate sandbox test dispute at its own amount, not one sale disputed again.
               </p>
-            ))}
+            )}
           </div>
           {judge && <TestDispute lede="Want to watch one arrive?" />}
         </header>
