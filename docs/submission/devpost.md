@@ -29,8 +29,8 @@ CaseClerk is a dispute desk that acts on PayPal's Disputes API under rules the s
 - A policy gate checks every action before PayPal is called. By default, evidence on disputes under $250 and refunds or offers up to $15 go out on their own. Anything above those lines waits for the seller's one-click approval.
 - Filing goes to PayPal's `provide-evidence` endpoint. The case page shows PayPal's HTTP status and debug id for every call, the exact evidence text PayPal received, and each webhook event id.
 - When PayPal resolves the case, CaseClerk reads PayPal's fund movements and the capture and shows what the seller kept. It shows that figure only when PayPal states it.
-- A deadline board (Bryntum Scheduler) shows one row per real case: a bar from the day the dispute opened to PayPal's seller-response due date, markers for the agent's and PayPal's moments, and a click through to the case. <!-- verify after /board ships -->
-- Anyone can press **Open a test dispute**. That creates a real sandbox payment for a used film camera, with USPS tracking, and a chargeback through PayPal's simulator. The case arrives by webhook a few minutes later and, being over the $250 line, waits for the visitor's yes.
+- A deadline board (Bryntum Scheduler) shows every real case as a row, grouped as waiting for the seller's yes, open and closed. Each bar runs from PayPal opening the dispute to PayPal's deadline (or the close, or now), with the case's moments as dots (filled for CaseClerk or the seller, hollow for PayPal) and a line for now. It has two spans, to the deadlines or hour by hour, and a click or Enter opens the case.
+- Anyone can press **Open a test dispute**. That creates a real sandbox payment for a used film camera, with USPS tracking, and a chargeback through PayPal's simulator. The case arrives by webhook a few minutes later and, being over the $250 line, waits for the visitor's yes. After approving, the visitor can ask PayPal's sandbox to rule and watch PayPal's resolved webhook close the case. <!-- verify after judge loop ships -->
 
 ## How we built it
 
@@ -38,7 +38,7 @@ CaseClerk is a dispute desk that acts on PayPal's Disputes API under rules the s
 - **PayPal REST, called directly** (sandbox only): Disputes (get, list, provide-evidence, accept-claim, make-offer, send-message, acknowledge-return-item), the sandbox simulators (process-chargeback, require-evidence, adjudicate, buyer-side create), Orders v2, Payments (captures, a guarded refund), Shipping Trackers, Transaction Search and Webhooks. Every result keeps PayPal's `debug_id`.
 - **Claude through `@anthropic-ai/sdk`**, no agent framework. Triage on `claude-haiku-5-5` with JSON-schema output; we chose it after it labelled 15 of 15 hand-labelled disputes correctly. Decisions and writing on `claude-opus-5-5` at medium effort, with strict tool schemas and prompt caching. Write tools appear only when PayPal's HATEOAS link for that action is present.
 - **Guards in code**: the policy gate; a fact check that holds back evidence citing any tracking number or id no tool returned; a refund guard that refuses while a dispute is open on the capture; a per-case lock; and a hard spend cap. Each Claude call reserves its estimated cost first, and defaults are $45 all-time, $4 a day and 60 runs a day. Over a cap no request is sent.
-- **Front end**: one real case read off a camera's engraved shutter-speed scale. The case's elapsed time runs on a log scale, from "Chargeback in" to "Kept", with one stop where the seller said yes. We followed the impeccable design rules (Apache-2.0), with WCAG 2.2 AA contrast as the target. The deadline board is Bryntum Scheduler (trial), fed from the same case API, one row per real case. <!-- verify after /board ships -->
+- **Front end**: one real case read off a camera's engraved shutter-speed scale. The case's elapsed time runs on a log scale, from "Chargeback in" to "Kept", with one stop where the seller said yes. We followed the impeccable design rules (Apache-2.0), with WCAG 2.2 AA contrast as the target. The deadline board is Bryntum Scheduler (trial 7.3.7, React wrapper, client-only, read-only), themed to the same top plate; the server builds its rows from the same case API, one per real case.
 - **Tests**: 155 unit and contract tests with Vitest (agent loop, policy, spend caps, webhook handling, PayPal parsing on real PII-stripped sandbox payloads), plus a live sandbox suite.
 
 ## Challenges we ran into
@@ -71,8 +71,6 @@ CaseClerk is a dispute desk that acts on PayPal's Disputes API under rules the s
 
 ## Built with
 
-<!-- verify after /board ships -->
-
 anthropic, claude, claude-opus-5-5, claude-haiku-5-5, paypal, paypal-disputes-api, paypal-orders-api, paypal-payments-api, paypal-shipping-trackers, paypal-transaction-search, paypal-webhooks, next.js, react, typescript, node.js, postgresql, neon, vercel, bryntum, pdf-lib, zod, vitest
 
 ## Try it out
@@ -88,11 +86,12 @@ anthropic, claude, claude-opus-5-5, claude-haiku-5-5, paypal, paypal-disputes-ap
 2. Open **Cases** (top bar). You'll see every sandbox dispute: the ones waiting for the seller's yes, the open ones by deadline, and the closed ones with PayPal's ruling.
 3. Open a resolved case, for example **https://caseclerk.vercel.app/case/PP-R-NJA-10194486**. There you can see what the agent sent PayPal (the exact text and the PDF), PayPal's HTTP 200 and debug id for the filing, the `CUSTOMER.DISPUTE.RESOLVED` webhook id, and the seller's hold being placed and released.
 4. Open **Rules** to see the lines the agent works under. They are shown read-only.
-5. Open **Deadlines** (`/board`): one row per real case, from the day it opened to PayPal's response due date, with the agent's and PayPal's moments marked. Click a bar to open its case. <!-- verify after /board ships -->
+5. Open **Deadlines** (top bar, `/board`): every real case as a row, grouped as waiting, open and closed. A bar runs from PayPal opening the dispute to its deadline (or its close, or now); dots mark the case's moments (filled: CaseClerk or the seller; hollow: PayPal), and the orange line is now. Switch the span between **To the deadlines** and **Hour by hour**, hover a bar for its moments, and click it (or press Enter) to open the case. The diagonal "Trial Version" pattern is Bryntum's trial watermark.
 6. Press **Open a test dispute** (on the landing or on Cases). This creates a real sandbox payment for one used film camera ($289 to $449) with USPS tracking, and a chargeback through PayPal's simulator. PayPal delivers the dispute webhook in about 3 to 4 minutes; refresh **Cases** to see it. The order is above the $250 line, so the agent prepares the evidence and waits for your yes. Once PayPal opens the dispute for a response, press **File the evidence** on your case: CaseClerk files it with PayPal and shows PayPal's HTTP status and debug id. Each visitor can open three a day.
+7. Once PayPal offers the ruling (minutes to tens of minutes after the filing), press **Ask PayPal's sandbox to rule** on your case. CaseClerk calls the sandbox's `adjudicate` simulator; when PayPal's `CUSTOMER.DISPUTE.RESOLVED` webhook arrives (about 12 minutes after the request on one of our cases), refresh the case to see PayPal's ruling and what the seller kept. <!-- verify after judge loop ships -->
 
 Sandbox notes:
-- PayPal's sandbox doesn't rule on chargebacks by itself in any predictable time. The resolved cases you see were ruled after we called the sandbox's `adjudicate` simulator. A test dispute you open will usually stay at "Filed. PayPal is reviewing".
+- PayPal's sandbox doesn't rule on chargebacks by itself in any predictable time. The resolved cases you see were ruled after we called the sandbox's `adjudicate` simulator. A test dispute you open stays at "Filed. PayPal is reviewing" until you ask the sandbox to rule (step 7). <!-- verify after judge loop ships -->
 - A case may be waiting for a seller's yes. Pressing **File the evidence** on it sends a real sandbox filing to PayPal. One case is marked "Kept waiting for a demo recording": that is our video's case, and the API refuses to file it (403).
 - The Rules are read-only here: changing them needs an edit token the hosted demo doesn't set.
 - The Claude spend has a hard cap. If the demo budget is ever reached, the agent makes no new model calls, and a case shows a recorded run that is clearly labelled as a replay.
