@@ -147,9 +147,9 @@ export function DeskHome() {
 }
 
 function Disclosure({ title, meta, children, icon = "file", open = false }: { title: string; meta?: string; children: ReactNode; icon?: IconName; open?: boolean }) {
-  return <details className="evidence-disclosure disclosure" open={open}>
+  return <details className="evidence-disclosure disclosure" name="case-evidence" open={open}>
     <summary><span className="summary-label"><Icon name={icon} /><span>{title}</span></span><span className="disclosure-meta">{meta}<Icon name="chevron" size={16} /></span></summary>
-    <div className="disclosure-content">{children}</div>
+    <div className="disclosure-content" tabIndex={0} aria-label={`${title} content`}>{children}</div>
   </details>;
 }
 

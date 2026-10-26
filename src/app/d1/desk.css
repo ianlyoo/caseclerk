@@ -123,7 +123,8 @@
 .disclosure[open] > summary .rule-summary > svg, .disclosure[open] > summary .disclosure-meta > svg { transform: rotate(90deg); }
 .disclosure[open] > summary { color: var(--blue); }
 .disclosure-content { padding: 0 0 var(--space-6); font-size: 14px; line-height: 1.75; overflow-wrap: anywhere; }
-.disclosure-content p { max-width: 72ch; }
+.disclosure-content p { max-width: 58ch; }
+.evidence-disclosure > .disclosure-content { max-height: 360px; overflow-y: auto; scrollbar-color: #a3b4c4 var(--ground); }
 .disclosure-content p + p { margin-top: var(--space-4); }
 .disclosure[open] > .disclosure-content { animation: document-unfold 220ms var(--ease); }
 @keyframes document-unfold { from { clip-path: inset(0 0 12% 0); opacity: .6; } to { clip-path: inset(0); opacity: 1; } }
