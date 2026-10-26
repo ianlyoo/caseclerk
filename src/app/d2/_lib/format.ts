@@ -37,7 +37,17 @@ export const span = (sec: number) => {
   return `${Math.floor(h / 24)} days`;
 };
 
-export const daysLeft = (iso: string, now = Date.now()) => Math.max(0, Math.ceil((Date.parse(iso) - now) / 86_400_000));
+/** Whole days still left (10 days and 3 hours is "10 days left", never rounded up). */
+export const daysLeft = (iso: string, now = Date.now()) => Math.max(0, Math.floor((Date.parse(iso) - now) / 86_400_000));
+
+/** "10 days left", "1 day left", "5 h left", "past due" */
+export const leftWords = (iso: string, now = Date.now()) => {
+  const ms = Date.parse(iso) - now;
+  if (ms <= 0) return "past due";
+  const d = daysLeft(iso, now);
+  if (d >= 1) return d === 1 ? "1 day left" : `${d} days left`;
+  return `${Math.max(1, Math.floor(ms / 3_600_000))} h left`;
+};
 
 const REASONS: Record<string, string> = {
   MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED: "not as described",

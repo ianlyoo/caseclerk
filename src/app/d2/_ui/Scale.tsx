@@ -1,7 +1,7 @@
 "use client";
 // The engraved scale: a case's elapsed time on a logarithmic, shutter-dial-like axis.
 // Stops sit at their real times; the index travels stop to stop (replay on the landing, "now" on a case).
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import NumberFlow, { NumberFlowGroup } from "@number-flow/react";
 import { logPos, type Stop, type Tick } from "../_lib/story";
 
@@ -22,11 +22,68 @@ type Props = {
   footer?: ReactNode;
   /** Readout label per stop id (server components can't pass functions); falls back to the stop title. */
   readouts?: Record<string, string>;
+  /** A stop that just arrived (a filing, a PayPal webhook): its dot is stamped in and its label rises. */
+  fresh?: string;
 };
+
+/**
+ * Labels sit in two rows. A row-2 label's leader runs up through row 1, so the rows are chosen (all
+ * combinations; a case has a handful of stops) so no two labels in a row come within 16px and no leader
+ * crosses a row-1 label; among clean layouts, the one closest to alternating wins.
+ */
+function useRows(ol: RefObject<HTMLOListElement | null>, sig: string) {
+  const [rows, setRows] = useState<Record<string, "1" | "2">>({});
+  useLayoutEffect(() => {
+    const el = ol.current;
+    if (!el) return;
+    const place = () => {
+      const W = el.clientWidth;
+      const items = [...el.querySelectorAll<HTMLElement>(".sc-stop")];
+      if (!W || items.length > 10 || items.some((li) => getComputedStyle(li).position !== "absolute")) return setRows({});
+      const box = items.map((li) => {
+        const w = li.offsetWidth;
+        const x = Number(li.dataset.x) * W;
+        const left = li.dataset.end === "right" ? x - w : x;
+        return { id: li.dataset.id ?? "", x, left, right: left + w };
+      });
+      let best = { cost: Infinity, mask: 0 };
+      for (let mask = 0; mask < 1 << box.length; mask++) {
+        const row = (i: number) => (mask >> i) & 1; // 0: row 1, 1: row 2
+        let bad = 0;
+        let off = 0;
+        box.forEach((b, i) => {
+          if (row(i) !== i % 2) off++;
+          for (let j = i + 1; j < box.length; j++) {
+            const o = box[j];
+            if (row(i) === row(j) && o.left < b.right + 16 && b.left < o.right + 16) bad++;
+            if (row(j) === 1 && row(i) === 0 && o.x > b.left - 6 && o.x < b.right + 6) bad++;
+            if (row(i) === 1 && row(j) === 0 && b.x > o.left - 6 && b.x < o.right + 6) bad++;
+          }
+        });
+        const cost = bad * 100 + off;
+        if (cost < best.cost) best = { cost, mask };
+      }
+      const out = Object.fromEntries(box.map((b, i) => [b.id, (best.mask >> i) & 1 ? "2" : "1"])) as Record<string, "1" | "2">;
+      setRows((cur) => (JSON.stringify(cur) === JSON.stringify(out) ? cur : out));
+    };
+    place();
+    // labels change width when the web font arrives, without the scale itself resizing
+    const ro = new ResizeObserver(place);
+    ro.observe(el);
+    el.querySelectorAll(".sc-stop").forEach((li) => ro.observe(li));
+    let live = true;
+    void document.fonts?.ready.then(() => live && place());
+    return () => {
+      live = false;
+      ro.disconnect();
+    };
+  }, [ol, sig]);
+  return rows;
+}
 
 const STEP_MS = 900;
 
-export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption, endLabel, footer, readouts }: Props) {
+export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption, endLabel, footer, readouts, fresh }: Props) {
   const last = stops.length - 1;
   // The landing starts at the first stop and replays; reduced motion parks the index on the last stop.
   const [active, setActive] = useState<number>(replay ? 0 : nowT !== undefined ? -1 : last);
@@ -71,6 +128,8 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
   const proofStop = [...stops.slice(0, upTo + 1)].reverse().find((s) => s.proof?.length);
   const labelled = stops.filter((s) => !s.quiet);
   const lastLabelled = labelled[labelled.length - 1];
+  const olRef = useRef<HTMLOListElement>(null);
+  const rows = useRows(olRef, labelled.map((s) => `${s.id}:${s.title}:${s.detail}:${pos(s.t).toFixed(3)}`).join("|"));
 
   const pick = (i: number) => {
     clear();
@@ -145,16 +204,17 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
             aria-hidden="true"
             data-tone={s.tone}
             data-state={active >= 0 ? (i < active ? "past" : i === active ? "current" : "future") : "past"}
+            data-new={s.id === fresh || undefined}
             style={{ "--x": pos(s.t) } as CSSProperties}
           />
         ))}
         <span className="sc-index" aria-hidden="true" />
       </div>
 
-      <ol className="sc-stops">
+      <ol className="sc-stops" ref={olRef}>
         {stops.map((s, i) => {
           if (s.quiet) return null;
-          const row = stops.slice(0, i).filter((o) => !o.quiet).length % 2 ? "2" : "1";
+          const row = rows[s.id] ?? (stops.slice(0, i).filter((o) => !o.quiet).length % 2 ? "2" : "1");
           const x = pos(s.t);
           const state = active >= 0 ? (i < active ? "past" : i === active ? "current" : "future") : "past";
           return (
@@ -162,6 +222,9 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
               key={s.id}
               className="sc-stop"
               data-row={row}
+              data-id={s.id}
+              data-x={x}
+              data-new={s.id === fresh || undefined}
               data-end={s === lastLabelled && x > 0.86 ? "right" : "left"}
               data-tone={s.tone}
               data-state={state}

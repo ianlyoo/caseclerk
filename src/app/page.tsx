@@ -1,8 +1,13 @@
+import { Shell, SITE } from "./d2/_ui/Shell";
+import { Landing } from "./d2/_views/Landing";
+
+export const dynamic = "force-dynamic";
+export const metadata = SITE;
+
 export default function Home() {
   return (
-    <main style={{ padding: 24 }}>
-      <h1>CaseClerk</h1>
-      <p>Spike build. See <a href="/board">/board</a> for the deadline board.</p>
-    </main>
+    <Shell>
+      <Landing />
+    </Shell>
   );
 }

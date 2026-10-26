@@ -1,20 +1,9 @@
-import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Archivo } from "next/font/google";
-import "./d2.css";
+import { Shell, SITE } from "./_ui/Shell";
 
-const archivo = Archivo({ subsets: ["latin"], axes: ["wdth"], variable: "--font-archivo", display: "swap" });
+export const metadata = SITE;
 
-export const metadata: Metadata = {
-  title: "CaseClerk: PayPal disputes, answered",
-  description:
-    "CaseClerk answers PayPal disputes for small sellers and asks before it moves money. Built on real PayPal sandbox disputes.",
-};
-
+/** /d2 was the redesign's preview path; its routes now send visitors to the same pages at the root. */
 export default function D2Layout({ children }: { children: ReactNode }) {
-  return (
-    <div className={`d2 ${archivo.variable}`} data-space-root>
-      {children}
-    </div>
-  );
+  return <Shell>{children}</Shell>;
 }
