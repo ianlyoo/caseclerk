@@ -1,0 +1,78 @@
+<!-- B1, 0.0-13.6: the problem (a real $412.00 chargeback and its deadline), then who CaseClerk is for.
+     Every figure here is from PP-R-VPY-10194485 as PayPal's sandbox states it. -->
+<template>
+  <style>
+    @font-face { font-family: Archivo; src: url('assets/fonts/Archivo.ttf') format('truetype'); font-weight: 100 900; font-stretch: 62% 125%; font-display: block; }
+    #root { position: absolute; inset: 0; font-family: Archivo; font-feature-settings: "tnum"; color: #101214; }
+    .t-plate { position: absolute; inset: 0; overflow: hidden; background-color: #dde0e3; background-image: linear-gradient(180deg, #e9ebed 0%, #dde0e3 55%, #cfd3d7 100%); }
+    .t-grain { position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='360'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0025 0.75' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.06 0 0 0 0 0.07 0 0 0 0 0.08 0.16 0 0 0 -0.03'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)'/%3E%3C/svg%3E"); }
+    #t-amount { position: absolute; left: 192px; top: 150px; margin: 0; font-size: 132px; font-weight: 720; line-height: 1.07; letter-spacing: -0.035em; font-variation-settings: "wdth" 112; }
+    #t-claim { position: absolute; left: 196px; top: 312px; margin: 0; font-size: 44px; font-weight: 400; color: #3f444a; }
+    /* the deadline as a scale: chargeback in, ten days, PayPal's due date */
+    #t-scale { position: absolute; left: 192px; top: 470px; width: 1536px; height: 150px; }
+    #t-track { position: absolute; left: 0; right: 0; top: 40px; height: 2px; background: #a9afb5; }
+    #t-lit { position: absolute; left: 0; top: 40px; width: 1536px; height: 2px; background: #101214; transform-origin: 0 50%; }
+    .t-tick { position: absolute; top: 34px; width: 1px; height: 14px; background: #4b5157; }
+    .t-tl { position: absolute; top: 62px; font-size: 28px; font-weight: 500; color: #3f444a; font-variation-settings: "wdth" 110; white-space: nowrap; }
+    #t-due { position: absolute; right: 0; top: 62px; font-size: 30px; font-weight: 650; color: #101214; font-variation-settings: "wdth" 110; }
+    #t-end { position: absolute; right: 0; top: 26px; width: 2px; height: 30px; background: #101214; }
+    #t-index { position: absolute; left: -15px; top: 4px; width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 22px solid #f26a1b; }
+    #t-band { position: absolute; left: 0; right: 0; top: 650px; bottom: 0; background: #151514; border-top: 1px solid #0a0a09; color: #f2f1ec; }
+    #t-band .t-grain { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.62' numOctaves='3' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.11 0 0 0 -0.045'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23l)'/%3E%3C/svg%3E"); }
+    #t-noanswer { position: absolute; left: 192px; top: 54px; margin: 0; font-size: 50px; font-weight: 650; letter-spacing: -0.02em; font-variation-settings: "wdth" 112; }
+    #t-lose { position: absolute; left: 192px; top: 128px; margin: 0; font-size: 40px; font-weight: 400; color: #b6b5af; }
+    #t-lose b { color: #e8604f; font-weight: 650; font-variation-settings: "wdth" 118; }
+    #t-mark { position: absolute; left: 192px; top: 318px; display: flex; align-items: center; gap: 30px; }
+    #t-tri { width: 0; height: 0; border-left: 34px solid transparent; border-right: 34px solid transparent; border-top: 50px solid #f26a1b; margin-top: 8px; }
+    #t-word { margin: 0; font-size: 150px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; font-variation-settings: "wdth" 125; }
+    #t-line { position: absolute; left: 196px; top: 520px; width: 1240px; margin: 0; font-size: 50px; font-weight: 400; line-height: 1.3; color: #3f444a; }
+  </style>
+  <div id="root" data-composition-id="title" data-width="1920" data-height="1080">
+    <div id="t-case" class="clip" data-start="0" data-duration="9.7">
+      <div class="t-plate"><div class="t-grain"></div></div>
+      <h1 id="t-amount">$412.00 chargeback</h1>
+      <p id="t-claim">Not as described. Due Nov 4, 8:59 pm PT.</p>
+      <div id="t-scale">
+        <div id="t-track"></div>
+        <div id="t-lit"></div>
+        <div class="t-tick" style="left:0"></div>
+        <div class="t-tick" style="left:307px"></div>
+        <div class="t-tick" style="left:614px"></div>
+        <div class="t-tick" style="left:922px"></div>
+        <div class="t-tick" style="left:1229px"></div>
+        <div id="t-end"></div>
+        <div class="t-tl" style="left:0">Chargeback in, Oct 25</div>
+        <div id="t-due">Due Nov 4</div>
+        <div id="t-index"></div>
+      </div>
+      <div id="t-band">
+        <div class="t-grain"></div>
+        <p id="t-noanswer">No answer at all: PayPal rules for the buyer.</p>
+        <p id="t-lose">The seller loses <b>$412.00</b> and the fee.</p>
+      </div>
+    </div>
+    <div id="t-brand" class="clip" data-start="9.7" data-duration="3.9">
+      <div class="t-plate"><div class="t-grain"></div></div>
+      <div id="t-mark"><div id="t-tri"></div><h2 id="t-word">CaseClerk</h2></div>
+      <p id="t-line">CaseClerk answers PayPal disputes for small sellers and asks before it moves money.</p>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const out = "expo.out";
+    tl.fromTo("#t-amount", { y: 18 }, { y: 0, duration: 0.8, ease: out }, 0);
+    tl.fromTo("#t-claim", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, 0.8);
+    tl.fromTo("#t-scale", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, 1.1);
+    // the index travels the ten days to PayPal's deadline while N01 says "days to answer"
+    tl.fromTo("#t-index", { x: 0 }, { x: 1536, duration: 4.0, ease: "power1.inOut" }, 1.6);
+    tl.fromTo("#t-lit", { scaleX: 0 }, { scaleX: 1, duration: 4.0, ease: "power1.inOut" }, 1.6);
+    // missing the deadline: the leather band rises with what it costs
+    tl.fromTo("#t-band", { yPercent: 100 }, { yPercent: 0, duration: 0.7, ease: out }, 5.6);
+    tl.fromTo("#t-noanswer", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: out }, 5.9);
+    tl.fromTo("#t-lose", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: out }, 6.9);
+    // who it is for
+    tl.fromTo("#t-mark", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.6, ease: out }, 9.7);
+    tl.fromTo("#t-line", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 9.85);
+    window.__timelines["title"] = tl;
+  </script>
+</template>

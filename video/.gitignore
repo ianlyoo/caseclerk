@@ -1,0 +1,12 @@
+# rendered media and footage stay out of git
+out/
+renders/
+snapshots/
+.hyperframes/
+assets/footage/
+*.mp4
+*.webm
+*.mov
+*.m4a
+*.png
+*.jpg

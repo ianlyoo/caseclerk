@@ -1,0 +1,661 @@
+{
+ "about": "CaseClerk demo video, locked cut A (2026-10-26). Source of truth for timing; docs/submission/video-script.md is its readable form. scripts/build.py writes index.html, compositions/captions.html and compositions/overlays.html from this file and checks every line's pace. Times are seconds on the film clock; `in` is the offset into the normalised source clip.",
+ "fps": 30,
+ "width": 1920,
+ "height": 1080,
+ "duration": 168.5,
+ "maxWps": 2.4,
+ "sources": {
+  "arrival": {
+   "file": "assets/footage/arrival.mp4",
+   "take": "footage/arrival.webm",
+   "case": "PP-R-RSL-10194603",
+   "videoOffset": 0.04,
+   "dur": 284.07
+  },
+  "rsl": {
+   "file": "assets/footage/rsl.mp4",
+   "take": "footage/rsl.webm",
+   "case": "PP-R-RSL-10194603",
+   "videoOffset": 0.38,
+   "dur": 24.27
+  },
+  "vpy": {
+   "file": "assets/footage/vpy.mp4",
+   "take": "footage/vpy.webm",
+   "case": "PP-R-VPY-10194485",
+   "videoOffset": 0.41,
+   "dur": 41.83
+  },
+  "standin": {
+   "file": "assets/footage/standin-approve.mp4",
+   "take": "docs/design/d2/stage2/approve-1440.mp4",
+   "case": "PP-R-VAB-10194570",
+   "videoOffset": 0,
+   "note": "Stand-in for phase B: the VAB approval recorded 10/25 at 1440x900, pillarboxed on metal. Phase B replaces it with the VPY approval take.",
+   "dur": 18.8
+  },
+  "vab": {
+   "file": "assets/footage/vab.mp4",
+   "take": "footage/vab.webm",
+   "case": "PP-R-VAB-10194570",
+   "videoOffset": 0.08,
+   "dur": 21.53
+  },
+  "rules": {
+   "file": "assets/footage/rules.mp4",
+   "take": "footage/rules.webm",
+   "case": null,
+   "videoOffset": 0.48,
+   "dur": 19.83
+  },
+  "cases": {
+   "file": "assets/footage/cases.mp4",
+   "take": "footage/cases.webm",
+   "case": null,
+   "videoOffset": 0.44,
+   "dur": 19.53
+  },
+  "landing": {
+   "file": "assets/footage/landing.mp4",
+   "take": "footage/landing.webm",
+   "case": "PP-R-SGV-10194507",
+   "videoOffset": 0.4,
+   "dur": 26.47
+  }
+ },
+ "beats": [
+  {
+   "id": "B1",
+   "name": "The problem, and who it is for",
+   "start": 0,
+   "end": 13.6,
+   "shots": [
+    {
+     "id": "title",
+     "scene": "compositions/title.html",
+     "start": 0,
+     "end": 13.6
+    }
+   ],
+   "lines": [
+    {
+     "id": "N01",
+     "start": 0.4,
+     "end": 5.2,
+     "text": "A buyer files a chargeback. The seller has days to answer.",
+     "cap": "A buyer files a chargeback. | The seller has days to answer."
+    },
+    {
+     "id": "N02",
+     "start": 5.6,
+     "end": 9.2,
+     "text": "Miss it, and PayPal rules for the buyer."
+    },
+    {
+     "id": "N03",
+     "start": 9.7,
+     "end": 13.3,
+     "text": "CaseClerk answers them for small PayPal sellers."
+    }
+   ]
+  },
+  {
+   "id": "B2",
+   "name": "A real sandbox dispute arrives",
+   "start": 13.6,
+   "end": 37.2,
+   "shots": [
+    {
+     "id": "arrival-click",
+     "src": "arrival",
+     "in": 1.6,
+     "start": 13.6,
+     "end": 21.6,
+     "shows": "Cases page (33 disputes); the cursor clicks Open a test dispute; the button reads Opening in PayPal's sandbox",
+     "cam": [
+      [
+       13.6,
+       1,
+       0,
+       0,
+       0
+      ],
+      [
+       15.2,
+       1.45,
+       -324,
+       0,
+       2.2
+      ]
+     ]
+    },
+    {
+     "id": "arrival-plate",
+     "src": "arrival",
+     "in": 13.4,
+     "start": 21.6,
+     "end": 24.6,
+     "shows": "The wait plate: chargeback filed, $289.00; wire rows 201/200/200/201",
+     "cam": [
+      [
+       21.6,
+       1.8,
+       -1536,
+       -150,
+       0
+      ]
+     ]
+    },
+    {
+     "id": "arrival-webhook",
+     "src": "arrival",
+     "in": 201.0,
+     "start": 24.6,
+     "end": 33.6,
+     "shows": "3 min 8 s so far; Dispute opened, webhook (verified); Checked the webhook signature 200; Its webhook arrived; Reading the order and tracking; Open the $289.00 case",
+     "cam": [
+      [
+       24.6,
+       1.8,
+       -1536,
+       -150,
+       0
+      ]
+     ]
+    },
+    {
+     "id": "rsl-asked",
+     "src": "rsl",
+     "in": 6.9,
+     "start": 33.6,
+     "end": 37.2,
+     "shows": "The $289.00 case: Asked you, 89 s after it arrived; Over your $250 evidence line, so CaseClerk asks first",
+     "cam": [
+      [
+       33.6,
+       1.3,
+       -275,
+       -80,
+       0
+      ]
+     ]
+    }
+   ],
+   "lines": [
+    {
+     "id": "N04",
+     "start": 14.0,
+     "end": 17.3,
+     "text": "Here it is, live on PayPal's sandbox."
+    },
+    {
+     "id": "N05",
+     "start": 17.6,
+     "end": 22.5,
+     "text": "One click opens a real sandbox chargeback on a test order.",
+     "cap": "One click opens a real sandbox | chargeback on a test order."
+    },
+    {
+     "id": "N06",
+     "start": 24.8,
+     "end": 29.7,
+     "text": "Three minutes later, PayPal's webhook arrives, and CaseClerk checks its signature.",
+     "cap": "Three minutes later, PayPal's webhook arrives, | and CaseClerk checks its signature."
+    },
+    {
+     "id": "N07",
+     "start": 30.2,
+     "end": 36.8,
+     "text": "A Claude agent reads the order and the tracking, then stops to ask the seller.",
+     "cap": "A Claude agent reads the order and the tracking, | then stops to ask the seller."
+    }
+   ]
+  },
+  {
+   "id": "B3",
+   "name": "The agent's call on a harder case",
+   "start": 37.2,
+   "end": 64.2,
+   "shots": [
+    {
+     "id": "vpy",
+     "src": "vpy",
+     "in": 4.0,
+     "start": 37.2,
+     "end": 64.2,
+     "shows": "The $412.00 case: Chargeback in, Asked you 98 s after it arrived, About 35%, Filing $292.22 vs refunding $442.87, File the evidence hovered (never clicked), What CaseClerk will send PayPal",
+     "cam": [
+      [
+       37.2,
+       1.25,
+       -240,
+       -40,
+       0
+      ],
+      [
+       44.6,
+       2.0,
+       -1920,
+       -550,
+       1.0
+      ],
+      [
+       55.4,
+       1.25,
+       -240,
+       -40,
+       1.0
+      ]
+     ]
+    }
+   ],
+   "lines": [
+    {
+     "id": "N08",
+     "start": 37.8,
+     "end": 44.4,
+     "text": "A harder one: a $412.00 camera the buyer says isn't as described.",
+     "cap": "A harder one: a $412.00 camera | the buyer says isn't as described."
+    },
+    {
+     "id": "N09",
+     "start": 45.0,
+     "end": 50.6,
+     "text": "It's candid: tracking proves delivery, not condition. About a 35% chance.",
+     "cap": "It's candid: tracking proves delivery, | not condition. About a 35% chance."
+    },
+    {
+     "id": "N10",
+     "start": 51.2,
+     "end": 55.4,
+     "text": "It still fights, because filing costs less than refunding."
+    },
+    {
+     "id": "N11",
+     "start": 56.0,
+     "end": 63.2,
+     "text": "Over the $250 line, it stops and asks, with the evidence already written.",
+     "cap": "Over the $250 line, it stops and asks, | with the evidence already written."
+    }
+   ]
+  },
+  {
+   "id": "B4",
+   "name": "The seller's yes",
+   "start": 64.2,
+   "end": 82.4,
+   "phaseB": "Replace the stand-in with the VPY approval take (1920x1080). Retime N12/N13 to it.",
+   "shots": [
+    {
+     "id": "approve",
+     "src": "standin",
+     "in": 0.0,
+     "start": 64.2,
+     "end": 82.4,
+     "standin": true,
+     "shows": "File the evidence, Yes file it, Filing in 4 s / Undo, Sending, 200 accepted with PayPal's debug id",
+     "cam": [
+      [
+       64.2,
+       1.15,
+       -130,
+       -60,
+       0
+      ]
+     ]
+    }
+   ],
+   "lines": [
+    {
+     "id": "N12",
+     "start": 64.8,
+     "end": 70.2,
+     "text": "The seller decides. A yes files it, with five seconds to undo.",
+     "cap": "The seller decides. | A yes files it, with five seconds to undo."
+    },
+    {
+     "id": "N13",
+     "start": 73.6,
+     "end": 81.0,
+     "text": "CaseClerk calls PayPal's Disputes API, and PayPal answers: HTTP 200, with its own debug ID.",
+     "cap": "CaseClerk calls PayPal's Disputes API, | and PayPal answers: HTTP 200, | with its own debug ID."
+    }
+   ]
+  },
+  {
+   "id": "B5",
+   "name": "PayPal's ruling",
+   "start": 82.4,
+   "end": 102.4,
+   "shots": [
+    {
+     "id": "vab",
+     "src": "vab",
+     "in": 0.9,
+     "start": 82.4,
+     "end": 102.4,
+     "shows": "PayPal ruled for you $388.18, kept $388.18 of $399.00; Closed for you; You said yes. Filed (POST provide-evidence, 200, debug id); Held, then released $388.18",
+     "cam": [
+      [
+       82.4,
+       1.3,
+       -275,
+       -80,
+       0
+      ]
+     ]
+    }
+   ],
+   "lines": [
+    {
+     "id": "N14",
+     "start": 83.0,
+     "end": 87.1,
+     "text": "In the sandbox, we then asked PayPal to rule."
+    },
+    {
+     "id": "N15",
+     "start": 87.6,
+     "end": 95.1,
+     "text": "It ruled for the seller and released the hold: $388.18 kept.",
+     "cap": "It ruled for the seller and released the hold: | $388.18 kept."
+    },
+    {
+     "id": "N16",
+     "start": 95.6,
+     "end": 101.1,
+     "text": "CaseClerk shows money only when PayPal's own records state it.",
+     "cap": "CaseClerk shows money only when | PayPal's own records state it."
+    }
+   ]
+  },
+  {
+   "id": "B5J",
+   "name": "Judge loop (phase B slot)",
+   "start": 102.4,
+   "end": 108.6,
+   "conditional": "Keep only if the judge-loop control ships on production. If it doesn't, delete this beat and N17 and pull everything after it 6.2 s earlier (film 2:42.3).",
+   "shots": [
+    {
+     "id": "judge",
+     "scene": "compositions/judge.html",
+     "start": 102.4,
+     "end": 108.6,
+     "slot": true
+    }
+   ],
+   "lines": [
+    {
+     "id": "N17",
+     "start": 102.8,
+     "end": 108.6,
+     "text": "You can ask the sandbox to rule on your own test case, too.",
+     "conditional": true,
+     "cap": "You can ask the sandbox to rule | on your own test case, too."
+    }
+   ]
+  },
+  {
+   "id": "B6",
+   "name": "The seller's rules",
+   "start": 108.6,
+   "end": 127.0,
+   "shots": [
+    {
+     "id": "rules",
+     "src": "rules",
+     "in": 1.0,
+     "start": 108.6,
+     "end": 127.0,
+     "shows": "Your rules; It asks before money moves; the evidence lane's Asks you at $250, then the refund lane's Asks you over $15",
+     "cam": [
+      [
+       108.6,
+       1.4,
+       -200,
+       0,
+       0
+      ],
+      [
+       113.9,
+       1.8,
+       -1317,
+       -74,
+       1.0
+      ]
+     ]
+    }
+   ],
+   "lines": [
+    {
+     "id": "N18",
+     "start": 109.1,
+     "end": 113.6,
+     "text": "The seller's lines are code, not hints in a prompt.",
+     "cap": "The seller's lines are code, | not hints in a prompt."
+    },
+    {
+     "id": "N19",
+     "start": 114.4,
+     "end": 122.0,
+     "text": "Evidence under $250 and refunds up to $15 go out on their own.",
+     "cap": "Evidence under $250 | and refunds up to $15 go out on their own."
+    },
+    {
+     "id": "N20",
+     "start": 122.6,
+     "end": 125.6,
+     "text": "Anything bigger waits for a yes."
+    }
+   ]
+  },
+  {
+   "id": "B7",
+   "name": "How it works",
+   "start": 127.0,
+   "end": 152.8,
+   "shots": [
+    {
+     "id": "arch",
+     "scene": "compositions/arch.html",
+     "start": 127.0,
+     "end": 146.8
+    },
+    {
+     "id": "cases",
+     "src": "cases",
+     "in": 6.6,
+     "start": 146.8,
+     "end": 152.8,
+     "shows": "Closed 23, PayPal's rulings, newest first; For you, $X kept rows",
+     "cam": [
+      [
+       146.8,
+       1,
+       0,
+       0,
+       0
+      ]
+     ]
+    }
+   ],
+   "lines": [
+    {
+     "id": "N21",
+     "start": 127.5,
+     "end": 131.9,
+     "text": "Under the hood, every PayPal webhook is verified first."
+    },
+    {
+     "id": "N22",
+     "start": 132.4,
+     "end": 139.4,
+     "text": "Claude Haiku sorts the case. Claude Opus works it with tools, and writes the evidence.",
+     "cap": "Claude Haiku sorts the case. | Claude Opus works it with tools, | and writes the evidence."
+    },
+    {
+     "id": "N23",
+     "start": 139.9,
+     "end": 146.7,
+     "text": "Every action passes the seller's lines before it reaches PayPal, under hard spend caps.",
+     "cap": "Every action passes the seller's lines | before it reaches PayPal, under hard spend caps."
+    },
+    {
+     "id": "N24",
+     "start": 147.3,
+     "end": 152.2,
+     "text": "Eleven sandbox chargebacks have run this loop end to end.",
+     "cap": "Eleven sandbox chargebacks | have run this loop end to end."
+    }
+   ]
+  },
+  {
+   "id": "B8",
+   "name": "Close",
+   "start": 152.8,
+   "end": 168.5,
+   "shots": [
+    {
+     "id": "landing",
+     "src": "landing",
+     "in": 0.9,
+     "start": 152.8,
+     "end": 160.4,
+     "shows": "Landing: $397.00 disputed. $386.23 kept. The scale replays to 12 min 31 s, chargeback to closed",
+     "cam": [
+      [
+       152.8,
+       1,
+       0,
+       0,
+       0
+      ]
+     ]
+    },
+    {
+     "id": "end",
+     "scene": "compositions/end.html",
+     "start": 160.4,
+     "end": 168.5
+    }
+   ],
+   "lines": [
+    {
+     "id": "N25",
+     "start": 153.3,
+     "end": 160.7,
+     "text": "For a one-person shop, that's an answer on every dispute, instead of a loss by default.",
+     "cap": "For a one-person shop, | that's an answer on every dispute, | instead of a loss by default."
+    },
+    {
+     "id": "N26",
+     "start": 161.2,
+     "end": 166.8,
+     "text": "CaseClerk. It answers your PayPal disputes, and asks before it moves money.",
+     "captionOnCard": true
+    }
+   ]
+  }
+ ],
+ "spoken": {
+  "$412.00": "four hundred twelve dollars",
+  "$250": "two hundred fifty dollar",
+  "$15": "fifteen dollars",
+  "$388.18": "three hundred eighty-eight dollars and eighteen cents",
+  "35%": "thirty-five percent",
+  "HTTP 200": "H-T-T-P two hundred",
+  "API": "A-P-I",
+  "ID": "I-D"
+ },
+ "overlays": [
+  {
+   "id": "ov-wait",
+   "start": 24.6,
+   "end": 28.8,
+   "text": "+3 min",
+   "sub": "Real wait, cut. The page's own clock keeps counting."
+  },
+  {
+   "id": "ov-standin",
+   "start": 64.2,
+   "end": 82.4,
+   "text": "Stand-in: the $399.00 case, Oct 25",
+   "sub": "Phase B records the $412.00 case."
+  },
+  {
+   "id": "ov-honest",
+   "start": 147.4,
+   "end": 152.8,
+   "text": "We asked the sandbox to rule on each.",
+   "sub": "A working loop, not a win rate."
+  }
+ ],
+ "cues": [
+  {
+   "id": "sfx-01",
+   "at": 18.23,
+   "sound": "click-a",
+   "volume": 0.55,
+   "why": "arrival: the real click on Open a test dispute (src 6.2)"
+  },
+  {
+   "id": "sfx-02",
+   "at": 24.68,
+   "sound": "tick",
+   "volume": 0.45,
+   "why": "the +3 min plate lands"
+  },
+  {
+   "id": "sfx-03",
+   "at": 38.96,
+   "sound": "click-b",
+   "volume": 0.5,
+   "why": "vpy: click on the Chargeback in stop"
+  },
+  {
+   "id": "sfx-04",
+   "at": 43.8,
+   "sound": "click-a",
+   "volume": 0.5,
+   "why": "vpy: click on the Asked you stop"
+  },
+  {
+   "id": "sfx-05",
+   "at": 66.13,
+   "sound": "click-b",
+   "volume": 0.5,
+   "why": "stand-in: File the evidence"
+  },
+  {
+   "id": "sfx-06",
+   "at": 69.03,
+   "sound": "click-a",
+   "volume": 0.55,
+   "why": "stand-in: Yes, file it"
+  },
+  {
+   "id": "sfx-07",
+   "at": 79.25,
+   "sound": "pop",
+   "volume": 0.4,
+   "why": "stand-in: PayPal's 200 lands"
+  },
+  {
+   "id": "sfx-08",
+   "at": 88.16,
+   "sound": "click-b",
+   "volume": 0.5,
+   "why": "vab: click on the Closed for you stop"
+  },
+  {
+   "id": "sfx-09",
+   "at": 93.95,
+   "sound": "click-a",
+   "volume": 0.5,
+   "why": "vab: click on the You said yes stop"
+  }
+ ],
+ "camNote": "cam: [film time, scale, x, y, move seconds]; the source pixel (px,py) lands at (x + scale*px, y + scale*py). Moves ease power2.inOut; 0 s is a cut.",
+ "capNote": "cap: where a line's caption breaks (|). Without it the line is one caption group."
+}

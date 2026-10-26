@@ -1,0 +1,134 @@
+{
+ "about": "Sound cues for cut A. Times are on the film clock with B5J in; edit.json is the source of truth (build.py places them). No music anywhere. Every sound is CC0 from Kenney, decoded from the pack's .ogg to 48 kHz mono wav and peak-normalised to -3 dBFS.",
+ "packs": {
+  "interface-sounds": {
+   "name": "Kenney Interface Sounds 1.0",
+   "page": "https://kenney.nl/assets/interface-sounds",
+   "zip": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
+   "zipSha256": "f2193d072726d6758a5f7871b2dcc54dcce0d5c35c6f0a62f92549b327c81232",
+   "license": "CC0 1.0 (License.txt in the zip)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "ui-audio": {
+   "name": "Kenney UI Audio (UI SFX Set)",
+   "page": "https://kenney.nl/assets/ui-audio",
+   "zip": "https://kenney.nl/media/pages/assets/ui-audio/490d233f68-1677590494/kenney_ui-audio.zip",
+   "zipSha256": "946fc23a63d535d693eb31b2eabb80c8c28d6351e2186b344ceb71b2cb1d5eb6",
+   "license": "CC0 1.0 (License.txt in the zip)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  }
+ },
+ "sounds": {
+  "click-a": {
+   "file": "assets/sfx/click-a.wav",
+   "pack": "ui-audio",
+   "original": "Audio/mouseclick1.ogg",
+   "seconds": 0.056,
+   "sha256": "5e262196069eb7466fc5e62ffa34ba888e67ac09df287a1616bee851ce2d2d11"
+  },
+  "click-b": {
+   "file": "assets/sfx/click-b.wav",
+   "pack": "ui-audio",
+   "original": "Audio/click1.ogg",
+   "seconds": 0.091,
+   "sha256": "0dac685526427675fb3031b04d2b911f32e98fb5f290d22ac5657a71bf03b1b7"
+  },
+  "pop": {
+   "file": "assets/sfx/pop.wav",
+   "pack": "interface-sounds",
+   "original": "Audio/drop_002.ogg",
+   "seconds": 0.188,
+   "sha256": "927b574f6c59aeccda3208dfb42a9f5181b7ceaaa92f17640c532422a03700de"
+  },
+  "tick": {
+   "file": "assets/sfx/tick.wav",
+   "pack": "interface-sounds",
+   "original": "Audio/tick_002.ogg",
+   "seconds": 0.02,
+   "sha256": "1fb9670c87a8e72725238bc76922b818558ab0bee46353693fd68711c107cd60"
+  }
+ },
+ "cues": [
+  {
+   "id": "sfx-01",
+   "at": 18.23,
+   "sound": "click-a",
+   "volume": 0.55,
+   "why": "arrival: the real click on Open a test dispute (src 6.2)",
+   "file": "assets/sfx/click-a.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-02",
+   "at": 24.68,
+   "sound": "tick",
+   "volume": 0.45,
+   "why": "the +3 min plate lands",
+   "file": "assets/sfx/tick.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-03",
+   "at": 38.96,
+   "sound": "click-b",
+   "volume": 0.5,
+   "why": "vpy: click on the Chargeback in stop",
+   "file": "assets/sfx/click-b.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-04",
+   "at": 43.8,
+   "sound": "click-a",
+   "volume": 0.5,
+   "why": "vpy: click on the Asked you stop",
+   "file": "assets/sfx/click-a.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-05",
+   "at": 66.13,
+   "sound": "click-b",
+   "volume": 0.5,
+   "why": "stand-in: File the evidence",
+   "file": "assets/sfx/click-b.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-06",
+   "at": 69.03,
+   "sound": "click-a",
+   "volume": 0.55,
+   "why": "stand-in: Yes, file it",
+   "file": "assets/sfx/click-a.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-07",
+   "at": 79.25,
+   "sound": "pop",
+   "volume": 0.4,
+   "why": "stand-in: PayPal's 200 lands",
+   "file": "assets/sfx/pop.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-08",
+   "at": 88.16,
+   "sound": "click-b",
+   "volume": 0.5,
+   "why": "vab: click on the Closed for you stop",
+   "file": "assets/sfx/click-b.wav",
+   "license": "CC0 1.0"
+  },
+  {
+   "id": "sfx-09",
+   "at": 93.95,
+   "sound": "click-a",
+   "volume": 0.5,
+   "why": "vab: click on the You said yes stop",
+   "file": "assets/sfx/click-a.wav",
+   "license": "CC0 1.0"
+  }
+ ]
+}

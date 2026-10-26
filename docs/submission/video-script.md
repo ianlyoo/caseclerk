@@ -1,149 +1,118 @@
-# Demo video script: CaseClerk (draft, ≤ 2:50)
+# Demo video script: CaseClerk, locked cut A
 
-For the owner's review. Nothing is recorded or uploaded by this draft.
+This is the locked cut and the source of truth for the film. The machine copy is `video/edit.json`. The two tables below are printed from it by `python3 -I video/scripts/build.py --md`, and `build.py` refuses any cut that breaks the rules below. To change a time or a line, edit `edit.json`, rebuild, and paste the tables back here.
 
-- **Length:** 2:50 at most (the rules require under 3 minutes). The narration below is about 380 words, roughly 2:37 at a calm TTS pace of 145 words a minute, which leaves room for the pauses marked in the shot lists. The tightest beat is 8 (50 words in 19 s): read it a little faster or trim it.
-- **Voice:** English TTS, one voice, no music (or only self-made music; no third-party tracks).
-- **Screen:** the live product at https://caseclerk.vercel.app, desktop 1440×900, browser chrome hidden or neutral. Record the screen as video: the rules ask for the project shown running, so stills are fallbacks only.
-- **Honesty lines that must stay in:** "sandbox" (beats 2 and 6), and that we asked the sandbox to rule (beat 6).
-- **Reserved case:** PP-R-VPY-10194485 ($412.00, Olympus OM-1n body, chrome) is approved **only on camera**, once, in beat 5. Do a full dry run of beats 1 to 4 first, and don't click File the evidence on VPY until the take that counts. The pages hold VPY on purpose ("Kept waiting for a demo recording"), and the API refuses to approve or deny it (403) while it is listed in `RESERVED_CASE_IDS`. Lifting the hold for the take takes two steps (see the checklist): the PM sets `RESERVED_CASE_IDS=""` in Vercel and redeploys, and the page's own hold (`RESERVED_CASES` in `src/app/d2/_lib/routes.ts`) must be lifted in the same deploy (W3); otherwise the page answers the click with its "held" state and never calls the API.
-- **TTS reading:** case ids are on screen only, never read aloud. Read amounts as written ("$412" → "four hundred twelve dollars").
+- **Length:** 2:48.5 with the judge-loop slot (B5J), or 2:42.3 if that beat is dropped (`"skip": true` on B5J).
+- **Voice:** 영인 님 reads the 26 English lines (N01–N26). The recording guide is `docs/submission/narration-guide.md`. The final cut has no TTS and no music at all.
+- **Sound:** nine short CC0 interface sounds, one on each real click (licences in `video/audio/cues.json`).
+- **Picture:** the live product at https://caseclerk.vercel.app, recorded 10/26 at 1920×1080 against production with the real clock. The takes are listed in `video/footage.md`; the originals are in `s4/video/footage/`. Only B4 is a stand-in until phase B.
+- **Pace:** at most 2.4 spoken words a second per line, counted with amounts said in full ("$388.18" is seven words), with at least 0.3 s between lines. The film has 308 spoken words.
+- **Text on screen:** captions repeat each line word for word, sit 112 px above the bottom edge, and never cover the part of the page being talked about. Titles and captions name no camera brand. PayPal and Claude appear as words, never as logos.
 
-Shot status key: **EXISTS** = a usable file is already in `docs/design/d2/**` (path given). **FALLBACK** = a still exists, but the beat needs live footage, so use the still only if recording fails. **RECORD** = must be recorded or made.
+## Beats
 
----
+**B1 · 0:00–0:13.6 · The problem, and who it's for.** A metal title card in the product's look. "$412.00 chargeback" and "Not as described. Due Nov 4, 8:59 pm PT." sit above a scale running from "Chargeback in, Oct 25" to "Due Nov 4". The orange index travels it while N01 plays. A leather band rises at N02: "No answer at all: PayPal rules for the buyer. The seller loses $412.00 and the fee." At N03 the card cuts to the wordmark and "CaseClerk answers PayPal disputes for small sellers and asks before it moves money."
 
-## Beat 1 · 0:00–0:15 · The problem
+**B2 · 0:13.6–0:37.2 · A real sandbox dispute arrives (by 0:37).** The cases page with 33 disputes. The camera pushes in as the cursor clicks **Open a test dispute**. That was the take's one real `POST /api/test-dispute`, on 10/26 at 17:56:24 KST. The wait plate follows: a $289.00 chargeback filed, with PayPal's wire rows (201, 200, 200, 201). A cut carries the chip "+3 min / Real wait, cut. The page's own clock keeps counting."; the page's own clock reads 3 min 8 s. PayPal's webhook then lands, with "verified" and the signature check's 200. Last, the new case (PP-R-RSL-10194603) shows the stop "Asked you, 89 s after it arrived" and "Over your $250 evidence line".
 
-**Narration**
-> A buyer opens a chargeback on a four-hundred-dollar camera. The seller has about ten days to answer with evidence. If nobody answers, PayPal rules for the buyer, and the seller loses the sale and the fee.
+**B3 · 0:37.2–1:04.2 · The agent's call on a harder case.** PP-R-VPY-10194485, waiting for a yes. Chargeback in, then Asked you, 98 s after it arrived. The camera pushes in to "About 35%" and "Weak: tracking proves delivery, not condition", then to the cost of each choice: filing $292.22 against refunding $442.87. It pulls back to File the evidence (hovered, never clicked) and the evidence it wrote.
 
-**Shots**
-| # | Time | Shot | Status |
-|---|---|---|---|
-| 1a | 0:00–0:06 | Title card on the product's own metal ground: "A chargeback. Ten days to answer." (Archivo, product colours; no logos other than our own) | RECORD (make the card) |
-| 1b | 0:06–0:15 | VPY case page, slow push-in on the line "No answer at all: PayPal rules for the buyer: you lose $412.00 and the fee" | RECORD · FALLBACK `docs/design/d2/stage2/case-pending-vpy-1440.png` |
+**B4 · 1:04.2–1:22.4 · The seller's yes. Phase B replaces this footage.** For now it holds a stand-in: the real approval of the $399.00 case (VAB) on 10/25, from an older build at 1440×900, with the tag "Stand-in: the $399.00 case, Oct 25 / Phase B records the $412.00 case." The take shows File the evidence, Yes, file it, the 5 s undo (`UNDO_MS = 5000`), Sending, then PayPal's 200 with its debug id. Phase B swaps in the same flow on VPY at 1920×1080, and the tag goes.
 
-## Beat 2 · 0:15–0:37 · The landing
+**B5 · 1:22.4–1:42.4 · PayPal's ruling.** PP-R-VAB-10194570, closed: "PayPal ruled for you", $388.18 kept of $399.00. The stops shown are Closed for you, then You said yes, whose record reads POST provide-evidence, 200, debug id f95638041ab53. Then Held, then released.
 
-**Narration**
-> This is CaseClerk, an AI dispute desk for small PayPal sellers, running live on PayPal's sandbox. The landing replays one real case on a scale, like a camera's shutter dial: the chargeback arrives, the evidence goes in, PayPal closes the case, and the seller keeps the money.
+**B5J · 1:42.4–1:48.6 · Judge-loop slot (conditional).** It holds a placeholder card for now. If the "ask the sandbox to rule" control ships on production, phase B records a visitor pressing it on their own test case, and N17 stays. If it doesn't ship, set `"skip": true`, drop N17, and the film runs 2:42.3.
 
-**Shots**
-| # | Time | Shot | Status |
-|---|---|---|---|
-| 2a | 0:15–0:28 | Landing at load: the index sweeps the scale from "Chargeback in" to "$386.23 kept" (the load replay; don't use reduced motion) | RECORD · FALLBACK `stage2/landing-waiting-1440.png` |
-| 2b | 0:28–0:37 | Click the "Seller said yes. Filed" stop; its record opens | RECORD · FALLBACK `stage2/landing-stop-read-1440.png` |
+**B6 · 1:48.6–2:07.0 · The seller's rules.** Your rules, "It asks before money moves". The camera moves to the two lanes: evidence asks at $250 and up, refunds and offers ask over $15. The cursor hovers each Asks you.
 
-## Beat 3 · 0:37–1:02 · A real dispute arriving
+**B7 · 2:07.0–2:32.8 · How it works, and what it has done.** A drawn scale in the app's style, with five stops lit as the narration names them:
+1. PayPal webhook: "Its signature checked with PayPal first".
+2. Claude Haiku: "Sorts the case".
+3. Claude Opus: "Reads the order and tracking with tools, writes the evidence".
+4. Your lines: "In code. Over a line, it asks you".
+5. PayPal Disputes API: "PayPal answers with a status and its debug id".
 
-**Narration**
-> Anyone can start one. Open a test dispute makes a real sandbox payment for a used camera, adds USPS tracking, and files a chargeback through PayPal's simulator. A few minutes later, PayPal's webhook arrives. CaseClerk verifies it with PayPal, and the case is on the desk. It's over the seller's line, so the agent will prepare the evidence and wait for a yes.
+A band adds "Ruling: PayPal's webhooks bring it back, checked the same way." and "Spend: Hard caps on every AI call. Over a cap, the call is never sent." Then the real cases page, scrolled to Closed (23), with the chip "We asked the sandbox to rule on each. / A working loop, not a win rate."
 
-**Shots**
-| # | Time | Shot | Status |
-|---|---|---|---|
-| 3a | 0:37–0:46 | Landing or Cases: press **Open a test dispute**; the button reads "Opening in PayPal's sandbox", then the wait message | RECORD (uses one of the recorder's three test disputes for the day) · FALLBACK `stage2/landing-testdispute-wait-1440.png` (shows the old Deadlines link) |
-| 3b | 0:46–0:48 | On-screen caption "+3 min" over a cut (keep the real clock; don't hide the wait) | RECORD |
-| 3c | 0:48–0:54 | Cases page after refresh: the new case at the top of Open | RECORD · FALLBACK `stage2/inbox-testdispute-1440.png` |
-| 3d | 0:54–1:02 | The new case page: the camera, its amount over the $250 line, and the agent's state as PayPal's links allow (waiting for PayPal, or "File this evidence with PayPal?") | RECORD (no matching still: the stills show the old small test disputes, which filed on their own; since main `100cc31` a visitor's test dispute is a $289 to $449 camera that waits for a yes) |
+**B8 · 2:32.8–2:48.5 · Close.** The landing replays PP-R-SGV-10194507: $397.00 disputed, $386.23 kept, 12 min 31 s from chargeback to closed. The end card follows: ▼ CaseClerk, "It answers your PayPal disputes, and asks before it moves money.", then caseclerk.vercel.app and "Built for the PayPal AI Hackathon. Runs on PayPal's sandbox." N26 is spoken over the card, which already shows its words, so it has no caption.
 
-Tip: open the test dispute about 6 minutes before recording beat 3, so 3c and 3d can be filmed without a long wait. Film 3a as its own take.
+## Shots
 
-## Beat 4 · 1:02–1:32 · The agent's work, on the scale
+| Beat | Shot | Film | Footage (in-point) | Camera |
+|---|---|---|---|---|
+| B1 | title | 0:00.0–0:13.6 | `video/compositions/title.html` | none |
+| B2 | arrival-click | 0:13.6–0:21.6 | `footage/arrival.webm` from 1.6 s | 1x, 1.45x over 2.2 s |
+| B2 | arrival-plate | 0:21.6–0:24.6 | `footage/arrival.webm` from 13.4 s | 1.8x |
+| B2 | arrival-webhook | 0:24.6–0:33.6 | `footage/arrival.webm` from 201.0 s | 1.8x |
+| B2 | rsl-asked | 0:33.6–0:37.2 | `footage/rsl.webm` from 6.9 s | 1.3x |
+| B3 | vpy | 0:37.2–1:04.2 | `footage/vpy.webm` from 4.0 s | 1.25x, 2x over 1 s, 1.25x over 1 s |
+| B4 | approve | 1:04.2–1:22.4 | `docs/design/d2/stage2/approve-1440.mp4` from 0.0 s | 1.15x |
+| B5 | vab | 1:22.4–1:42.4 | `footage/vab.webm` from 0.9 s | 1.3x |
+| B5J | judge | 1:42.4–1:48.6 | `video/compositions/judge.html` | none |
+| B6 | rules | 1:48.6–2:07.0 | `footage/rules.webm` from 1.0 s | 1.4x, 1.8x over 1 s |
+| B7 | arch | 2:07.0–2:26.8 | `video/compositions/arch.html` | none |
+| B7 | cases | 2:26.8–2:32.8 | `footage/cases.webm` from 6.6 s | 1x |
+| B8 | landing | 2:32.8–2:40.4 | `footage/landing.webm` from 0.9 s | 1x |
+| B8 | end | 2:40.4–2:48.5 | `video/compositions/end.html` | none |
 
-**Narration**
-> Here is one that has been waiting: four hundred twelve dollars, item not as described. Ninety-eight seconds after it arrived, the agent had read the order and the tracking. It is candid: tracking proves delivery, not condition, so it puts the chance at about thirty-five percent. Filing still costs less than refunding. It wrote the evidence PayPal will receive, and stopped, because this is over the seller's two-hundred-fifty-dollar line.
+The camera column gives each zoom from the cut, and each later move with how long it takes. Every move eases (power2.inOut). In `edit.json`, `cam` gives the exact frame position.
 
-**Shots**
-| # | Time | Shot | Status |
-|---|---|---|---|
-| 4a | 1:02–1:10 | VPY case page top: "$412.00 chargeback, not as described", "File this evidence with PayPal?" | RECORD · FALLBACK `stage2/case-pending-vpy-1440.png` |
-| 4b | 1:10–1:18 | Scale: select "Chargeback in", then "Asked you, 98 s after it arrived"; the record shows the webhook id and the order and tracking reads | RECORD |
-| 4c | 1:18–1:26 | The decision panel: "About 35%", "Weak: tracking proves delivery, not condition", expected loss "Filing $292.22, refunding $442.87" | RECORD |
-| 4d | 1:26–1:32 | Scroll to "What CaseClerk will send PayPal": order details, shipment and tracking, seller statement, "Goes to PayPal as one PDF" | RECORD |
+## Lines
 
-## Beat 5 · 1:32–1:52 · The seller's yes (approval on VPY, on camera)
+Words are spoken words, with amounts read in full. The guide spells out how to say each amount (`edit.json` → `spoken`).
 
-**Narration**
-> The seller decides. One click files it. There's a moment to undo, then CaseClerk calls PayPal's Disputes API. PayPal answers: HTTP two hundred, with its own debug id. That id is PayPal's record, not ours.
+| Id | Beat | Start–end | Secs | Words | wps | Line |
+|---|---|---|---|---|---|---|
+| N01 | B1 | 0:00.4–0:05.2 | 4.8 | 11 | 2.29 | A buyer files a chargeback. The seller has days to answer. |
+| N02 | B1 | 0:05.6–0:09.2 | 3.6 | 8 | 2.22 | Miss it, and PayPal rules for the buyer. |
+| N03 | B1 | 0:09.7–0:13.3 | 3.6 | 7 | 1.94 | CaseClerk answers them for small PayPal sellers. |
+| N04 | B2 | 0:14.0–0:17.3 | 3.3 | 7 | 2.12 | Here it is, live on PayPal's sandbox. |
+| N05 | B2 | 0:17.6–0:22.5 | 4.9 | 11 | 2.24 | One click opens a real sandbox chargeback on a test order. |
+| N06 | B2 | 0:24.8–0:29.7 | 4.9 | 11 | 2.24 | Three minutes later, PayPal's webhook arrives, and CaseClerk checks its signature. |
+| N07 | B2 | 0:30.2–0:36.8 | 6.6 | 15 | 2.27 | A Claude agent reads the order and the tracking, then stops to ask the seller. |
+| N08 | B3 | 0:37.8–0:44.4 | 6.6 | 15 | 2.27 | A harder one: a $412.00 camera the buyer says isn't as described. |
+| N09 | B3 | 0:45.0–0:50.6 | 5.6 | 12 | 2.14 | It's candid: tracking proves delivery, not condition. About a 35% chance. |
+| N10 | B3 | 0:51.2–0:55.4 | 4.2 | 9 | 2.14 | It still fights, because filing costs less than refunding. |
+| N11 | B3 | 0:56.0–1:03.2 | 7.2 | 16 | 2.22 | Over the $250 line, it stops and asks, with the evidence already written. |
+| N12 | B4 | 1:04.8–1:10.2 | 5.4 | 12 | 2.22 | The seller decides. A yes files it, with five seconds to undo. |
+| N13 | B4 | 1:13.6–1:21.0 | 7.4 | 16 | 2.16 | CaseClerk calls PayPal's Disputes API, and PayPal answers: HTTP 200, with its own debug ID. |
+| N14 | B5 | 1:23.0–1:27.1 | 4.1 | 9 | 2.20 | In the sandbox, we then asked PayPal to rule. |
+| N15 | B5 | 1:27.6–1:35.1 | 7.5 | 17 | 2.27 | It ruled for the seller and released the hold: $388.18 kept. |
+| N16 | B5 | 1:35.6–1:41.1 | 5.5 | 10 | 1.82 | CaseClerk shows money only when PayPal's own records state it. |
+| N17 | B5J | 1:42.8–1:48.6 | 5.8 | 13 | 2.24 | You can ask the sandbox to rule on your own test case, too. |
+| N18 | B6 | 1:49.1–1:53.6 | 4.5 | 10 | 2.22 | The seller's lines are code, not hints in a prompt. |
+| N19 | B6 | 1:54.4–2:02.0 | 7.6 | 17 | 2.24 | Evidence under $250 and refunds up to $15 go out on their own. |
+| N20 | B6 | 2:02.6–2:05.6 | 3.0 | 6 | 2.00 | Anything bigger waits for a yes. |
+| N21 | B7 | 2:07.5–2:11.9 | 4.4 | 9 | 2.05 | Under the hood, every PayPal webhook is verified first. |
+| N22 | B7 | 2:12.4–2:19.4 | 7.0 | 15 | 2.14 | Claude Haiku sorts the case. Claude Opus works it with tools, and writes the evidence. |
+| N23 | B7 | 2:19.9–2:26.7 | 6.8 | 14 | 2.06 | Every action passes the seller's lines before it reaches PayPal, under hard spend caps. |
+| N24 | B7 | 2:27.3–2:32.2 | 4.9 | 10 | 2.04 | Eleven sandbox chargebacks have run this loop end to end. |
+| N25 | B8 | 2:33.3–2:40.7 | 7.4 | 16 | 2.16 | For a one-person shop, that's an answer on every dispute, instead of a loss by default. |
+| N26 | B8 | 2:41.2–2:46.8 | 5.6 | 12 | 2.14 | CaseClerk. It answers your PayPal disputes, and asks before it moves money. |
 
-**Shots**
-| # | Time | Shot | Status |
-|---|---|---|---|
-| 5a | 1:32–1:38 | Cursor to **File the evidence** on VPY; click; confirm | RECORD (the one real approval of PP-R-VPY-10194485, action `dce5fede-e03a-4d4e-8e99-d88af7bb177d`). Before the take: the PM sets `RESERVED_CASE_IDS=""` and redeploys (with W3's page-hold change in the same deploy); without it the API answers 403 "This case is held for the demo recording." |
-| 5b | 1:38–1:43 | The undo window counting down; let it run out | RECORD |
-| 5c | 1:43–1:52 | "Sending to PayPal", then PayPal's answer: HTTP 200, debug id, time; the scale's index moves to "Filed" | RECORD · reference only: `stage2/approve-1440.mp4` and `stage2/approve-{confirm,undo,sending,answer}-1440.png` (the same flow on VAB, $399.00; shows the old Deadlines link, so not for the final cut) |
+Caption breaks (`|` in `edit.json` → `cap`) are set by hand, so no caption runs past two short lines. The one exception is N13, which gets three.
 
-Write down the debug id and time PayPal returns; beat 6 and the Devpost text can quote them.
+## Facts on screen and in the lines, and where each was checked
 
-## Beat 6 · 1:52–2:10 · PayPal's ruling
-
-**Narration**
-> In the sandbox, we then asked PayPal to rule. PayPal resolved the case and released the seller's hold. CaseClerk shows what the seller kept, using PayPal's own fund movements and the resolved webhook, and only when PayPal states it.
-
-**Shots**
-| # | Time | Shot | Status |
-|---|---|---|---|
-| 6a | 1:52–1:55 | Caption "About 10 minutes later. Sandbox ruling requested by us." | RECORD |
-| 6b | 1:55–2:04 | VPY resolved: "PayPal ruled for you", "You kept $[from PayPal] of $412.00", the fee line | RECORD after the ruling lands (W1 adjudicates SELLER_FAVOR once the `adjudicate` link appears; earlier cases took 7 to 12.5 minutes, one took about 48) · FALLBACK `stage2/case-resolved-kept-sgv-1440.png` (a $397.00 case; change the narration's amounts if used) |
-| 6c | 2:04–2:10 | Its record: the RESOLVED webhook id; "Held, then released" with times | RECORD · FALLBACK `stage2/case-vab-stop-filed-1440.png` |
-
-## Beat 7 · 2:10–2:25 · The seller's rules
-
-**Narration**
-> The seller's rules are lines in code, not hints in a prompt. Evidence under two hundred fifty dollars, and refunds up to fifteen, go out on their own. Anything above waits for a yes.
-
-**Shots**
-| # | Time | Shot | Status |
-|---|---|---|---|
-| 7a | 2:10–2:25 | Rules page: the two lanes ("Filing evidence: asks at $250 and up", "Refunds and offers: asks over $15"), then "45% minimum to fight" | RECORD · FALLBACK `stage2/policy-readonly-1440.png` |
-
-## Beat 8 · 2:25–2:44 · Impact and architecture
-
-**Narration**
-> Under the hood: PayPal webhooks in, Claude Haiku triages, Claude Opus decides and writes with tools, a policy gate checks, and PayPal's Disputes API files, all under a hard spend cap. Eleven sandbox chargebacks have run this loop. For a one-person shop, that's money kept instead of lost by default.
-
-**Shots**
-| # | Time | Shot | Status |
-|---|---|---|---|
-| 8a | 2:25–2:37 | Architecture slide: the README's mermaid diagram, rendered in the product's colours (webhook → triage on Haiku → decide on Opus → policy gate → Disputes API → webhooks back) | RECORD (make the slide) |
-| 8b | 2:37–2:44 | Cases page, scrolled to Closed: the rows marked "For you" with "kept" amounts | RECORD · FALLBACK `stage2/inbox-all-1440.png` |
-
-"Eleven" is the count in `docs/submission/devpost.md` (ten approved cases from `docs/REAL-CASES.md`, nine on 10/25 plus PP-R-VAB-10194570, and PP-R-JKB-10194463, filed on its own). Once VPY resolves it becomes twelve; update both files together.
-
-## Beat 9 · 2:44–2:50 · End
-
-**Narration**
-> CaseClerk. It answers your PayPal disputes, and asks before it moves money.
-
-**Shots**
-| # | Time | Shot | Status |
-|---|---|---|---|
-| 9a | 2:44–2:50 | End card: "CaseClerk", caseclerk.vercel.app, "Built for the PayPal AI Hackathon. PayPal sandbox." | RECORD (make the card) |
-
----
-
-## Recording checklist
-
-1. Dry run beats 1 to 4 and 7 to 8 on the live site. Don't touch VPY's File button.
-2. About 6 minutes before beat 3, open a test dispute so it arrives during the take; film the button press as a separate take.
-3. Before beat 5, lift the hold: the PM sets `RESERVED_CASE_IDS=""` in Vercel (production) and redeploys, and W3 lifts the page hold (`RESERVED_CASES` and `RESERVED_ACTIONS` in `src/app/d2/_lib/routes.ts`) in the same deploy. Check that VPY no longer reads "Kept waiting for a demo recording", without clicking File.
-4. Beat 5: the single real approval of VPY. Note PayPal's debug id and time. Right after the take, the PM can restore the hold (unset `RESERVED_CASE_IDS` again; the default is VPY) so nobody else approves or denies it.
-5. Ask W1 to adjudicate VPY `SELLER_FAVOR` once PayPal shows the `adjudicate` link, then film beat 6 after the `RESOLVED` webhook. Fill in the kept amount.
-6. Make the three cards (1a, 9a, 8a) in the product's colours and type.
-7. Generate the TTS, cut to the timecodes, and check the total stays at or under 2:50.
-
-## Files already in `docs/design/d2/**` (for reference)
-
-| File | What it shows | Use |
+| Fact | Where | Checked against |
 |---|---|---|
-| `stage2/landing-waiting-1440.png`, `landing-stop-read-1440.png` | landing, a selected stop | fallback 2a, 2b |
-| `stage2/landing-testdispute-wait-1440.png` | test-dispute wait message (old Deadlines link) | fallback 3a |
-| `stage2/inbox-testdispute-1440.png`, `inbox-all-1440.png` | Cases with a new test dispute; all cases | fallback 3c, 8b |
-| `stage2/case-testdispute-ydq-1440.png`, `case-autofiled-kept-jkb-1440.png` | small cases the agent filed on its own | not a match for 3d any more (visitor test disputes now wait for a yes) |
-| `stage2/case-pending-vpy-1440.png`, `case-record-vpy-390.png` | VPY waiting for the yes (desktop; mobile record) | fallback 1b, 4a |
-| `stage2/approve-1440.mp4` + `approve-*-1440.png` | the approval flow on VAB (18.8 s) | reference for 5a–5c |
-| `stage2/case-resolved-kept-sgv-1440.png`, `case-resolved-kept-vab-1440.png`, `case-vab-stop-filed-1440.png` | resolved cases, kept amounts, a stop's record | fallback 6b, 6c |
-| `stage2/policy-readonly-1440.png` | Rules page | fallback 7a |
-| `firstlook/first-look.mp4` | an earlier stage of the design | don't use |
+| $412.00, not as described, due Nov 4, 8:59 pm PT, chargeback in Oct 25 | B1 card, N08 | `GET /api/cases/PP-R-VPY-10194485` on 10/26: amount 412.00, MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED, sellerResponseDueDate 2026-11-05T04:59:59Z (PST), created 2026-10-25 |
+| About 35%; filing $292.22 vs refunding $442.87 | N09, N10, B3 | the same GET: winProbability 0.35, expectedValueUsd −292.22 / −442.87; also on screen in `vpy.webm` |
+| Asked you 98 s after it arrived (VPY), 89 s (RSL) | B3, B2 | `vpy.webm`, `rsl.webm` |
+| A real sandbox chargeback, about three minutes to the webhook, signature checked | N05, N06 | `arrival.webm`: the POST at 17:56:24 KST; 3 min 10 s of waiting; the webhook rows "verified" and the signature check's 200 |
+| $250 evidence line, $15 refund line | N11, N19 | `rules.webm` (production policy) |
+| Five seconds to undo | N12 | `src/app/d2/_ui/Decide.tsx`: `UNDO_MS = 5000` |
+| HTTP 200 with PayPal's debug id | N13, B5 | `vab.webm`: POST provide-evidence, 200, debug id f95638041ab53; the B4 stand-in shows the same answer |
+| $388.18 kept of $399.00, held then released | N15 | `vab.webm` |
+| Haiku sorts, Opus works with tools; spend caps | N22, N23, B7 | `src/lib/agent/config.ts` (claude-haiku-5-5, claude-opus-5-5), `src/lib/spend/` |
+| Webhooks verified first | N06, N21 | `src/lib/paypal/webhook.ts` (`/v1/notifications/verify-webhook-signature`) |
+| Eleven sandbox chargebacks end to end | N24 | `docs/submission/devpost.md` and `docs/REAL-CASES.md` (ten approved, one filed on its own, each ruled after we asked the sandbox). The cases page shows Closed (23); `GET /api/cases` on 10/26 gives 23 resolved, the 11 plus older cases |
+| $397.00 disputed, $386.23 kept, 12 min 31 s | B8 | `landing.webm` |
+
+When VPY is approved and ruled on in phase B, "Eleven" becomes "Twelve" in N24, `devpost.md` and the README together.
+
+## Phase B
+
+1. **The VPY approval take (B4).** This needs the PM to lift VPY's hold first (`RESERVED_CASE_IDS` and the page hold in the same deploy). Record at 1920×1080 with `video/capture/rec.cjs`: File the evidence → Yes, file it → the 5 s undo runs out → Sending → PayPal's 200 and debug id, about 20 s of picture. Then set `sources.standin` to the new take, remove `ov-standin`, set the shot's in-point, and retime N12/N13 to the clicks.
+2. **Narration.** Transcribe 영인 님's takes (`hyperframes transcribe`), move each line's start and end in `edit.json` to the words, rebuild, check, render. Lines may move within their beat; if one runs long, the beat's footage gets the time, not a faster read.
+3. **B5J.** Keep it with real footage if the control ships; otherwise skip it.

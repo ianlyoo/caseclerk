@@ -1,0 +1,27 @@
+<!-- B5J, 102.4-108.6: PHASE B SLOT for the judge-loop control. Not on production yet.
+     If it ships: replace this scene with footage of the control (a visitor asking the sandbox to rule on their own test case).
+     If it doesn't: set "skip": true on B5J in edit.json and rebuild; the film becomes 2:42.3. -->
+<template>
+  <style>
+    @font-face { font-family: Archivo; src: url('assets/fonts/Archivo.ttf') format('truetype'); font-weight: 100 900; font-stretch: 62% 125%; font-display: block; }
+    #root { position: absolute; inset: 0; font-family: Archivo; color: #f2f1ec; }
+    #j-band { position: absolute; inset: 0; background: #151514; }
+    .j-grain { position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.62' numOctaves='3' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.11 0 0 0 -0.045'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23l)'/%3E%3C/svg%3E"); }
+    #j-label { position: absolute; left: 192px; top: 200px; margin: 0; font-size: 32px; color: #8a8983; }
+    #j-what { position: absolute; left: 192px; top: 260px; width: 1400px; margin: 0; font-size: 64px; font-weight: 650; line-height: 1.15; letter-spacing: -0.02em; font-variation-settings: "wdth" 112; }
+    #j-note { position: absolute; left: 194px; top: 480px; width: 1300px; margin: 0; font-size: 32px; line-height: 1.35; color: #b6b5af; }
+  </style>
+  <div id="root" data-composition-id="judge" data-width="1920" data-height="1080">
+    <div id="j-slot" class="clip" data-start="0" data-duration="6.2">
+      <div id="j-band"><div class="j-grain"></div></div>
+      <p id="j-label">Phase B slot, 6.2 s</p>
+      <p id="j-what">Footage: asking the sandbox to rule on your own test case.</p>
+      <p id="j-note">Recorded only if the judge-loop control ships. If not, this beat drops and the film runs 2:42.3.</p>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo(["#j-label", "#j-what", "#j-note"], { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out", stagger: 0.15 }, 0.1);
+    window.__timelines["judge"] = tl;
+  </script>
+</template>
