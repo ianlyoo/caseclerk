@@ -201,3 +201,36 @@ Fund movements (PayPal dispute + capture, read 13:04 UTC; same format as the "fu
 - **EGZ ($394):** The $383.31 hold was released in full and the capture is still COMPLETED, so the seller keeps $383.31 ($394.00 minus the $10.69 fee). The buyer's $394.00 was paid by PayPal. Chargeback fee: not stated.
 - **IHX ($391):** The $380.38 hold was released in full and the capture is still COMPLETED, so the seller keeps $380.38 ($391.00 minus the $10.62 fee). The buyer's $391.00 was paid by PayPal. Chargeback fee: not stated.
 - **SGV ($397):** The $386.23 hold was released in full and the capture is still COMPLETED, so the seller keeps $386.23 ($397.00 minus the $10.77 fee). The buyer's $397.00 was paid by PayPal. Chargeback fee: not stated.
+
+## VAB / YDQ (10/26; production case data read from the live API, 2026-10-26 ~07:00 UTC)
+
+Sources: `GET https://caseclerk.vercel.app/api/cases/{id}` (case, actions, audit, wire rows with PayPal debug ids, `money`). The adjudicate calls were made by `scripts/run.sh scripts/demo-prep.ts --ids PP-R-VAB-10194570,PP-R-YDQ-10194582 --stage resolved` (sandbox adjudicate SELLER_FAVOR, PayPal 200, 10/26 ~04:50 UTC / ~13:50 KST, per the PM). The script's calls aren't on the production wire, so their debug ids aren't recorded here.
+
+| Dispute | Amount | Role | Filed by | PayPal (last read) | Production case |
+|---|---|---|---|---|---|
+| **PP-R-VAB-10194570** | $399.00 (Olympus OM-1n body, chrome; Visa C2, not as described) | Olympus case opened 10/26 01:53Z alongside PP-R-MFL-10194569 ($401.00); approved in W3's recorder (`docs/design/d2/stage2/gates.md`) | agent prepared it, the seller approved | **RESOLVED / RESOLVED_WITH_PAYOUT**, update_time 2026-10-26T05:02:18.462Z | `resolved`, 30 wire rows |
+| **PP-R-YDQ-10194582** | $27.95 (Hand-carved walnut serving spoon $22.00 + $5.95 shipping; not received) | test dispute (`isTestDispute: true`) | agent on its own (under the $250 line) | **UNDER_REVIEW**, no links, update_time 2026-10-26T04:57:14.072Z; not resolved at 07:00 UTC (~2 h 10 min after the adjudicate request) | `waiting_on_paypal`, 28 wire rows |
+
+### PP-R-VAB-10194570 ($399.00): RESOLVED
+- Capture 150652353P512152Y, order 1T257088P4875345A. Dispute created at PayPal 01:53:18.030Z; CREATED webhook `WH-4WG903824F857553P-9TH831100K233352E` received 01:56:35.662Z, verify SUCCESS.
+- Agent: triage (claude-haiku-5-5) 01:56:40Z; after UPDATED `WH-1N662885UE862001P-7SG36710FF0307317` (WAITING_FOR_SELLER_RESPONSE, 01:57:35Z) it read the order and tracking (USPS …233486, delivered), decided **fight** (win chance 35%, evidence weak; expected result fight −$283.47, refund −$429.42) and stopped at 01:58:00Z: `action.awaiting_approval` (`6848026d-ee06-4e70-8d06-65fcfa51c8a5`, $399.00 is at or above the $250 evidence line). Run cost $0.0379.
+- Seller approved 04:14:59.159Z: **provide-evidence 200, debug f95638041ab53** (04:15:01.637Z), tracker restore PUT 204 (f641529fee221); action `executed`.
+- UPDATED webhooks `WH-6FE022639B882101D-4CG51768WS6764010` (04:15:35Z, UNDER_REVIEW) and `WH-2RC439716M878725D-6GK14442RV7249406` (04:57:04Z, UNDER_REVIEW, no links).
+- **RESOLVED webhook: `WH-7HK4446246508252M-6XX26394Y8604272Y` (CUSTOMER.DISPUTE.RESOLVED), received 2026-10-26T05:02:34.898Z**, verify SUCCESS, processed. Agent `run.done` 05:02:38Z: "PayPal closed the dispute (RESOLVED_WITH_PAYOUT). Nothing left to do."
+- Approval → RESOLVED ~47 min, but the adjudicate request came ~35 min after the approval, so this isn't comparable with the ~7–12.5 min of the 10/25 ceremonies (adjudicate request → RESOLVED ~12 min).
+
+### PP-R-YDQ-10194582 ($27.95): filed by the agent, adjudicated, not yet resolved
+- Opened by "Open a test dispute" (origin seller): `POST /v2/checkout/orders` 201 (f71665861aa97), `POST /v1/shipping/trackers-batch` 200 (f7597667d3b4d), `POST /v2/customer-support/process-chargeback` 201 (f759766b12579), all at 04:27:11–17Z. Capture 36R0041384649325R, order 56J16503PK8103402.
+- CREATED webhook `WH-6UB58941XL021622V-0CP01617VL783133X` received 04:30:35.128Z (3 min 18 s after the chargeback call), verify SUCCESS. Triage 04:30:40Z.
+- UPDATED `WH-9F777363Y4605882P-0BH03580Y3069845G` (WAITING_FOR_SELLER_RESPONSE, 04:31:34Z) → agent read the order and tracking (USPS …059105, delivered), decided **fight** (win chance 65%, evidence medium; fight −$20.55, refund −$45.42) and filed on its own: **provide-evidence 200, debug ca506bc0bfb43** at 04:31:59.355Z (25 s after the webhook), tracker restore PUT 204 (ca506bc16fef8). Action `d6ebda31-d698-4bb5-ab6e-5efa0549d5f7` executed. Run cost $0.0522.
+- UPDATED `WH-75475566N66709321-52585486A6094061S` (04:32:34Z, UNDER_REVIEW) and `WH-6J7186238B548081F-7HT82918090131107` (04:57:35Z, UNDER_REVIEW, no links). No RESOLVED webhook yet.
+
+Fund movements (live API `money`, from PayPal's dispute `fund_movements` and the capture, read 06:31 UTC; same format as the "fund movements" section):
+
+| Case | Capture (gross / PayPal fee / net) | fund_movements (party RECEIVER) | Outcome |
+|---|---|---|---|
+| PP-R-VAB-10194570 | $399.00 / $10.82 / $388.18 | DEBIT HOLD_PLACED $388.18 at 01:56:16Z; CREDIT HOLD_RELEASED $388.18 at 04:56:14Z | RESOLVED_WITH_PAYOUT |
+| PP-R-YDQ-10194582 | not stated yet (`money: null` until RESOLVED) | not stated yet | open (UNDER_REVIEW) |
+
+- **VAB ($399):** The $388.18 hold was released in full, so the seller keeps $388.18 ($399.00 minus the $10.82 fee). Chargeback fee: not stated.
+- **YDQ ($27.95):** nothing to state until PayPal resolves it.

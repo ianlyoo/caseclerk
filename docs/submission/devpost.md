@@ -29,7 +29,8 @@ CaseClerk is a dispute desk that acts on PayPal's Disputes API under rules the s
 - A policy gate checks every action before PayPal is called. By default, evidence on disputes under $250 and refunds or offers up to $15 go out on their own. Anything above those lines waits for the seller's one-click approval.
 - Filing goes to PayPal's `provide-evidence` endpoint. The case page shows PayPal's HTTP status and debug id for every call, the exact evidence text PayPal received, and each webhook event id.
 - When PayPal resolves the case, CaseClerk reads PayPal's fund movements and the capture and shows what the seller kept. It shows that figure only when PayPal states it.
-- Anyone can press **Open a test dispute**. That creates a real sandbox payment with USPS tracking and a chargeback through PayPal's simulator, and the case arrives by webhook a few minutes later.
+- A deadline board (Bryntum Scheduler) shows one row per real case: a bar from the day the dispute opened to PayPal's seller-response due date, markers for the agent's and PayPal's moments, and a click through to the case. <!-- verify after /board ships -->
+- Anyone can press **Open a test dispute**. That creates a real sandbox payment for a used film camera, with USPS tracking, and a chargeback through PayPal's simulator. The case arrives by webhook a few minutes later and, being over the $250 line, waits for the visitor's yes.
 
 ## How we built it
 
@@ -37,7 +38,7 @@ CaseClerk is a dispute desk that acts on PayPal's Disputes API under rules the s
 - **PayPal REST, called directly** (sandbox only): Disputes (get, list, provide-evidence, accept-claim, make-offer, send-message, acknowledge-return-item), the sandbox simulators (process-chargeback, require-evidence, adjudicate, buyer-side create), Orders v2, Payments (captures, a guarded refund), Shipping Trackers, Transaction Search and Webhooks. Every result keeps PayPal's `debug_id`.
 - **Claude through `@anthropic-ai/sdk`**, no agent framework. Triage on `claude-haiku-5-5` with JSON-schema output; we chose it after it labelled 15 of 15 hand-labelled disputes correctly. Decisions and writing on `claude-opus-5-5` at medium effort, with strict tool schemas and prompt caching. Write tools appear only when PayPal's HATEOAS link for that action is present.
 - **Guards in code**: the policy gate; a fact check that holds back evidence citing any tracking number or id no tool returned; a refund guard that refuses while a dispute is open on the capture; a per-case lock; and a hard spend cap. Each Claude call reserves its estimated cost first, and defaults are $45 all-time, $4 a day and 60 runs a day. Over a cap no request is sent.
-- **Front end**: one real case read off a camera's engraved shutter-speed scale. The case's elapsed time runs on a log scale, from "Chargeback in" to "Kept", with one stop where the seller said yes. We followed the impeccable design rules (Apache-2.0), with WCAG 2.2 AA contrast as the target.
+- **Front end**: one real case read off a camera's engraved shutter-speed scale. The case's elapsed time runs on a log scale, from "Chargeback in" to "Kept", with one stop where the seller said yes. We followed the impeccable design rules (Apache-2.0), with WCAG 2.2 AA contrast as the target. The deadline board is Bryntum Scheduler (trial), fed from the same case API, one row per real case. <!-- verify after /board ships -->
 - **Tests**: 155 unit and contract tests with Vitest (agent loop, policy, spend caps, webhook handling, PayPal parsing on real PII-stripped sandbox payloads), plus a live sandbox suite.
 
 ## Challenges we ran into
@@ -51,7 +52,7 @@ CaseClerk is a dispute desk that acts on PayPal's Disputes API under rules the s
 ## Accomplishments that we're proud of
 
 - The whole loop runs against PayPal's sandbox: a chargeback arrives, the agent writes and files evidence, PayPal accepts it, and PayPal resolves the case. Nothing on the PayPal side is mocked.
-- 10 sandbox chargebacks went through this loop to `RESOLVED_WITH_PAYOUT`, with PayPal releasing the seller's hold. On nine of them the agent stopped at the seller's $250 line and filed after the seller approved; on one ($17.95) it filed on its own. In each case we asked the sandbox to rule (`SELLER_FAVOR`), so these show the pipe working, not a win rate. For example, a $389.00 case ended with the seller keeping $378.43; the difference is PayPal's normal transaction fee. On the nine approved cases, PayPal resolved the dispute 7 to 12.5 minutes after the approval.
+- 11 sandbox chargebacks went through this loop to `RESOLVED_WITH_PAYOUT`, with PayPal releasing the seller's hold. On ten of them the agent stopped at the seller's $250 line and filed after the seller approved; on one ($17.95) it filed on its own. In each case we asked the sandbox to rule (`SELLER_FAVOR`), so these show the pipe working, not a win rate. For example, a $389.00 case ended with the seller keeping $378.43; the difference is PayPal's normal transaction fee. On the nine cases approved on 10/25, PayPal resolved the dispute 7 to 12.5 minutes after the approval; on the tenth, about 12 minutes after we asked for the ruling.
 - The agent is candid. On the camera cases it put the chance at 30 to 35% and said why ("tracking proves delivery, not condition"). It chose to file because the expected loss was smaller than refunding, and it left the call to the seller.
 - Every claim on screen is PayPal's own record: HTTP status, debug id, webhook event id, fund movements.
 
@@ -66,13 +67,13 @@ CaseClerk is a dispute desk that acts on PayPal's Disputes API under rules the s
 - Buyer negotiation at the inquiry stage. The agent's offer and message tools are built and unit-tested, and we sent a real message on a sandbox inquiry. Creating inquiries still needs a buyer-side id we can only read by hand.
 - Better evidence from the seller: item photos, listings and return policies. On the camera cases the agent itself called the evidence weak for lack of them.
 - Seller accounts with sign-in and Log in with PayPal, so each seller connects their own PayPal account and edits their own rules. The demo has one sandbox seller and no auth.
-- A deadline board across open cases, and a live-account pilot with a few small sellers.
+- A live-account pilot with a few small sellers.
 
 ## Built with
 
-<!-- Owner: add "bryntum" only if a real deadline board ships; today /board is an unlinked spike with sample rows. -->
+<!-- verify after /board ships -->
 
-anthropic, claude, claude-opus-5-5, claude-haiku-5-5, paypal, paypal-disputes-api, paypal-orders-api, paypal-payments-api, paypal-shipping-trackers, paypal-transaction-search, paypal-webhooks, next.js, react, typescript, node.js, postgresql, neon, vercel, pdf-lib, zod, vitest
+anthropic, claude, claude-opus-5-5, claude-haiku-5-5, paypal, paypal-disputes-api, paypal-orders-api, paypal-payments-api, paypal-shipping-trackers, paypal-transaction-search, paypal-webhooks, next.js, react, typescript, node.js, postgresql, neon, vercel, bryntum, pdf-lib, zod, vitest
 
 ## Try it out
 
@@ -87,10 +88,12 @@ anthropic, claude, claude-opus-5-5, claude-haiku-5-5, paypal, paypal-disputes-ap
 2. Open **Cases** (top bar). You'll see every sandbox dispute: the ones waiting for the seller's yes, the open ones by deadline, and the closed ones with PayPal's ruling.
 3. Open a resolved case, for example **https://caseclerk.vercel.app/case/PP-R-NJA-10194486**. There you can see what the agent sent PayPal (the exact text and the PDF), PayPal's HTTP 200 and debug id for the filing, the `CUSTOMER.DISPUTE.RESOLVED` webhook id, and the seller's hold being placed and released.
 4. Open **Rules** to see the lines the agent works under. They are shown read-only.
-5. Press **Open a test dispute** (on the landing or on Cases). This creates a real sandbox payment with USPS tracking and a chargeback through PayPal's simulator. PayPal delivers the dispute webhook in about 3 to 4 minutes; refresh **Cases** to see it. Test orders are under $60, below the $250 line, so the agent files the evidence on its own within a few minutes after PayPal opens the dispute for a response. Each visitor can open three a day.
+5. Open **Deadlines** (`/board`): one row per real case, from the day it opened to PayPal's response due date, with the agent's and PayPal's moments marked. Click a bar to open its case. <!-- verify after /board ships -->
+6. Press **Open a test dispute** (on the landing or on Cases). This creates a real sandbox payment for one used film camera ($289 to $449) with USPS tracking, and a chargeback through PayPal's simulator. PayPal delivers the dispute webhook in about 3 to 4 minutes; refresh **Cases** to see it. The order is above the $250 line, so the agent prepares the evidence and waits for your yes. Once PayPal opens the dispute for a response, press **File the evidence** on your case: CaseClerk files it with PayPal and shows PayPal's HTTP status and debug id. Each visitor can open three a day.
 
 Sandbox notes:
 - PayPal's sandbox doesn't rule on chargebacks by itself in any predictable time. The resolved cases you see were ruled after we called the sandbox's `adjudicate` simulator. A test dispute you open will usually stay at "Filed. PayPal is reviewing".
-- A case may be waiting for a seller's yes. Pressing **File the evidence** on it sends a real sandbox filing to PayPal. One case is marked "Kept waiting for a demo recording": that is our video's case, and the page won't file it.
+- A case may be waiting for a seller's yes. Pressing **File the evidence** on it sends a real sandbox filing to PayPal. One case is marked "Kept waiting for a demo recording": that is our video's case, and the API refuses to file it (403).
+- The Rules are read-only here: changing them needs an edit token the hosted demo doesn't set.
 - The Claude spend has a hard cap. If the demo budget is ever reached, the agent makes no new model calls, and a case shows a recorded run that is clearly labelled as a replay.
 - The API is readable without a key: `GET /api/cases`, `GET /api/cases/{id}`, `GET /api/policy`, `GET /api/health`.

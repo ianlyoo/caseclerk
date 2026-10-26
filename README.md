@@ -11,10 +11,11 @@ Built for the PayPal AI Hackathon (2026). Everything runs on the PayPal **sandbo
 1. **Landing** (`/`): one real sandbox case replayed on a time scale, from "Chargeback in" to "Closed for the seller": $397.00 disputed, $386.23 kept. Click any stop to read PayPal's record for it.
 2. **Cases** (`/cases`): every sandbox dispute the desk has seen: the ones waiting for the seller's yes, the open ones (soonest deadline first), and the closed ones with PayPal's ruling.
 3. **A resolved case with PayPal's proof**: [`/case/PP-R-NJA-10194486`](https://caseclerk.vercel.app/case/PP-R-NJA-10194486). A $389.00 not-as-described chargeback. The agent prepared the evidence and asked, because $389 is over the seller's $250 line. The seller approved, PayPal accepted the filing (HTTP 200, debug id `f8469524f503f`), and PayPal resolved the case: the hold of $378.43 was released, so the seller kept $378.43 (the other $10.57 is PayPal's normal transaction fee). The page shows the exact evidence text, the `CUSTOMER.DISPUTE.RESOLVED` webhook id and every PayPal call with its debug id.
-4. **Rules** (`/policy`): the seller's lines the agent runs under: evidence filing on its own below $250, refunds and offers on its own up to $15, a 45% minimum chance to fight, offers never above 40% of the amount.
-5. **Open a test dispute** (button on the landing and on `/cases`): this creates a real sandbox card payment, adds USPS tracking and files a chargeback through PayPal's simulator. PayPal delivers the `CUSTOMER.DISPUTE.CREATED` webhook about 3 to 4 minutes later, and the case appears. Test orders are under $60, below the $250 line, so the agent files evidence on its own. Limit: three per visitor per day.
+4. **Rules** (`/policy`): the seller's lines the agent runs under: evidence filing on its own below $250, refunds and offers on its own up to $15, a 45% minimum chance to fight, offers never above 40% of the amount. Shown read-only: on the hosted demo nobody can change them.
+5. **Deadlines** (`/board`): a Bryntum Scheduler board with one row per real case. Each bar runs from the day the dispute opened to PayPal's seller-response due date, markers show the agent's and PayPal's moments (filed, approved, ruled), and a click opens the case. <!-- verify after /board ships -->
+6. **Open a test dispute** (button on the landing and on `/cases`): this creates a real sandbox card payment, adds USPS tracking and files a chargeback through PayPal's simulator. PayPal delivers the `CUSTOMER.DISPUTE.CREATED` webhook about 3 to 4 minutes later, and the case appears. Your test order is one used film camera ($289 to $449), above the $250 line, so the agent prepares the evidence and waits for your yes: **File the evidence** on that case sends a real sandbox filing to PayPal. (The daily cron test dispute uses small $12 to $28 items, which the agent files on its own.) Limit: three per visitor per day.
 
-A case marked "Kept waiting for a demo recording" is held on purpose for our video.
+A case marked "Kept waiting for a demo recording" is held on purpose for our video: the API refuses to approve or deny it (403) until we lift the hold (`RESERVED_CASE_IDS`).
 
 ## How it works
 
@@ -92,10 +93,10 @@ These are real PayPal **sandbox** disputes. We created them with PayPal's charge
 | PP-R-EGZ-10194505 | $394.00 | $383.31 | $10.69 | approved; ~11.5 min |
 | PP-R-IHX-10194506 | $391.00 | $380.38 | $10.62 | approved; ~10.5 min |
 | PP-R-SGV-10194507 | $397.00 | $386.23 | $10.77 | approved; ~9.5 min |
-| PP-R-VAB-10194570 | $399.00 | $388.18 | $10.82 | approved; resolved webhook ~48 min after approval (live API; how its ruling was requested isn't in `docs/REAL-CASES.md`) |
+| PP-R-VAB-10194570 | $399.00 | $388.18 | $10.82 | approved; ruling requested ~35 min after the approval, RESOLVED ~12 min after that |
 | PP-R-JKB-10194463 | $17.95 | $17.00 | $0.95 | agent filed on its own (under $250), twice after PayPal asked for more evidence; ruled via the demo controls; resolved a day later (live API) |
 
-PayPal's outcome on every row is `RESOLVED_WITH_PAYOUT` with reason `REPRESENTED_BY_PAYPAL`: PayPal paid the buyer, released the seller's hold, and the capture stayed `COMPLETED`. PayPal stated no chargeback fee on any of these cases. The test-dispute case PP-R-RCJ-10194476 ($27.95) also resolved this way, but its evidence was filed by a script, not the agent, so it isn't in the table.
+PayPal's outcome on every row is `RESOLVED_WITH_PAYOUT` with reason `REPRESENTED_BY_PAYPAL`: PayPal paid the buyer, released the seller's hold, and the capture stayed `COMPLETED`. PayPal stated no chargeback fee on any of these cases. The test-dispute case PP-R-RCJ-10194476 ($27.95) also resolved this way, but its evidence was filed by a script, not the agent, so it isn't in the table. PP-R-YDQ-10194582 ($27.95, a test dispute the agent filed on its own 25 seconds after PayPal opened it for a response) was adjudicated the same way on 10/26 but was still `UNDER_REVIEW` two hours later; it isn't counted until PayPal resolves it.
 
 Timing in the sandbox: the `CREATED` webhook arrives about 3 minutes after the chargeback; on the camera cases the agent asked the seller about 1.5 minutes after the case arrived. PayPal's own unlock times varied from minutes to hours (see `docs/experiments.md`).
 
@@ -110,7 +111,7 @@ npm ci
 cp .env.example .env.local      # fill in values; .env.local is gitignored
 ```
 
-Set at least `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `ANTHROPIC_API_KEY` and `CASECLERK_API_ORIGIN=http://localhost:3000` (otherwise the pages read the hosted demo's API). Every variable is listed with a one-line comment in [`.env.example`](.env.example).
+Set at least `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `ANTHROPIC_API_KEY` and `CASECLERK_API_ORIGIN=http://localhost:3000` (otherwise the pages read the hosted demo's API). Two demo guards matter for your own copy: `RESERVED_CASE_IDS` defaults to our video case, so set it to an empty string to approve anything; and `PUT /api/policy` works only when `POLICY_EDIT_TOKEN` is set and sent as the `x-policy-edit-token` header. Every variable is listed with a one-line comment in [`.env.example`](.env.example).
 
 Database (optional, Neon):
 
@@ -147,14 +148,14 @@ On 2026-10-26: 155 passed, 9 skipped (the Postgres contract test needs `DATABASE
 
 ## Tech stack
 
-Next.js 16.4 (App Router) and React 19.3, TypeScript 6.0, `@anthropic-ai/sdk` 1.3 (Claude Opus 5.5 and Haiku 5.5), Neon Postgres (`@neondatabase/serverless`), pdf-lib (evidence PDF), zod, Motion and Number Flow (the scale's movement and figures), Archivo (Google Fonts), Vercel (Hobby, functions in `sin1`), Vitest.
+Next.js 16.4 (App Router) and React 19.3, TypeScript 6.0, Bryntum Scheduler (deadline board), `@anthropic-ai/sdk` 1.3 (Claude Opus 5.5 and Haiku 5.5), Neon Postgres (`@neondatabase/serverless`), pdf-lib (evidence PDF), zod, Motion and Number Flow (the scale's movement and figures), Archivo (Google Fonts), Vercel (Hobby, functions in `sin1`), Vitest.
 
 ## Credits and licences
 
 - **PayPal** REST APIs and sandbox simulators. Our dispute tools are written directly against the REST API; PayPal's agent-toolkit (Apache-2.0) was read for reference, and no code from it is used.
 - **Anthropic** Claude via `@anthropic-ai/sdk` (Apache-2.0).
-- **Bryntum Scheduler**, trial package `@bryntum/scheduler-trial` 7.3.7 under Bryntum's commercial trial licence (it shows a trial watermark). It renders `/board`, an early deadline-board spike with three sample rows; it is not linked from the product pages.
-- **impeccable** 4.7.0 (Apache-2.0): the design skill whose rules we followed for the front end (`DESIGN.md`, `PRODUCT.md`); vendored under `.claude/skills/impeccable` and `.agents/skills/impeccable`.
+- **Bryntum Scheduler**, trial package `@bryntum/scheduler-trial` 7.3.7 under Bryntum's commercial trial licence (it shows a trial watermark). It renders the deadline board at `/board`: one row per real case, bars from opened to PayPal's response due date, markers for the agent's and PayPal's moments. <!-- verify after /board ships -->
+- **impeccable** 4.7.0 (Apache-2.0): the design skill whose rules we followed for the front end (`DESIGN.md`, `PRODUCT.md`); vendored under `.claude/skills/impeccable` and `.agents/skills/impeccable`, each with its `LICENSE` and `NOTICE.md` (which also credits platform-design-skills, MIT).
 - Next.js, React, pdf-lib, zod, Motion, Number Flow and the Neon driver (MIT); `@vercel/functions` (Apache-2.0); Archivo (SIL Open Font License 1.1).
 
 ## Licence
