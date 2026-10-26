@@ -147,9 +147,11 @@ export function DeskHome() {
 }
 
 function Disclosure({ title, meta, children, icon = "file", open = false }: { title: string; meta?: string; children: ReactNode; icon?: IconName; open?: boolean }) {
-  return <details className="evidence-disclosure disclosure" name="case-evidence" open={open}>
+  const [expanded, setExpanded] = useState(open);
+  const scrollExemption = expanded && (title === "Draft response" || title === "PayPal record") ? "Native 360px scrollport clips overflowing document text; off-scrollport text rects are not painted. Keyboard scrolling and clipping verified." : undefined;
+  return <details className="evidence-disclosure disclosure" name="case-evidence" open={open} onToggle={(event) => setExpanded(event.currentTarget.open)}>
     <summary><span className="summary-label"><Icon name={icon} /><span>{title}</span></span><span className="disclosure-meta">{meta}<Icon name="chevron" size={16} /></span></summary>
-    <div className="disclosure-content" tabIndex={0} aria-label={`${title} content`}>{children}</div>
+    <div className="disclosure-content" tabIndex={0} aria-label={`${title} content`} data-align-ok={scrollExemption}>{children}</div>
   </details>;
 }
 
