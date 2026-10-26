@@ -170,13 +170,13 @@
      "in": 6.9,
      "start": 33.6,
      "end": 37.2,
-     "shows": "The $289.00 case: Asked you, 89 s after it arrived; Over your $250 evidence line, so CaseClerk asks first",
+     "shows": "The $289.00 case: Asked you, 89 s after it arrived; Over your $250 evidence line, so CaseClerk asks first. Cropped below the item headline.",
      "cam": [
       [
        33.6,
        1.3,
        -275,
-       -80,
+       -275.6,
        0
       ]
      ]
@@ -223,14 +223,14 @@
      "src": "vpy",
      "in": 4.0,
      "start": 37.2,
-     "end": 64.2,
-     "shows": "The $412.00 case: Chargeback in, Asked you 98 s after it arrived, About 35%, Filing $292.22 vs refunding $442.87, File the evidence hovered (never clicked), What CaseClerk will send PayPal",
+     "end": 56.4,
+     "shows": "The $412.00 case: Chargeback in, Asked you 98 s after it arrived, About 35%, Filing $292.22 vs refunding $442.87. Cropped below the item headline.",
      "cam": [
       [
        37.2,
        1.25,
        -240,
-       -40,
+       -265,
        0
       ],
       [
@@ -239,13 +239,33 @@
        -1920,
        -550,
        1.0
-      ],
+      ]
+     ]
+    },
+    {
+     "id": "vpy-evidence",
+     "src": "vpy",
+     "in": 28.2,
+     "start": 56.4,
+     "end": 64.2,
+     "shows": "The same page scrolled to What CaseClerk will send PayPal (order details, shipment and tracking, seller statement), the panel's $250 line beside it. Cropped above the exact-text toggle.",
+     "cam": [
       [
-       55.4,
-       1.25,
-       -240,
-       -40,
-       1.0
+       56.4,
+       1.1,
+       -96,
+       -44,
+       0
+      ]
+     ],
+     "window": [
+      [
+       56.4,
+       0,
+       0,
+       196,
+       0,
+       0
       ]
      ]
     }
@@ -262,14 +282,15 @@
      "id": "N09",
      "start": 45.0,
      "end": 50.6,
-     "text": "It's candid: tracking proves delivery, not condition. About a 35% chance.",
-     "cap": "It's candid: tracking proves delivery, | not condition. About a 35% chance."
+     "text": "Tracking proves delivery, not condition. It estimates a 35% chance.",
+     "cap": "Tracking proves delivery, not condition. | It estimates a 35% chance."
     },
     {
      "id": "N10",
      "start": 51.2,
      "end": 55.4,
-     "text": "It still fights, because filing costs less than refunding."
+     "text": "It still recommends filing, because the expected loss is smaller.",
+     "cap": "It still recommends filing, | because the expected loss is smaller."
     },
     {
      "id": "N11",
@@ -290,18 +311,36 @@
     {
      "id": "approve",
      "src": "standin",
-     "in": 0.0,
+     "in": 0.6,
      "start": 64.2,
      "end": 82.4,
      "standin": true,
-     "shows": "File the evidence, Yes file it, Filing in 4 s / Undo, Sending, 200 accepted with PayPal's debug id",
+     "shows": "File the evidence, Yes file it, Filing in 4 s / Undo, Sending, then PayPal's answer: 200 accepted, with PayPal's debug id. Cropped below the item headline; the crop opens 34 px while the panel is blank, so PayPal's answer shows whole.",
      "cam": [
       [
        64.2,
        1.15,
        -130,
-       -60,
+       -162,
        0
+      ]
+     ],
+     "window": [
+      [
+       64.2,
+       120,
+       0,
+       0,
+       0,
+       0
+      ],
+      [
+       78.25,
+       86,
+       0,
+       0,
+       0,
+       0.15
       ]
      ]
     }
@@ -316,10 +355,10 @@
     },
     {
      "id": "N13",
-     "start": 73.6,
-     "end": 81.0,
-     "text": "CaseClerk calls PayPal's Disputes API, and PayPal answers: HTTP 200, with its own debug ID.",
-     "cap": "CaseClerk calls PayPal's Disputes API, | and PayPal answers: HTTP 200, | with its own debug ID."
+     "start": 75.3,
+     "end": 82.4,
+     "text": "CaseClerk files through PayPal's Disputes API. PayPal returns success and its own debug ID.",
+     "cap": "CaseClerk files through PayPal's Disputes API. | PayPal returns success and its own debug ID."
     }
    ]
   },
@@ -335,13 +374,13 @@
      "in": 0.9,
      "start": 82.4,
      "end": 102.4,
-     "shows": "PayPal ruled for you $388.18, kept $388.18 of $399.00; Closed for you; You said yes. Filed (POST provide-evidence, 200, debug id); Held, then released $388.18",
+     "shows": "PayPal ruled for you $388.18, kept $388.18 of $399.00; Closed for you; You said yes. Filed (POST provide-evidence, 200, debug id); Held, then released $388.18. Cropped below the item headline.",
      "cam": [
       [
        82.4,
        1.3,
        -275,
-       -80,
+       -228.8,
        0
       ]
      ]
@@ -352,7 +391,7 @@
      "id": "N14",
      "start": 83.0,
      "end": 87.1,
-     "text": "In the sandbox, we then asked PayPal to rule."
+     "text": "We asked PayPal's sandbox to rule for the seller."
     },
     {
      "id": "N15",
@@ -365,8 +404,8 @@
      "id": "N16",
      "start": 95.6,
      "end": 101.1,
-     "text": "CaseClerk shows money only when PayPal's own records state it.",
-     "cap": "CaseClerk shows money only when | PayPal's own records state it."
+     "text": "This amount comes from PayPal's own hold and release records.",
+     "cap": "This amount comes from PayPal's own | hold and release records."
     }
    ]
   },
@@ -432,8 +471,8 @@
      "id": "N18",
      "start": 109.1,
      "end": 113.6,
-     "text": "The seller's lines are code, not hints in a prompt.",
-     "cap": "The seller's lines are code, | not hints in a prompt."
+     "text": "The seller's limits are enforced in code, not a prompt.",
+     "cap": "The seller's limits are enforced in code, | not a prompt."
     },
     {
      "id": "N19",
@@ -460,20 +499,30 @@
      "id": "arch",
      "scene": "compositions/arch.html",
      "start": 127.0,
-     "end": 146.8
+     "end": 148.0
     },
     {
      "id": "cases",
      "src": "cases",
-     "in": 6.6,
-     "start": 146.8,
+     "in": 14.7,
+     "start": 148.0,
      "end": 152.8,
-     "shows": "Closed 23, PayPal's rulings, newest first; For you, $X kept rows",
+     "shows": "Closed (23), scrolled to the kept rows: nine of the documented cases (SGV to NJA), For you, $X kept. Cropped to those rows.",
      "cam": [
       [
-       146.8,
-       1,
+       148.0,
+       1.2,
+       -192,
+       -144,
+       0
+      ]
+     ],
+     "window": [
+      [
+       148.0,
        0,
+       0,
+       334,
        0,
        0
       ]
@@ -498,15 +547,15 @@
      "id": "N23",
      "start": 139.9,
      "end": 146.7,
-     "text": "Every action passes the seller's lines before it reaches PayPal, under hard spend caps.",
-     "cap": "Every action passes the seller's lines | before it reaches PayPal, under hard spend caps."
+     "text": "Every action is checked against those limits before reaching PayPal, and AI spend is capped.",
+     "cap": "Every action is checked against those limits | before reaching PayPal, and AI spend is capped."
     },
     {
      "id": "N24",
      "start": 147.3,
      "end": 152.2,
-     "text": "Eleven sandbox chargebacks have run this loop end to end.",
-     "cap": "Eleven sandbox chargebacks | have run this loop end to end."
+     "text": "Real sandbox chargebacks have run this whole loop, every answer kept.",
+     "cap": "Real sandbox chargebacks | have run this whole loop, every answer kept."
     }
    ]
   },
@@ -545,14 +594,14 @@
      "id": "N25",
      "start": 153.3,
      "end": 160.7,
-     "text": "For a one-person shop, that's an answer on every dispute, instead of a loss by default.",
-     "cap": "For a one-person shop, | that's an answer on every dispute, | instead of a loss by default."
+     "text": "For a one-person shop, every dispute gets an answer with evidence ready, not a loss by default.",
+     "cap": "For a one-person shop, | every dispute gets an answer with evidence ready, | not a loss by default."
     },
     {
      "id": "N26",
      "start": 161.2,
      "end": 166.8,
-     "text": "CaseClerk. It answers your PayPal disputes, and asks before it moves money.",
+     "text": "CaseClerk. It answers your PayPal disputes, within the limits you set.",
      "captionOnCard": true
     }
    ]
@@ -564,9 +613,9 @@
   "$15": "fifteen dollars",
   "$388.18": "three hundred eighty-eight dollars and eighteen cents",
   "35%": "thirty-five percent",
-  "HTTP 200": "H-T-T-P two hundred",
-  "API": "A-P-I",
-  "ID": "I-D"
+  "API": "A P I",
+  "ID": "I D",
+  "AI": "A I"
  },
  "overlays": [
   {
@@ -584,11 +633,18 @@
    "sub": "Phase B records the $412.00 case."
   },
   {
+   "id": "ov-earlier",
+   "start": 82.4,
+   "end": 102.4,
+   "text": "An earlier case, same flow",
+   "sub": "The $399.00 case, ruled Oct 25."
+  },
+  {
    "id": "ov-honest",
-   "start": 147.4,
+   "start": 148.1,
    "end": 152.8,
-   "text": "We asked the sandbox to rule on each.",
-   "sub": "A working loop, not a win rate."
+   "text": "{count} so far, each one kept",
+   "sub": "We asked the sandbox to rule on each. A working loop, not a win rate."
   }
  ],
  "cues": [
@@ -622,24 +678,24 @@
   },
   {
    "id": "sfx-05",
-   "at": 66.13,
+   "at": 65.53,
    "sound": "click-b",
    "volume": 0.5,
    "why": "stand-in: File the evidence"
   },
   {
    "id": "sfx-06",
-   "at": 69.03,
+   "at": 68.43,
    "sound": "click-a",
    "volume": 0.55,
    "why": "stand-in: Yes, file it"
   },
   {
    "id": "sfx-07",
-   "at": 79.25,
+   "at": 79.1,
    "sound": "pop",
    "volume": 0.4,
-   "why": "stand-in: PayPal's 200 lands"
+   "why": "stand-in: PayPal's 200 settles (src 15.5)"
   },
   {
    "id": "sfx-08",
@@ -656,6 +712,6 @@
    "why": "vab: click on the You said yes stop"
   }
  ],
- "camNote": "cam: [film time, scale, x, y, move seconds]; the source pixel (px,py) lands at (x + scale*px, y + scale*py). Moves ease power2.inOut; 0 s is a cut.",
+ "camNote": "cam: [film time, scale, x, y, move seconds]; the source pixel (px,py) lands at (x + scale*px, y + scale*py). Moves ease power2.inOut; 0 s is a cut. A shot's \"window\" keys [film time, top, right, bottom, left, move seconds] crop the footage to the rest of the frame (insets in px); the crop resets when the shot ends.",
  "capNote": "cap: where a line's caption breaks (|). Without it the line is one caption group."
 }

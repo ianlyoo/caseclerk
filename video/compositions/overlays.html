@@ -11,17 +11,20 @@
     .chip b { font-size: 88px; line-height: 1; letter-spacing: -2px; font-variation-settings: "wdth" 115; margin-bottom: 14px; }
     .note { padding: 16px 24px 20px; max-width: 760px; }
     .note b { font-size: 30px; line-height: 1.2; margin-bottom: 4px; }
+    .one { display: flex; align-items: baseline; gap: 22px; white-space: nowrap; max-width: none; }
+    .one b { margin-bottom: 0; }
     #ov-honest-tag { width: 440px; box-sizing: border-box; }
   </style>
   <div id="root" data-composition-id="overlays" data-width="1920" data-height="1080">
     <div id="ov-wait" class="clip ov" style="left:200px; top:300px;" data-start="24.6" data-duration="4.2"><div class="tag chip" id="ov-wait-tag"><b>+3 min</b><small>Real wait, cut. The page&#x27;s own clock keeps counting.</small></div></div>
-    <div id="ov-standin" class="clip ov" style="left:200px; top:244px;" data-start="64.2" data-duration="18.2"><div class="tag note" id="ov-standin-tag"><b>Stand-in: the $399.00 case, Oct 25</b><small>Phase B records the $412.00 case.</small></div></div>
-    <div id="ov-honest" class="clip ov" style="right:40px; top:300px;" data-start="147.4" data-duration="5.4"><div class="tag note" id="ov-honest-tag"><b>We asked the sandbox to rule on each.</b><small>A working loop, not a win rate.</small></div></div>
+    <div id="ov-standin" class="clip ov" style="left:200px; top:8px;" data-start="64.2" data-duration="18.2"><div class="tag note one" id="ov-standin-tag"><b>Stand-in: the $399.00 case, Oct 25</b><small>Phase B records the $412.00 case.</small></div></div>
+    <div id="ov-earlier" class="clip ov" style="left:200px; top:58px;" data-start="82.4" data-duration="20"><div class="tag note one" id="ov-earlier-tag"><b>An earlier case, same flow</b><small>The $399.00 case, ruled Oct 25.</small></div></div>
+    <div id="ov-honest" class="clip ov" style="right:40px; top:300px;" data-start="148.1" data-duration="4.7"><div class="tag note" id="ov-honest-tag"><b>10 so far, each one kept</b><small>We asked the sandbox to rule on each. A working loop, not a win rate.</small></div></div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
     
-    tl.fromTo("#ov-wait-tag", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, 24.6);    tl.to("#ov-wait-tag", { opacity: 0, duration: 0.2, ease: "power2.in" }, 28.55);    tl.fromTo("#ov-standin-tag", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, 64.2);    tl.to("#ov-standin-tag", { opacity: 0, duration: 0.2, ease: "power2.in" }, 82.15);    tl.fromTo("#ov-honest-tag", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, 147.4);    tl.to("#ov-honest-tag", { opacity: 0, duration: 0.2, ease: "power2.in" }, 152.55);
+    tl.fromTo("#ov-wait-tag", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, 24.6);    tl.to("#ov-wait-tag", { opacity: 0, duration: 0.2, ease: "power2.in" }, 28.55);    tl.fromTo("#ov-standin-tag", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, 64.2);    tl.to("#ov-standin-tag", { opacity: 0, duration: 0.2, ease: "power2.in" }, 82.15);    tl.fromTo("#ov-earlier-tag", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, 82.4);    tl.to("#ov-earlier-tag", { opacity: 0, duration: 0.2, ease: "power2.in" }, 102.15);    tl.fromTo("#ov-honest-tag", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, 148.1);    tl.to("#ov-honest-tag", { opacity: 0, duration: 0.2, ease: "power2.in" }, 152.55);
     window.__timelines["overlays"] = tl;
   </script>
 </template>

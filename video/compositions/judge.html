@@ -1,6 +1,6 @@
-<!-- B5J, 102.4-108.6: PHASE B SLOT for the judge-loop control. Not on production yet.
-     If it ships: replace this scene with footage of the control (a visitor asking the sandbox to rule on their own test case).
-     If it doesn't: set "skip": true on B5J in edit.json and rebuild; the film becomes 2:42.3. -->
+<!-- B5J, 102.4-108.6: PHASE B SLOT for the judge-loop footage.
+     If the footage exists: replace this scene with it (a visitor asking the sandbox to rule on their own test case); N17 stays.
+     If it doesn't: set "skip": true on B5J in edit.json and rebuild; the beat drops with N17 and the film becomes 2:42.3. -->
 <template>
   <style>
     @font-face { font-family: Archivo; src: url('assets/fonts/Archivo.ttf') format('truetype'); font-weight: 100 900; font-stretch: 62% 125%; font-display: block; }
@@ -16,7 +16,7 @@
       <div id="j-band"><div class="j-grain"></div></div>
       <p id="j-label">Phase B slot, 6.2 s</p>
       <p id="j-what">Footage: asking the sandbox to rule on your own test case.</p>
-      <p id="j-note">Recorded only if the judge-loop control ships. If not, this beat drops and the film runs 2:42.3.</p>
+      <p id="j-note">Phase B fills this if the judge-loop footage exists. If not, this beat and its line drop, and the film runs 2:42.3.</p>
     </div>
   </div>
   <script>

@@ -7,6 +7,10 @@ don't tile the film, lines that overlap or run faster than maxWps (counted in
 spoken words, so "$388.18" is seven), shots past their source, or a camera
 that would show past the frame's edge.
 
+Overlay text may say {count}: the number of documented sandbox chargebacks that ran
+the whole loop, from video/live/real-cases.json (write it with scripts/count_cases.py
+right before a render).
+
   python3 -I video/scripts/build.py           # check, then write
   python3 -I video/scripts/build.py --check   # check only, print the table
   python3 -I video/scripts/build.py --md      # check, print the script's tables
@@ -32,7 +36,7 @@ def fmt(t):
 
 def spoken_words(text, spoken):
     for written, said in sorted(spoken.items(), key=lambda kv: -len(kv[0])):
-        text = text.replace(written, said)
+        text = re.sub(r"(?<![A-Za-z0-9])" + re.escape(written) + r"(?![A-Za-z0-9])", said, text)
     return len([w for w in re.split(r"\s+", text) if re.search(r"[A-Za-z0-9]", w)])
 
 
@@ -89,6 +93,14 @@ def check(edit):
                     errs.append(f"{s['id']} camera at {at} shows past the frame: scale {sc}, x {x}, y {y}")
             if s.get("cam") and abs(s["cam"][0][0] - s["start"]) > EPS:
                 errs.append(f"{s['id']} camera must be set at the shot's start")
+            for k in s.get("window", []):
+                at, top, right, bottom, left, mv = k
+                if not (s["start"] - EPS <= at and at + mv <= s["end"] + EPS):
+                    errs.append(f"{s['id']} window key at {at} (+{mv}) is outside the shot")
+                if min(top, right, bottom, left) < 0 or top + bottom >= H or left + right >= W:
+                    errs.append(f"{s['id']} window at {at} leaves nothing to see")
+            if s.get("window") and abs(s["window"][0][0] - s["start"]) > EPS:
+                errs.append(f"{s['id']} window must be set at the shot's start")
         if abs(st - b["end"]) > EPS:
             errs.append(f"{b['id']} shots end at {st}, the beat at {b['end']}")
         t = b["end"]
@@ -144,10 +156,12 @@ def write_captions(edit):
     spoken = edit["spoken"]
     groups = []
     lines = [l for b in edit["beats"] for l in b["lines"]]
+    beat_end = {l["id"]: b["end"] for b in edit["beats"] for l in b["lines"]}
     for i, l in enumerate(lines):
         if l.get("captionOnCard"):
             continue
-        nxt = lines[i + 1]["start"] if i + 1 < len(lines) else edit["duration"]
+        # a caption may hang 0.25 s after its line, but never past its beat's last frame
+        nxt = min(lines[i + 1]["start"] if i + 1 < len(lines) else edit["duration"], beat_end[l["id"]] + 0.1)
         for j, (text, a, z) in enumerate(caption_groups(l, spoken)):
             a = a - 0.1 if j == 0 else a
             z = min(z + 0.25, nxt - 0.1) if z == l["end"] else z
@@ -194,21 +208,37 @@ def write_captions(edit):
 OVERLAY_STYLE = {
     # where each note sits; every one is clear of the caption band and of the UI it is about
     "ov-wait": "left:200px; top:300px;",
-    "ov-standin": "left:200px; top:244px;",
-    "ov-honest": "right:40px; top:300px;",  # over the Closed dates; the list drifts up under anything further left
+    "ov-standin": "left:200px; top:8px;",  # in the strip the headline crop leaves
+    "ov-earlier": "left:200px; top:58px;",  # between the case's subtitle and its clock
+    "ov-honest": "right:40px; top:300px;",  # over the Closed dates, clear of the rulings
 }
+
+
+def live_count():
+    path = os.path.join(VIDEO, "live", "real-cases.json")
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        return json.load(f)
+
+
+def fill(text, live):
+    if "{count}" in text:
+        if live is None:
+            sys.exit("ERROR an overlay needs {count}: run scripts/count_cases.py first")
+        text = text.replace("{count}", str(live["count"]))
+    return text
 
 
 def write_overlays(edit):
     items, tweens = [], []
+    live = live_count()
     for o in edit["overlays"]:
         oid = o["id"]
-        if oid == "ov-wait":
-            inner = (f'<div class="tag chip" id="{oid}-tag"><b>{esc(o["text"])}</b>'
-                     f'<small>{esc(o["sub"])}</small></div>')
-        else:
-            inner = (f'<div class="tag note" id="{oid}-tag"><b>{esc(o["text"])}</b>'
-                     f'<small>{esc(o["sub"])}</small></div>')
+        text, sub = fill(o["text"], live), fill(o["sub"], live)
+        kind = {"ov-wait": "chip", "ov-earlier": "note one", "ov-standin": "note one"}.get(oid, "note")
+        inner = (f'<div class="tag {kind}" id="{oid}-tag"><b>{esc(text)}</b>'
+                 f'<small>{esc(sub)}</small></div>')
         items.append(
             f'    <div id="{oid}" class="clip ov" style="{OVERLAY_STYLE.get(oid, "left:200px; top:120px;")}" '
             f'data-start="{fmt(o["start"])}" data-duration="{fmt(round(o["end"] - o["start"], 3))}">{inner}</div>')
@@ -229,6 +259,8 @@ def write_overlays(edit):
     .chip b {{ font-size: 88px; line-height: 1; letter-spacing: -2px; font-variation-settings: "wdth" 115; margin-bottom: 14px; }}
     .note {{ padding: 16px 24px 20px; max-width: 760px; }}
     .note b {{ font-size: 30px; line-height: 1.2; margin-bottom: 4px; }}
+    .one {{ display: flex; align-items: baseline; gap: 22px; white-space: nowrap; max-width: none; }}
+    .one b {{ margin-bottom: 0; }}
     #ov-honest-tag {{ width: 440px; box-sizing: border-box; }}
   </style>
   <div id="root" data-composition-id="overlays" data-width="{edit['width']}" data-height="{edit['height']}">
@@ -247,11 +279,24 @@ def write_overlays(edit):
 
 def write_index(edit):
     W, H, D = edit["width"], edit["height"], edit["duration"]
-    videos, scenes, cams = [], [], []
+    videos, scenes = [], []
+    # the crop starts open; a window's fromTo must not paint its start before its own time
+    cams = ['tl.set("#camwin", { clipPath: "inset(0px 0px 0px 0px)" }, 0);']
     prev = None
     for b in edit["beats"]:
         for s in b["shots"]:
             dur = fmt(round(s["end"] - s["start"], 3))
+            if "window" in s:
+                # crop the footage to a rectangle of the frame (a brand headline, or rows not talked about)
+                was = None
+                for at, *box, mv in s["window"]:
+                    inset = '{ clipPath: "inset(' + " ".join(f"{v:g}px" for v in box) + ')" }'
+                    if mv == 0 or was is None:
+                        cams.append(f'tl.set("#camwin", {inset}, {fmt(at)});')
+                    else:
+                        cams.append(f'tl.fromTo("#camwin", {was}, {{ ...{inset}, duration: {mv}, ease: "power2.inOut", immediateRender: false }}, {fmt(at)});')
+                    was = inset
+                cams.append(f'tl.set("#camwin", {{ clipPath: "inset(0px 0px 0px 0px)" }}, {fmt(s["end"])});')
             if "src" in s:
                 src = edit["sources"][s["src"]]
                 videos.append(
@@ -290,7 +335,8 @@ def write_index(edit):
 html, body {{ margin: 0; width: {W}px; height: {H}px; overflow: hidden; background: #dde0e3; }}
 #root {{ position: relative; width: {W}px; height: {H}px; overflow: hidden; }}
 #backdrop {{ position: absolute; inset: 0; background: #dde0e3; }}
-#cam {{ position: absolute; left: 0; top: 0; width: {W}px; height: {H}px; transform-origin: 0 0; z-index: 1; }}
+#camwin {{ position: absolute; inset: 0; z-index: 1; clip-path: inset(0px 0px 0px 0px); }}
+#cam {{ position: absolute; left: 0; top: 0; width: {W}px; height: {H}px; transform-origin: 0 0; }}
 #cam video {{ position: absolute; left: 0; top: 0; width: {W}px; height: {H}px; object-fit: contain; }}
 .scene {{ z-index: 2; }}
 #overlays {{ z-index: 5; }}
@@ -300,8 +346,10 @@ html, body {{ margin: 0; width: {W}px; height: {H}px; overflow: hidden; backgrou
 <body>
   <div id="root" data-composition-id="main" data-start="0" data-duration="{fmt(D)}" data-width="{W}" data-height="{H}" data-fps="{edit['fps']}">
     <div id="backdrop"></div>
+    <div id="camwin">
     <div id="cam">
 {chr(10).join(videos)}
+    </div>
     </div>
 {chr(10).join(scenes)}
     <div id="overlays" data-composition-id="overlays" data-composition-src="compositions/overlays.html" data-start="0" data-duration="{fmt(D)}" data-track-index="5" data-track-kind="graphics" data-width="{W}" data-height="{H}"></div>
@@ -334,6 +382,12 @@ def print_md(edit, rows):
                 src = edit["sources"][s["src"]]
                 what = f"`{src['take']}` from {s['in']:g} s"
                 cam = ", ".join(f"{k[1]:g}x" + (f" over {k[4]:g} s" if k[4] else "") for k in s["cam"])
+                crops = []
+                for _, t, r, bt, l, mv in s.get("window", []):
+                    box = (f"x {l:g}–{edit['width'] - r:g}, " if l or r else "") + f"y {t:g}–{edit['height'] - bt:g}"
+                    crops.append(box + (f" over {mv:g} s" if mv else ""))
+                if crops:
+                    cam += ", cropped to " + ", then ".join(crops)
             else:
                 what, cam = f"`video/{s['scene']}`", "none"
             print(f"| {b['id']} | {s['id']} | {mmss(s['start'])}–{mmss(s['end'])} | {what} | {cam} |")

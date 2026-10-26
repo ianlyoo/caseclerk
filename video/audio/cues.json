@@ -87,7 +87,7 @@
   },
   {
    "id": "sfx-05",
-   "at": 66.13,
+   "at": 65.53,
    "sound": "click-b",
    "volume": 0.5,
    "why": "stand-in: File the evidence",
@@ -96,7 +96,7 @@
   },
   {
    "id": "sfx-06",
-   "at": 69.03,
+   "at": 68.43,
    "sound": "click-a",
    "volume": 0.55,
    "why": "stand-in: Yes, file it",
@@ -105,10 +105,10 @@
   },
   {
    "id": "sfx-07",
-   "at": 79.25,
+   "at": 79.1,
    "sound": "pop",
    "volume": 0.4,
-   "why": "stand-in: PayPal's 200 lands",
+   "why": "stand-in: PayPal's 200 settles (src 15.5)",
    "file": "assets/sfx/pop.wav",
    "license": "CC0 1.0"
   },

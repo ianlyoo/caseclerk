@@ -1,0 +1,114 @@
+{
+ "about": "N24's on-screen count. Written by scripts/count_cases.py from production GETs; only the ids documented in docs/REAL-CASES.md are read.",
+ "readAt": "2026-10-26T10:50:25Z",
+ "count": 10,
+ "counted": [
+  {
+   "id": "PP-R-AAJ-10194495",
+   "amount": "396.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "385.25"
+  },
+  {
+   "id": "PP-R-EGZ-10194505",
+   "amount": "394.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "383.31"
+  },
+  {
+   "id": "PP-R-IHX-10194506",
+   "amount": "391.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "380.38"
+  },
+  {
+   "id": "PP-R-IMW-10194496",
+   "amount": "393.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "382.33"
+  },
+  {
+   "id": "PP-R-LTK-10194490",
+   "amount": "398.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "387.20"
+  },
+  {
+   "id": "PP-R-NJA-10194486",
+   "amount": "389.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "378.43"
+  },
+  {
+   "id": "PP-R-SGV-10194507",
+   "amount": "397.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "386.23"
+  },
+  {
+   "id": "PP-R-TZD-10194493",
+   "amount": "402.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "391.10"
+  },
+  {
+   "id": "PP-R-UDP-10194489",
+   "amount": "405.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "394.02"
+  },
+  {
+   "id": "PP-R-VAB-10194570",
+   "amount": "399.00",
+   "status": "resolved",
+   "filed": true,
+   "kept": "388.18"
+  }
+ ],
+ "leftOut": [
+  {
+   "id": "PP-R-GDS-10194475",
+   "amount": "49.95",
+   "status": "resolved",
+   "filed": false,
+   "kept": "48.17"
+  },
+  {
+   "id": "PP-R-MFL-10194569",
+   "amount": "401.00",
+   "status": "awaiting_approval",
+   "filed": false,
+   "kept": null
+  },
+  {
+   "id": "PP-R-RCJ-10194476",
+   "amount": "27.95",
+   "status": "resolved",
+   "filed": false,
+   "kept": "26.74"
+  },
+  {
+   "id": "PP-R-VPY-10194485",
+   "amount": "412.00",
+   "status": "awaiting_approval",
+   "filed": false,
+   "kept": null
+  },
+  {
+   "id": "PP-R-YDQ-10194582",
+   "amount": "27.95",
+   "status": "waiting_on_paypal",
+   "filed": true,
+   "kept": null
+  }
+ ]
+}

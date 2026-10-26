@@ -31,3 +31,46 @@ All three were checked again in HyperFrames snapshots (21.62, 21.7, 144.5, 146.5
 - A full decode with `-xerror` logged 0 error lines. Atom order is ftyp moov free mdat (fast-start).
 - Sound: silencedetect (−45 dB) finds exactly nine onsets, at 18.23, 24.68, 38.96, 43.80, 66.13, 69.03, 79.25, 88.16 and 93.95 s, matching `audio/cues.json`. Peak −7.3 dB. There is nothing else on the track.
 - I looked at every frame below: the nine beat midpoints (`rehearsal-a-contact-sheet.png`) and the before/after pair at each of the 13 cuts. All three render 1 defects are gone, and nothing new turned up.
+
+# Review: rehearsal B (PM delta v1)
+
+Same pipeline as rehearsal A. What changed: the ten revised lines and their captions, the title and end-card taglines, B7's fourth stop ("Your limits"), crop windows (`#camwin`) so that no shot leads with a camera-brand headline, B3 split so N11's caption sits under the evidence, B4 reframed so N13's second half lands on PayPal's 200, B5's "An earlier case, same flow" note, and B7's cases shot cropped to the nine kept cohort rows with the live count chip.
+
+## Snapshots before rendering (HyperFrames, 10/26)
+
+| Where | What I found | Fix |
+|---|---|---|
+| 0:57–1:03, N11 | The caption sat on the seller statement (f016). | B3 split at 0:56.4: N11 plays on the scrolled take at 1.1×, cropped above the exact-text toggle, so the caption has an empty band under the evidence. |
+| 1:04–1:22, B4 | At 1.3× the left column was sliced, and the 200 was half cut during a nudge. | 1.15×, one fixed frame; a top crop of 120 px hides the item headline, opening to 86 px while the panel is blank (1:18.25–1:18.4), so "200 accepted" shows whole. N13 starts at 1:15.3 so "PayPal returns success…" appears at 1:19.0, as the 200 settles (1:19.1); sfx-07 moved there. |
+| 0:00–0:56, every shot | The B4 crop's `fromTo` painted its start (a 120 px top crop) as soon as the timeline was built. | The crop is opened at 0, and window tweens use `immediateRender: false`. Checked at 0:20, 0:30, 0:45 and 0:55.5. |
+| 1:22.4–1:42.4, B5 note | The one-line note overflowed its box. | `.one { max-width: none }`. |
+
+## Render 1 (10/26 19:50–19:59 KST, capture 8 min 17 s, overwritten by render 2)
+
+ffprobe gave h264 High, yuv420p, 1920×1080, 30/1, 5055 frames, 168.5 s. The `-xerror` decode logged 0 error lines, and the atom order was ftyp moov free mdat. silencedetect (−45 dB) found the nine onsets at 18.23, 24.68, 38.96, 43.80, 65.53, 68.43, 79.10, 88.16 and 93.95 s, matching `edit.json` and `audio/cues.json`, with a peak of −7.3 dB. I looked at the nine beat midpoints and the before/after pair at each of the 14 cuts. Two defects:
+
+| Where | What | Fix |
+|---|---|---|
+| 1:22.5, 1:48.7 | N13's and N17's last caption hung 0.25 s past their beat's cut, over VAB and over the rules page. | A caption now ends by its beat's last frame. |
+| 1:42.4–1:48.6, B5J card | The note said "if the judge-loop control ships". | "Phase B fills this if the judge-loop footage exists. If not, this beat and its line drop, and the film runs 2:42.3." |
+
+Both were checked in snapshots (82.35, 82.45, 105.5, 108.55, 108.65) before render 2.
+
+## Render 2, the rehearsal (10/26 20:06–20:15 KST, capture 8 min 19 s)
+
+`s4/video/rehearsal-b.mp4`, sha256 2b40247f799304c9e2d536c1d640df9d124e6c862a847fbd7ec669e50a4e7fa1, 40.1 MB. The on-screen count was read at 2026-10-26T10:50:25Z (10 of 15 documented cases).
+
+- ffprobe: h264 High, yuv420p, 1920×1080, 30/1, 5055 frames, 168.5 s (2:48.5), 1.90 Mb/s, AAC LC.
+- A full decode with `-xerror` logged 0 error lines. Atom order is ftyp moov free mdat (fast-start).
+- Sound: silencedetect (−45 dB) finds exactly nine onsets, at 18.23, 24.68, 38.96, 43.80, 65.53, 68.43, 79.10, 88.16 and 93.95 s, matching `edit.json` and `audio/cues.json`. Peak −7.3 dB. There is nothing else on the track.
+- I looked at every frame below: the nine beat midpoints (`rehearsal-b-contact-sheet.png`) and the before/after pair at each of the 14 cuts. Both render 1 defects are gone, and nothing new turned up.
+
+## Known and accepted (rehearsal B)
+
+- Small incidental UI text still names products and a carrier: "Olympus OM-1n body, chrome" in the order rows and the case lists, "Pentax MX body, silver" in RSL's order row (0:33.6–0:37.2), and "USPS" in the shipment rows. No headline with a brand is the hero of any shot, and nothing of ours names one.
+- The app's own copy still says "asks before it moves money" (landing hero, B8) and "It asks before money moves" (rules page, B6). That text lives in `src/`; the film's own lines and taglines now say "within the limits you set".
+- Crops leave a band in the plate colour: under the evidence in B3 (y 884–1080, where N11's caption sits), over B4 (holding the stand-in tag), and under the cases rows in B7.
+- In B4 the top crop also hides the stand-in panel's "$399.00" until PayPal's answer; the subtitle and the tag carry the amount.
+- PM visual fix 6 (an enforcement insert under the B7 diagram) is skipped: it crowds the beat. The real enforcement is on screen in B2 and B3 instead.
+- N25's last caption group runs 0.55 s onto the end card's plate, inside the same beat, as in rehearsal A.
+- Rehearsal A's other notes still apply (the arch's empty plate for 0.35 s, the pointer parked in the cases shot, the stand-in and placeholder slots, softer text at 2.0×).

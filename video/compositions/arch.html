@@ -1,6 +1,6 @@
-<!-- B7, 127.0-146.8: how it works, drawn as the app's scale. The index travels stop to stop as N21-N23 name each one.
+<!-- B7, 127.0-148.0: how it works, drawn as the app's scale. The index travels stop to stop as N21-N23 name each one.
      Facts: webhooks are verified with PayPal before anything runs; Haiku triages, Opus decides and writes evidence with tools;
-     every action passes the seller's policy in code; spend caps refuse a model call before it is sent (src/lib/spend). -->
+     every action is checked against the seller's limits in code; spend caps refuse a model call before it is sent (src/lib/spend). -->
 <template>
   <style>
     @font-face { font-family: Archivo; src: url('assets/fonts/Archivo.ttf') format('truetype'); font-weight: 100 900; font-stretch: 62% 125%; font-display: block; }
@@ -27,7 +27,7 @@
     .a-row dd { margin: 0; color: #f2f1ec; }
   </style>
   <div id="root" data-composition-id="arch" data-width="1920" data-height="1080">
-    <div id="a-scene" class="clip" data-start="0" data-duration="19.8">
+    <div id="a-scene" class="clip" data-start="0" data-duration="21">
       <div id="a-plate"><div class="a-grain"></div></div>
       <h2 id="a-head">Under the hood</h2>
       <p id="a-sub">One dispute, from PayPal's webhook to PayPal's answer.</p>
@@ -42,7 +42,7 @@
         <div class="a-stop" id="a-s1" style="left:0"><b>PayPal webhook</b><span>Its signature checked with PayPal first</span></div>
         <div class="a-stop" id="a-s2" style="left:384px"><b>Claude Haiku</b><span>Sorts the case</span></div>
         <div class="a-stop" id="a-s3" style="left:768px"><b>Claude Opus</b><span>Reads the order and tracking with tools, writes the evidence</span></div>
-        <div class="a-stop" id="a-s4" style="left:1152px"><b>Your lines</b><span>In code. Over a line, it asks you</span></div>
+        <div class="a-stop" id="a-s4" style="left:1152px"><b>Your limits</b><span>Checked in code. Over a limit, it asks you</span></div>
         <div class="a-stop hang" id="a-s5" style="right:0"><b>PayPal Disputes API</b><span>PayPal answers with a status and its debug id</span></div>
         <div id="a-index"></div>
       </div>
