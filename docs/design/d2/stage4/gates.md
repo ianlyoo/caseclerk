@@ -31,17 +31,18 @@ On a **test dispute** (`isTestDispute`), once the seller's yes has filed the evi
 
 Totals: 1 approve, 19 simulate POSTs (18 × 409, 1 × 200). That is 19 of the API's 120 checks an hour and 1 of its 20 actions. PayPal opened the ruling step 18 min 56 s after the filing. No other POST anywhere: every shot, check and gate ran GET-only (non-GET aborted). PP-R-VPY-10194485 and the spare MFL were not touched; no test dispute was opened (1 of 2 still unused).
 
-**RESOLVED: not arrived.** XCS was still under review at 09:18Z, 70 min after the ask; the GET-only recorder on win-guest that watched it (08:21Z to 09:18Z) was stopped for the report. The sandbox's timing varies: VAB resolved 47 min after its filing; JKB took about 24 h from adjudicate to RESOLVED. So the asked band now says the sandbox rules "from minutes to a day later" (it said "often minutes later").
+**RESOLVED: not arrived.** XCS was still under review at 14:00Z (23:00 KST), 5 h 52 min after the ask; PayPal's last update on it was 08:10Z. GET-only, I polled `/api/cases/PP-R-XCS-10194591` every 10 minutes and kept the case page open in a recorder on win-guest from 08:21Z to 09:18Z, 09:38Z to 10:32Z (production) and 10:32Z to 14:00Z (dev, the fixed scale); then I gave up, as the PM set. The sandbox's timing varies: VAB resolved 47 min after its filing; JKB took about 24 h from adjudicate to RESOLVED. So the asked band now says the sandbox rules "from minutes to a day later" (it said "often minutes later").
 
 ## The clip
 
-`judge-loop-1440.mp4`: 46.6 s, 1440×900, H.264 25 fps, two segments of the real run on XCS.
+`judge-loop-1440.mp4`: 44.4 s, 1440×900, H.264 25 fps, three segments of the real run on XCS.
 
 1. Take 1, 32.5 s: the waiting case, the yes (Approve and file), PayPal's 200 and "Filed. PayPal is reviewing." with the guide line, the band, Seller wins, Ask for the ruling, the 409 and "Asking the sandbox to rule for the seller" (Not open yet, Under review, 1 check).
 2. **Cut: about 18 minutes of waiting.** Take 1's page reloaded at 07:49:2x because I synced source to the dev server mid-recording (the recorder's context died); take 2 opened the same page and asked again at 07:50:35, and the band asked once a minute until PayPal opened the step.
-3. Take 2, 14.1 s: the last checks, the 200, "Ruling asked for the seller" and the new stop on the scale.
+3. Take 2, 7.0 s: the last checks, up to the frame before the 200 (after it, take 2 shows the asked band's earlier wording, "often minutes later").
+4. **Cut: 2 h 25 min.** Take 3, 5.0 s: the same page opened again at 10:32Z on the fixed scale: "Ruling asked for the seller" in the current wording ("from minutes to a day later") and the stop "You asked for a ruling". The 200 itself is not on screen; the scale's record line and the audit carry it (above).
 
-**Not in the clip:** the RESOLVED webhook and the money (see above). Takes 1 and 2 were recorded on the Mac (before PM delta v8). The clip shows the asked band's earlier wording ("often minutes later").
+**Not in the clip:** the RESOLVED webhook and the money (see above). Takes 1 and 2 were recorded on the Mac (before PM delta v8); take 3 on win-guest. No frame shows the earlier wording.
 
 ## Gates
 
@@ -105,5 +106,5 @@ Receipts are in `s3/redesign/receipts/`.
 
 ## Open
 
-- XCS's RESOLVED webhook and money, to add as the clip's last take and a shot when it lands.
+- XCS's RESOLVED webhook and money, not arrived by 14:00Z: to add as the clip's last take and a shot if it lands.
 - The phone board's key still shows "Times in PT" (`.bd-key-fine` loses to `.bd-key li`); from stage 3, untouched.
