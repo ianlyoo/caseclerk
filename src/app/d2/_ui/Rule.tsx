@@ -107,7 +107,7 @@ export function Rule({
           Ruling asked for {side(flow.outcome)}
         </h3>
         <p className="decide-msg" role="status">
-          Asked {clock(flow.when)} PT. The sandbox rules on its own time, often minutes later; its RESOLVED webhook lands on the scale and here.
+          Asked {clock(flow.when)} PT. The sandbox rules in its own time, from minutes to a day later; its RESOLVED webhook lands on the scale and here.
         </p>
       </section>
     );

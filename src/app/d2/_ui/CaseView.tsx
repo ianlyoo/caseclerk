@@ -33,7 +33,7 @@ function plain(e: Exhibit, c: CaseRecord): string {
 
 const FAST_MS = 4000;
 const SLOW_MS = 20000;
-/** after a sandbox ruling is asked for, PayPal's RESOLVED webhook and its money follow within minutes */
+/** after a sandbox ruling is asked for, poll fast for a while: the sandbox's RESOLVED webhook can follow within minutes (or take a day) */
 const RULING_MS = 15 * 60_000;
 
 /** The sandbox ruling asked for on this case, from CaseClerk's audit. */

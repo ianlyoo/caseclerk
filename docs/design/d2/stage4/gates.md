@@ -31,7 +31,7 @@ On a **test dispute** (`isTestDispute`), once the seller's yes has filed the evi
 
 Totals: 1 approve, 19 simulate POSTs (18 × 409, 1 × 200). That is 19 of the API's 120 checks an hour and 1 of its 20 actions. PayPal opened the ruling step 18 min 56 s after the filing. No other POST anywhere: every shot, check and gate ran GET-only (non-GET aborted). PP-R-VPY-10194485 and the spare MFL were not touched; no test dispute was opened (1 of 2 still unused).
 
-**RESOLVED: not arrived at the time of this commit** (XCS was still under review at 08:55Z, 47 min after the ask). The sandbox's timing varies: VAB resolved 47 min after its filing; JKB took about 24 h from adjudicate to RESOLVED. A GET-only recorder on win-guest watches XCS until about 10:00Z to catch it.
+**RESOLVED: not arrived.** XCS was still under review at 09:18Z, 70 min after the ask; the GET-only recorder on win-guest that watched it (08:21Z to 09:18Z) was stopped for the report. The sandbox's timing varies: VAB resolved 47 min after its filing; JKB took about 24 h from adjudicate to RESOLVED. So the asked band now says the sandbox rules "from minutes to a day later" (it said "often minutes later").
 
 ## The clip
 
@@ -41,7 +41,7 @@ Totals: 1 approve, 19 simulate POSTs (18 × 409, 1 × 200). That is 19 of the AP
 2. **Cut: about 18 minutes of waiting.** Take 1's page reloaded at 07:49:2x because I synced source to the dev server mid-recording (the recorder's context died); take 2 opened the same page and asked again at 07:50:35, and the band asked once a minute until PayPal opened the step.
 3. Take 2, 14.1 s: the last checks, the 200, "Ruling asked for the seller" and the new stop on the scale.
 
-**Not in the clip yet:** the RESOLVED webhook and the money (see above). Takes 1 and 2 were recorded on the Mac (before PM delta v8); the resolved take, if it comes, is win-guest's Linux rendering.
+**Not in the clip:** the RESOLVED webhook and the money (see above). Takes 1 and 2 were recorded on the Mac (before PM delta v8). The clip and `judge-asked-1440.png` show the asked band's earlier wording ("often minutes later").
 
 ## Gates
 
@@ -54,6 +54,7 @@ The company gate (`gate.sh`, the pinned `impeccable.py gate`, win-guest). The sh
 | 1440x900 | `/`, `/cases`, `/policy`, `/board`, case VPY, XCS, VAB, SGV; dev proxy | 0 | `gate-1440x900-1026-172146.json` |
 | 390x844 | the same 8 | 0 | `gate-390x844-1026-172328.json` |
 | 1440x900, 390x844 | case MFL, YDQ, MOL; dev proxy | 0 | `gate-1440x900-1026-174335.json`, `gate-390x844-1026-174406.json` |
+| 1440x900, 390x844 | case XCS (asked, the new wording), YDQ; hydrated | 0 | `gate-1440x900-1026-181911.json`, `gate-390x844-1026-181935.json` |
 
 Receipts are in `s3/redesign/receipts/`.
 
