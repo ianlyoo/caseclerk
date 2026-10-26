@@ -138,9 +138,6 @@ export async function Landing() {
               <Link className="btn btn-go" href={href.case(w.id)}>
                 Review the {wAmount} case
               </Link>
-              <div className="waiting-try">
-                <TestDispute on="leather" lede="Or open a new one and watch it arrive." />
-              </div>
             </div>
             <dl className="facts facts-dark">
               <div>
@@ -174,6 +171,20 @@ export async function Landing() {
                 </div>
               )}
             </dl>
+          </div>
+        </section>
+      )}
+
+      {w && (
+        <section className="metal try" aria-labelledby="try-title">
+          <div className="wrap try-grid">
+            <div className="try-copy">
+              <h2 id="try-title" className="h-section">
+                Watch one arrive.
+              </h2>
+              <p className="body">Open a real PayPal sandbox chargeback of your own. PayPal takes a few minutes to deliver it; then CaseClerk works it under these rules.</p>
+            </div>
+            <TestDispute />
           </div>
         </section>
       )}
