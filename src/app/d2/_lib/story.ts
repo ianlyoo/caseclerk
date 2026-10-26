@@ -218,10 +218,14 @@ export function ticksFor(tau: number, tMax: number, endAt = 0.94, gap = 0.1): Ti
     if (out.length && p - logPos(out[out.length - 1].t, tau, tMax) < gap) continue;
     out.push({ ...s });
   }
-  // narrow: every other label, and none near the right end, where the end label (the deadline) is engraved
-  return out.map((t, i) =>
-    (i % 2 === 0 && i !== out.length - 1) || logPos(t.t, tau, tMax) > 0.74 ? { ...t, narrow: "hide" as const } : t,
-  );
+  // narrow: every other label, none near the right end (where the deadline is engraved), and none crowding the one before
+  let prev = 0;
+  return out.map((t, i) => {
+    const p = logPos(t.t, tau, tMax);
+    if ((i % 2 === 0 && i !== out.length - 1) || p > 0.74 || p - prev < 0.16) return { ...t, narrow: "hide" as const };
+    prev = p;
+    return t;
+  });
 }
 
 export const STORY_TICKS: Tick[] = [
