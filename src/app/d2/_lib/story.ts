@@ -107,11 +107,6 @@ export function storyStops(b: CaseBundle): Stop[] {
     });
   }
 
-  const released = m?.movements.find((x) => x.type === "CREDIT" && x.reason === "HOLD_RELEASED");
-  if (released?.at) {
-    add({ id: "released", at: released.at, title: "Hold released", detail: `${usd(released.amount.value)} back`, tone: "done" });
-  }
-
   const resolved = b.wire.find((w) => w.kind === "event" && w.eventType === "CUSTOMER.DISPUTE.RESOLVED");
   const closedAt = resolved?.at ?? lastAudit(b, "webhook.received")?.at;
   if (c.status === "resolved" && closedAt) {
@@ -121,7 +116,11 @@ export function storyStops(b: CaseBundle): Stop[] {
       title: "Closed for the seller",
       detail: m ? `${usd(m.kept.value)} kept` : "Resolved",
       tone: "kept",
-      proof: resolved?.eventId ? [{ label: "Webhook", value: resolved.eventId }] : undefined,
+      // The hold release sits too near the close on a log scale to label apart; PayPal's capture id stands for it in the proof.
+      proof: [
+        ...(resolved?.eventId ? [{ label: "Webhook", value: resolved.eventId }] : []),
+        ...(m?.captureId ? [{ label: "Capture", value: m.captureId }] : []),
+      ],
     });
   }
   return stops.sort((a, b2) => a.t - b2.t);

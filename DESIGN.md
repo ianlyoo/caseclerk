@@ -23,7 +23,7 @@ colors:
 typography:
   hero:
     fontFamily: "Archivo, Helvetica Neue, Arial, sans-serif"
-    fontSize: "clamp(44px, 6.8vw, 124px)"
+    fontSize: "clamp(44px, 6.2vw, 96px)"
     fontWeight: 720
     lineHeight: 1.07
     letterSpacing: "-0.035em"
@@ -114,6 +114,11 @@ components:
     rounded: "{rounded.control}"
     padding: "0 24px"
     height: "52px"
+  waiting-plate:
+    backgroundColor: "{colors.leather}"
+    textColor: "{colors.engrave}"
+    rounded: "{rounded.panel}"
+    padding: "32px"
   decide-panel:
     backgroundColor: "{colors.leather}"
     textColor: "{colors.engrave}"
@@ -179,7 +184,7 @@ A neutral camera palette: cool satin metal, warm near-black leather, and one shu
 **Character:** a grotesque that widens like engraving on a camera body. The same family carries the 124px headline and the 13px scale label; hierarchy comes from width, weight and size, never from a second family. All figures are tabular.
 
 ### Hierarchy
-- **Hero** (720, clamp(44px, 6.8vw, 124px), line height 1.07, width 112, tracking -0.035em): the landing headline, two short lines of real figures: what was disputed, what was kept.
+- **Hero** (720, clamp(44px, 6.2vw, 96px), line height 1.07, width 112, tracking -0.035em): the landing headline, two short lines of real figures on one left edge, inside columns 1 to 8: what was disputed, what was kept.
 - **Case Title** (700, clamp(36px, 3.9vw, 60px), width 112): the item and the claim on a case page.
 - **Section** (650, clamp(28px, 2.5vw, 36px), width 112): one per band.
 - **Block** (650, 22px, width 110, balanced wrapping): panel and evidence headings.
@@ -200,6 +205,8 @@ A 12-column grid, 24px gutters, outer margin clamp(20px, 4.45vw, 96px), maximum 
 Spacing is a 4-based scale: 4, 8, 12, 16, 24, 32, 48, 64, 96, 128. Every vertical gap between sibling blocks is one of these values; band padding is 64 to 128, block gaps are 24 to 48, inside a component 8 to 16.
 
 ### Named Rules
+**The One Edge Rule.** Lines of a headline share one left edge. No stair-stepped indents; emphasis comes from colour (Kept green), never from offset.
+
 **The Band Rule.** Each band holds one idea: the claim (metal), the case told on the scale (leather), the rule (metal), the waiting case (leather). A band never holds two headings at the same level.
 
 **The Scale Is the Layout Rule.** The time scale is full-width in its band and is the first real product content on every page that has a case. Nothing sits beside it.
@@ -225,16 +232,19 @@ Corners are tight and machined: 6px on buttons, 10px on the decide panel, 2px on
 - **Confirm step:** a Go action that moves money or files evidence first turns into a confirm row (Yes, file it / Back) in place, same position, same sizes.
 
 ### The Scale (signature component)
-A horizontal log-time dial. Tick labels at shutter-like steps (15 s, 30 s, 1 min, 2 min, 4 min, 15 min on the landing; 1 min to 3 days on a case). Stops are 12px dots, labelled below in two alternating rows; stops too close to name separately are dots only. A triangular index rides above the track. The readout to the left of the track is a large figure (elapsed time) and a short label. Stops are buttons: selecting one moves the index and names PayPal's record of it. Narrow widths hide every other tick and switch stops to a vertical list with a left hairline.
+A horizontal log-time dial. Tick labels at shutter-like steps (15 s, 30 s, 1 min, 2 min, 4 min, 15 min on the landing; 1 min to 1 day on a case, then the deadline engraved at the axis end as "Due Nov 4"). Stops are 12px dots, labelled below in two alternating rows, and every label's 1px leader runs up until it touches its dot. Only the last stop may hang right of its dot. Two moments too close to label apart are not drawn as two dots: one is folded into the other's words or proof (the landing's hold release lives in the close's proof; a waiting case's tracking read lives in "Asked you"). A triangular index rides above the track. The readout to the left of the track is a large figure (elapsed time) and a short label. Stops are buttons: selecting one moves the index and names PayPal's record of it. The record line under the scale always shows PayPal's proof (webhook id, capture id) for the active or latest stop, so a real id is on screen without a click. Narrow widths hide every other tick and switch stops to a vertical list with a left hairline.
+
+### Waiting Plate
+The other case on the landing is its own leather plate in columns 9 to 12, bottom-aligned with the headline block: a label (Another case, waiting for you), the amount as a figure, the item and "a separate sandbox test dispute", then the Go button at full plate width. It is the same object as the case page's decide panel, so the reader learns that a leather plate with an orange button means a case waiting for them.
 
 ### Decide Panel
-Leather, 10px corners, 32px padding, sticky beside the case. Order inside: the amount as a figure, the question as a block heading, one line on why it waits, the Go/Quiet row, then a short definition list (chance PayPal sides with you, evidence strength, expected loss, what no answer costs).
+Leather, 10px corners, 32px padding, sticky beside the case. Below 900px it follows the title, drops the amount figure (the title above states it), keeps Go and Quiet on one row, and sets its read as a two-column list, so the scale's readout still lands in the first phone screen. Order inside: the amount as a figure, the question as a block heading, one line on why it waits, the Go/Quiet row, then a short definition list (chance PayPal sides with you, evidence strength, expected loss, what no answer costs).
 
 ### Evidence and Record
 The evidence list is plain sentences, one per exhibit, a third for the label and two thirds for the content. The exact text sent and PayPal's raw record sit behind two disclosure toggles; raw ids and event names live only there.
 
 ### Ledger (policy)
-A horizontal dollar scale from $5 to $1,000 (log, like a film-speed dial) with two engraved lines, the refund/offer line and the evidence line, and the cases on the page marked as dots. It replaces any table of rules.
+A horizontal dollar scale from $5 to $1,000 (log, like a film-speed dial) with two engraved lines, the refund/offer line and the evidence line, and the cases on the page marked as beads: a round-capped stroke over one value, or one bead spanning values that sit within 3% of the axis, so marks never touch. It replaces any table of rules.
 
 ### Navigation
 A thin top bar on metal: the wordmark set in Archivo at width 125, two or three plain links, and the sandbox label pushed right.

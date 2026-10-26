@@ -56,22 +56,26 @@ export default async function Landing() {
             <span className="hero-l1">{amount} disputed.</span>
             {kept && <span className="hero-l2">{kept} kept.</span>}
           </h1>
-          <p className="hero-lede">CaseClerk answers PayPal disputes for small sellers and asks before it moves money.</p>
-          <div className="hero-cta">
+          <div className="hero-copy">
+            <p className="hero-lede">CaseClerk answers PayPal disputes for small sellers and asks before it moves money.</p>
             {m && (
               <p className="hero-fine">
                 Kept after PayPal&rsquo;s {usd(m.fee.value)} fee; unanswered, the seller loses {amount} and the fee.
               </p>
             )}
-            {w && wAmount && (
-              <div className="hero-act">
-                <Link className="btn btn-go" href={`/d2/case/${w.id}`}>
-                  Review the {wAmount} case
-                </Link>
-                <p className="hero-cta-note">A separate test dispute, waiting for you.</p>
-              </div>
-            )}
           </div>
+          {w && wAmount && (
+            <aside className="hero-wait leather" aria-labelledby="hero-wait-title">
+              <p id="hero-wait-title" className="hero-wait-k">
+                Another case, waiting for you
+              </p>
+              <p className="hero-wait-amount">{wAmount}</p>
+              <p className="hero-wait-body">{w.order?.items[0]?.name ? `${w.order.items[0].name}. ` : ""}A separate sandbox test dispute.</p>
+              <Link className="btn btn-go" href={`/d2/case/${w.id}`}>
+                Review the {wAmount} case
+              </Link>
+            </aside>
+          )}
         </section>
       </div>
 

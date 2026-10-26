@@ -16,7 +16,7 @@ type Props = {
   nowT?: number;
   nowLabel?: string;
   caption: ReactNode;
-  /** Right end of the scale, e.g. the deadline. */
+  /** Right end of the scale, e.g. the deadline; engraved on the axis like a tick. */
   endLabel?: string;
   /** Rendered under the active stop's proof line. */
   footer?: ReactNode;
@@ -65,6 +65,12 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
   const min = Math.floor(shown / 60);
   const sec = shown % 60;
   const hours = Math.floor(shown / 3600);
+
+  // PayPal's proof shows by default: the active stop's, else the latest stop before it that has one.
+  const upTo = active >= 0 ? active : last;
+  const proofStop = [...stops.slice(0, upTo + 1)].reverse().find((s) => s.proof?.length);
+  const labelled = stops.filter((s) => !s.quiet);
+  const lastLabelled = labelled[labelled.length - 1];
 
   const pick = (i: number) => {
     clear();
@@ -116,7 +122,13 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
               {t.label}
             </text>
           ))}
+          {endLabel && (
+            <text x="100%" y="14" className="sc-tick-label sc-tick-end" textAnchor="end">
+              {endLabel}
+            </text>
+          )}
           <line x1="0%" x2="0%" y1="24" y2="44" className="sc-major" />
+          {endLabel && <line x1="100%" x2="100%" y1="20" y2="44" className="sc-major sc-major-end" />}
           {ticks.map((t) => (
             <line key={`M${t.t}`} x1={`${pos(t.t) * 100}%`} x2={`${pos(t.t) * 100}%`} y1="24" y2="44" className="sc-major" />
           ))}
@@ -150,7 +162,7 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
               key={s.id}
               className="sc-stop"
               data-row={row}
-              data-end={x > 0.86 ? "right" : "left"}
+              data-end={s === lastLabelled && x > 0.86 ? "right" : "left"}
               data-tone={s.tone}
               data-state={state}
               style={{ "--x": x } as CSSProperties}
@@ -162,24 +174,22 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
             </li>
           );
         })}
-        {endLabel && (
-          <li className="sc-stop sc-end" data-row={stops.filter((o) => !o.quiet).length % 2 ? "2" : "1"} data-end="right" data-state="future" style={{ "--x": 1 } as CSSProperties}>
-            <span className="sc-stop-title">{endLabel}</span>
-          </li>
-        )}
       </ol>
 
       <div className="sc-foot">
         <p className="sc-proof">
-          {picked && current?.proof?.length ? (
-            current.proof.map((p) => (
-              <span key={p.label} className="sc-proof-item">
-                <span className="sc-proof-k">{p.label}</span> <code>{p.value}</code>
-              </span>
-            ))
-          ) : (
-            <span className="sc-proof-hint">Select a stop for PayPal&rsquo;s record of it.</span>
+          {proofStop && (
+            <>
+              <span className="sc-proof-stop">{proofStop.title}</span>
+              {proofStop.proof?.map((p) => (
+                <span key={p.label} className="sc-proof-item">
+                  <span className="sc-proof-k">{p.label}</span> <code>{p.value}</code>
+                </span>
+              ))}
+            </>
           )}
+          {/* the landing keeps its first screen to the story; a case page says how to read its stops */}
+          {!picked && !replay && <span className="sc-proof-hint">Select a stop for PayPal&rsquo;s record of it.</span>}
         </p>
         <div className="sc-actions">
           {footer}

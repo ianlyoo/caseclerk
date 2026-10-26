@@ -67,24 +67,20 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
   const d = c.decision;
   const shipping = c.order?.shipping?.[0];
 
-  const stops: Stop[] = storyStops(b).map((st) =>
-    st.id === "ask"
-      ? { ...st, title: "Asked you", detail: `${Math.round(st.t)} s after it arrived`, tone: "done" }
-      : st.id === "read" && pending
-        ? { ...st, quiet: true }
-        : st,
-  );
+  // While it waits, reading the order and tracking (seconds before asking) is part of "Asked you", not a dot of its own.
+  const stops: Stop[] = storyStops(b)
+    .filter((st) => !(st.id === "read" && pending))
+    .map((st) => (st.id === "ask" ? { ...st, title: "Asked you", detail: `${Math.round(st.t)} s after it arrived`, tone: "done" } : st));
   if (pending) stops.push({ id: "now", t: nowT, at: now, title: "Now", detail: "Waiting for your yes", tone: "ask" });
   const ticks: Tick[] = [
     { t: 60, label: "1 min" },
     { t: 600, label: "10 min", narrow: "hide" as const },
     { t: 3600, label: "1 h" },
     { t: 21600, label: "6 h" },
-    { t: 86400, label: "1 day" },
+    { t: 86400, label: "1 day", narrow: due ? ("hide" as const) : undefined },
     { t: 259200, label: "3 days", narrow: "hide" as const },
-  ].filter((t) => logPos(t.t, 10, tMax) < 0.94);
+  ].filter((t) => logPos(t.t, 10, tMax) < (due ? 0.86 : 0.94)); // room for the deadline at the axis end
 
-  const waited = pending ? secondsBetween(pending.createdAt, now) : 0;
   const lineWord = usd(line).replace(".00", "");
 
   return (
@@ -114,9 +110,7 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
               File this evidence with PayPal?
             </h2>
             <p className="decide-why">
-              It is over your {lineWord} line for evidence, so CaseClerk asks first. Waiting{" "}
-              {waited >= 3600 ? `${Math.floor(waited / 3600)} h` : `${Math.max(1, Math.round(waited / 60))} min`}
-              {due ? `; PayPal's deadline is ${dayClock(due)}.` : "."}
+              Over your {lineWord} evidence line, so CaseClerk asks first.{due ? ` Due ${dayClock(due)}.` : ""}
             </p>
             <Decide actionId={pending.id} />
             {d && (
@@ -161,7 +155,7 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
             tMax={tMax}
             nowT={nowT}
             caption={<>Arrived {dayClock(t0)}. Time runs on a log scale, out to PayPal&rsquo;s deadline.</>}
-            endLabel={due ? `Deadline, ${day(due)}` : undefined}
+            endLabel={due ? `Due ${day(due)}` : undefined}
             nowLabel="since the dispute arrived"
             readouts={Object.fromEntries(stops.map((st) => [st.id, st.id === "now" ? "since the dispute arrived" : `${st.title}, ${clock(st.at)} PT`]))}
           />

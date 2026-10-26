@@ -9,16 +9,34 @@ const NARROW_HIDE = new Set([10, 25, 500]);
 const x = (v: number) => (Math.log(Math.min(MAX, Math.max(MIN, v)) / MIN) / Math.log(MAX / MIN)) * 100;
 const short = (v: number) => usd(v).replace(".00", "");
 
-/** Cases placed on the scale; their dots share one label (the amounts sit too close to name apart). */
+/** Cases placed on the scale under one label. Amounts within a few percent of the axis merge into one bead
+ *  spanning both values, so two dots never touch. */
 type Marks = { label: string; values: number[] };
+
+function Beads({ values }: { values: number[] }) {
+  const xs = [...values].map(x).sort((a, b) => a - b);
+  const groups: number[][] = [];
+  for (const v of xs) {
+    const g = groups[groups.length - 1];
+    if (g && v - g[g.length - 1] < 3) g.push(v);
+    else groups.push([v]);
+  }
+  return (
+    <>
+      {groups.map((g) => (
+        <line key={g[0]} x1={`${g[0]}%`} x2={`${g[g.length - 1]}%`} y1="31" y2="31" className="lane-mark" />
+      ))}
+    </>
+  );
+}
 
 function Lane({ title, line, own, ask, marks }: { title: string; line: number; own: string; ask: string; marks?: Marks }) {
   const lx = x(line);
   return (
     <div className="lane">
       <p className="lane-title">{title}</p>
-      <svg className="lane-svg" width="100%" height={marks ? 92 : 72} role="img" aria-label={`${own} below ${short(line)}; ${ask} from ${short(line)}`}>
-        <g transform={marks ? "translate(0 20)" : undefined}>
+      <svg className="lane-svg" width="100%" height={marks ? 100 : 72} role="img" aria-label={`${own} below ${short(line)}; ${ask} from ${short(line)}`}>
+        <g transform={marks ? "translate(0 28)" : undefined}>
           <rect x="0" y="28" width={`${lx}%`} height="6" className="lane-own" />
           <rect x={`${lx}%`} y="28" width={`${100 - lx}%`} height="6" className="lane-ask" />
           {TICKS.map((t) => (
@@ -42,7 +60,7 @@ function Lane({ title, line, own, ask, marks }: { title: string; line: number; o
           <text x={`${lx}%`} dx="8" y="18" className="lane-zone lane-zone-ask" textAnchor="start">
             {ask}
           </text>
-          {marks?.values.map((v) => <circle key={v} cx={`${x(v)}%`} cy="31" r="5" className="lane-mark" />)}
+          {marks && <Beads values={marks.values} />}
         </g>
         {marks && (
           <text x={`${x(Math.max(...marks.values))}%`} dx="6" y="12" className="lane-mark-label" textAnchor="end">

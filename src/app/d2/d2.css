@@ -280,9 +280,9 @@
   --col: calc((100% - 11 * var(--gutter)) / 12);
 }
 .hero-title {
-  grid-column: 1 / -1;
+  grid-column: 1 / span 8;
   grid-row: 1;
-  font-size: clamp(44px, 6.8vw, 124px);
+  font-size: clamp(44px, 6.2vw, 96px);
   line-height: 1.07; /* Archivo's content box is 1.09em: lines may not overlap */
   font-weight: 720;
   font-variation-settings: "wdth" 112;
@@ -295,41 +295,65 @@
   display: block;
 }
 .hero-l2 {
-  margin-left: calc(4 * var(--col) + 4 * var(--gutter));
   color: var(--kept-ink);
 }
-.hero-lede {
-  grid-column: 1 / span 4;
-  grid-row: 2;
-  font-size: 19px;
-  line-height: 1.45;
-  color: var(--ink-2);
-  text-wrap: pretty;
-}
-.hero-cta {
-  grid-column: 5 / -1;
+.hero-copy {
+  grid-column: 1 / span 8;
   grid-row: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
+.hero-lede,
 .hero-fine {
   font-size: 19px;
   line-height: 1.45;
   color: var(--ink-2);
-  max-width: 48ch;
   text-wrap: pretty;
 }
-.hero-act {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
+.hero-lede {
+  color: var(--ink);
 }
-.hero-cta-note {
+/* the other case: its own leather plate, the same object as the case page's decide panel */
+.hero-wait {
+  grid-column: 9 / -1;
+  grid-row: 1 / span 2;
+  align-self: end;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border-radius: 10px;
+  border-top: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.6),
+    0 18px 40px -24px rgba(16, 18, 20, 0.55);
+}
+.hero-wait-k {
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+  font-variation-settings: "wdth" 106;
+  color: var(--engrave-2);
+}
+.hero-wait-amount {
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 700;
+  font-variation-settings: "wdth" 118;
+  letter-spacing: -0.03em;
+  color: var(--engrave);
+}
+.hero-wait-body {
   font-size: 15px;
-  line-height: 1.4;
-  color: var(--ink-2);
-  max-width: 40ch;
+  line-height: 1.45;
+  color: var(--engrave-2);
+  text-wrap: pretty;
+}
+.hero-wait .btn {
+  margin-top: var(--space-3);
+  width: 100%;
 }
 
 /* ---------- the band and the scale ---------- */
@@ -378,6 +402,9 @@
   letter-spacing: -0.02em;
   color: var(--sc-1);
   font-variant-numeric: tabular-nums;
+  /* rolling digits stay inside the figure: no neighbour digit (read as a stray "-") shows above or below */
+  overflow: hidden;
+  --number-flow-mask-height: 0.08em;
 }
 .sc-unit {
   font-size: 20px;
@@ -395,6 +422,7 @@
 
 .sc-rail {
   position: relative;
+  z-index: 1; /* dots sit over the leaders that reach them */
   height: 64px;
 }
 .sc-ticks {
@@ -417,6 +445,14 @@
 .sc-major {
   stroke: var(--sc-2);
   stroke-width: 1.5;
+}
+.sc-tick-end {
+  font-weight: 650;
+  fill: var(--sc-1);
+}
+.sc-major-end {
+  stroke: var(--sc-1);
+  stroke-width: 2;
 }
 .sc-minor {
   stroke: var(--sc-3);
@@ -488,6 +524,8 @@
 }
 
 .sc-stops {
+  /* a leader runs from each label up to its dot: the dot's lower edge is 13px above the rail's foot, then the gap */
+  --lead: calc(var(--space-5) + 13px);
   position: relative;
   height: 128px;
 }
@@ -499,16 +537,20 @@
   padding-left: var(--space-3);
   border-left: 1px solid var(--sc-leader);
 }
+.sc-stop::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: calc(-1 * var(--lead));
+  height: var(--lead);
+  border-left: 1px solid var(--sc-leader);
+}
 .sc-stop[data-row="2"] {
   top: 64px;
 }
 .sc-stop[data-row="2"]::before {
-  content: "";
-  position: absolute;
-  left: -1px;
-  top: -64px;
-  height: 64px;
-  border-left: 1px solid var(--sc-leader);
+  top: calc(-64px - var(--lead));
+  height: calc(64px + var(--lead));
 }
 .sc-stop[data-end="right"] {
   left: auto;
@@ -519,7 +561,7 @@
   border-right: 1px solid var(--sc-leader);
   text-align: right;
 }
-.sc-stop[data-end="right"][data-row="2"]::before {
+.sc-stop[data-end="right"]::before {
   left: auto;
   right: -1px;
   border-left: 0;
@@ -578,7 +620,8 @@
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
-.sc-stop[data-state="current"] {
+.sc-stop[data-state="current"],
+.sc-stop[data-state="current"]::before {
   border-color: var(--sc-2);
 }
 
@@ -598,6 +641,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-5);
+}
+.sc-proof-stop {
+  font-weight: 600;
+  color: var(--sc-1);
 }
 .sc-proof-k {
   color: var(--sc-3);
@@ -711,10 +758,11 @@
 .lane-zone-ask {
   fill: #a8430a;
 }
+/* a bead: a round-capped stroke over one value, or over several that sit together */
 .lane-mark {
-  fill: var(--ink);
-  stroke: var(--metal-1);
-  stroke-width: 2;
+  stroke: var(--ink);
+  stroke-width: 12px;
+  stroke-linecap: round;
 }
 .lane-mark-label {
   font-family: var(--font);
@@ -1055,7 +1103,12 @@
     height: 56px;
     gap: var(--space-5);
   }
+  /* the links stay (the way back from a case); the sandbox label is said again in every page's copy */
   .bar-nav {
+    gap: var(--space-4);
+    font-size: 14px;
+  }
+  .bar-env {
     display: none;
   }
   .hero {
@@ -1069,28 +1122,21 @@
     font-size: clamp(44px, 12vw, 64px);
     line-height: 1.07;
   }
-  .hero-l2 {
-    margin-left: 0;
-  }
-  .hero-lede {
+  .hero-copy {
     grid-column: 1;
-    grid-row: 2;
-    font-size: 17px;
   }
-  .hero-cta {
-    grid-column: 1;
-    grid-row: 3;
-  }
+  .hero-lede,
   .hero-fine {
     font-size: 17px;
   }
-  .hero-act {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-3);
+  .hero-wait {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: stretch;
+    padding: var(--space-5);
   }
-  .hero-cta .btn {
-    width: 100%;
+  .hero-wait-amount {
+    font-size: 36px;
   }
   .sc-head {
     flex-direction: column;
@@ -1115,7 +1161,7 @@
     border-right: 0;
     text-align: left;
   }
-  .sc-stop[data-row="2"]::before {
+  .sc-stop::before {
     display: none;
   }
   .sc-stop[data-end="right"] .sc-stop-btn {
@@ -1153,7 +1199,7 @@
   }
   .case-grid {
     grid-template-columns: minmax(0, 1fr);
-    padding-top: var(--space-6);
+    padding-top: var(--space-5);
   }
   .case-head,
   .case-scale,
@@ -1162,24 +1208,48 @@
     grid-column: 1;
     grid-row: auto;
   }
+  .case-title {
+    font-size: 32px;
+  }
   .decide {
     position: relative;
     top: auto;
-    margin-top: var(--space-6);
+    margin-top: var(--space-4);
     padding: var(--space-5);
+    gap: var(--space-3);
   }
-  .decide-actions {
-    flex-direction: column;
+  /* the amount is in the title just above; the card keeps the question, the two buttons and the read */
+  .decide-amount {
+    display: none;
+  }
+  .decide-wrap,
+  .decide-read {
+    margin-top: var(--space-1); /* with the card's 12px gap: 16 */
+  }
+  .decide-title {
+    font-size: 19px;
+    font-variation-settings: "wdth" 100;
+  }
+  .decide-why {
+    font-size: 14px;
   }
   .decide-actions .btn {
-    width: 100%;
+    padding: 0 var(--space-4);
   }
   .decide-read > div {
-    flex-direction: column;
-    gap: var(--space-1);
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+    font-size: 13px;
+    line-height: 1.35;
   }
   .decide-read dd {
     text-align: left;
+  }
+  .case-scale {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
   }
   .exhibit {
     grid-template-columns: minmax(0, 1fr);
