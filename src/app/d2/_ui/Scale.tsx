@@ -256,7 +256,8 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
         <p className="sc-proof">
           {proofStop && (
             <>
-              <span className="sc-proof-stop">{proofStop.title}</span>
+              {/* the readout above names the stop; this line is its record */}
+              <span className="sc-proof-stop">Record</span>
               {proofStop.proof?.map((p) => (
                 <span key={p.label} className="sc-proof-item">
                   <span className="sc-proof-k">{p.label}</span> {p.words ? p.value : <code>{p.value}</code>}
