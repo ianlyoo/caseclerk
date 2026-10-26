@@ -2,7 +2,7 @@
 // payment + chargeback → record the capture so the webhook marks the case as a test dispute.
 import { rateLimit, testCaptures, wire } from "@/lib/db";
 import { withWire } from "@/lib/db/wire";
-import { openTestDispute, type OpenTestDisputeResult, type TestScenario } from "@/lib/paypal/testDispute";
+import { JUDGE_SHOP, judgeItem, openTestDispute, type OpenTestDisputeResult, type TestScenario } from "@/lib/paypal/testDispute";
 import { envInt, errMessage, json, jsonError } from "./http";
 
 const DAY_S = 86_400;
@@ -35,7 +35,11 @@ export async function createTestDispute(opts: {
     // waitMs 0: don't poll for the dispute id; the webhook links the case by capture id.
     created = await withWire({ origin: opts.origin }, async (ctx) => {
       rowIds = ctx.rowIds;
-      return openTestDispute({ scenario: opts.scenario, waitMs: 0 });
+      // A visitor's test dispute is a camera sale above the $250 evidence line, so it waits for their
+      // yes and they see the approval gate; the cron keeps the small catalog (answered on its own).
+      return opts.origin === "seller"
+        ? openTestDispute({ scenario: opts.scenario, waitMs: 0, items: [judgeItem()], shippingFee: null, shopName: JUDGE_SHOP })
+        : openTestDispute({ scenario: opts.scenario, waitMs: 0 });
     });
   } catch (e) {
     console.error(`${tag} openTestDispute failed: ${errMessage(e)}`);

@@ -21,6 +21,8 @@ const flushAfter = async () => {
 vi.mock("@/lib/paypal/testDispute", () => ({
   openTestDispute: m.openTestDispute,
   TEST_SCENARIOS: { not_received: {}, not_as_described: {} },
+  JUDGE_SHOP: "Judge Shop",
+  judgeItem: () => ({ name: "Camera", quantity: 1, unitAmount: { currency_code: "USD", value: "389.00" } }),
 }));
 vi.mock("@/lib/paypal/simulators", () => ({ adjudicate: m.adjudicate, requireEvidence: m.requireEvidence }));
 vi.mock("@/lib/paypal/disputes", () => ({ getDispute: m.getDispute }));
@@ -118,7 +120,14 @@ describe("test-dispute", () => {
     expect((await limited.json()).error.code).toBe("rate_limited");
     expect((await post("8.8.8.8")).status).toBe(202);
     expect(m.openTestDispute).toHaveBeenCalledTimes(4);
-    expect(m.openTestDispute).toHaveBeenCalledWith({ scenario: "not_received", waitMs: 0 });
+    // A visitor's test dispute is one camera above the $250 evidence line, free shipping.
+    expect(m.openTestDispute).toHaveBeenCalledWith({
+      scenario: "not_received",
+      waitMs: 0,
+      items: [expect.objectContaining({ unitAmount: { currency_code: "USD", value: "389.00" } })],
+      shippingFee: null,
+      shopName: "Judge Shop",
+    });
     expect(await db.testCaptures.get("CAP-9")).toMatchObject({ orderId: "ORD-9", scenario: "not_received", order });
     // The webhook's upsert then gives the case the test badge and the order context.
     const { record } = await db.cases.upsertFromSnapshot(snapshot({ id: "PP-R-9", sellerTransactionId: "CAP-9" }));
