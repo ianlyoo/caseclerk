@@ -51,6 +51,9 @@ export const itemName = (c: CaseRecord) => c.order?.items[0]?.name ?? null;
 /** "Chargeback, not as described" */
 export const claimWords = (c: CaseRecord) => `${cap(stageWord(c.snapshot.stage))}, ${reasonWords(c.snapshot.reason)}`;
 
+/** Kept for the demo recording: only while it waits for a yes; once answered or closed it reads like any other case. */
+export const isHeld = (c: CaseRecord) => RESERVED_CASES.includes(c.id) && caseState(c).phase === "waiting";
+
 /** The newest case waiting for a yes that a visitor may really approve (not one kept for the demo). */
 export function judgeCase<T extends CaseRecord>(list: readonly T[] | null | undefined): T | null {
   return (

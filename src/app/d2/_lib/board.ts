@@ -3,8 +3,8 @@
 import type { CaseRecord } from "@/lib/types";
 import type { CaseBundle } from "./api";
 import { cap, clock, day, dayClock, leftWords, usd } from "./format";
-import { href, RESERVED_CASES } from "./routes";
-import { caseState, claimWords, itemName, judgeCase, type Phase, type StateKey } from "./state";
+import { href } from "./routes";
+import { caseState, claimWords, isHeld, itemName, judgeCase, type Phase, type StateKey } from "./state";
 import { storyStops, type Tone } from "./story";
 
 /** Who made the moment: PayPal (its webhooks), CaseClerk (its reads, asks, filings, errors) or the seller. */
@@ -98,7 +98,7 @@ function rowFor(c: CaseRecord, b: CaseBundle | null, nowIso: string, line: numbe
     endWords,
     endShort,
     moments,
-    held: RESERVED_CASES.includes(c.id),
+    held: isHeld(c),
   };
 }
 
@@ -108,7 +108,7 @@ export function boardOf(list: CaseRecord[], bundles: Map<string, CaseBundle | nu
   const phase = (c: CaseRecord) => caseState(c).phase;
   const waiting = list
     .filter((c) => phase(c) === "waiting")
-    .sort((x, y) => Number(x.id !== judge?.id) - Number(y.id !== judge?.id) || Number(RESERVED_CASES.includes(x.id)) - Number(RESERVED_CASES.includes(y.id)) || byNewest(x, y));
+    .sort((x, y) => Number(x.id !== judge?.id) - Number(y.id !== judge?.id) || Number(isHeld(x)) - Number(isHeld(y)) || byNewest(x, y));
   const open = list.filter((c) => phase(c) === "open").sort((x, y) => dueOf(x) - dueOf(y) || byNewest(x, y));
   const closed = list
     .filter((c) => phase(c) === "closed")

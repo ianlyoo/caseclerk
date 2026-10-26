@@ -42,6 +42,11 @@ export async function Landing() {
   const wDue = w?.snapshot.sellerResponseDueDate;
   const wAction = waiting?.actions.find((a) => a.status === "awaiting_approval");
   const exhibits = ((wAction?.params as { exhibits?: { title: string }[] } | undefined)?.exhibits ?? []).map((e) => e.title);
+  // the footnote speaks only of the cases on this page: their kind and the days PayPal opened them
+  const shown = [story.case, ...(w ? [w] : [])];
+  const kinds = [...new Set(shown.map((c) => stageWord(c.snapshot.stage)))];
+  const kind = `${shown.every((c) => c.isTestDispute) ? "test " : ""}${kinds.length === 1 ? kinds[0] : "dispute"}`;
+  const opened = [...new Set(shown.map((c) => c.snapshot.createTime).sort((a, b) => Date.parse(a) - Date.parse(b)).map(day))].join(" and ");
 
   return (
     <>
@@ -193,8 +198,8 @@ export async function Landing() {
       <footer className="metal foot">
         <div className="wrap foot-grid">
           <p className="foot-note">
-            Every dispute here is a PayPal sandbox test dispute, opened from a sandbox buyer account on {day(story.case.snapshot.createTime)}. Sandbox
-            rulings were requested from PayPal&rsquo;s sandbox; on a live account the ruling is PayPal&rsquo;s own.
+            {shown.length > 1 ? `Both disputes on this page are ${kind}s` : `The dispute on this page is ${/^[aeiou]/.test(kind) ? "an" : "a"} ${kind}`}, opened in PayPal&rsquo;s sandbox on {opened}.
+            Sandbox rulings were requested from PayPal&rsquo;s sandbox; on a live account the ruling is PayPal&rsquo;s own.
           </p>
           <p className="foot-note">Built for the PayPal AI Hackathon.</p>
         </div>

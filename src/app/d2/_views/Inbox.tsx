@@ -3,8 +3,8 @@ import type { CSSProperties } from "react";
 import type { CaseRecord } from "@/lib/types";
 import { getPolicy, listCases } from "../_lib/api";
 import { day, usd } from "../_lib/format";
-import { href, RESERVED_CASES } from "../_lib/routes";
-import { caseState, claimWords, deadlineWords, itemName, judgeCase, sellerWon, sharedListings } from "../_lib/state";
+import { href } from "../_lib/routes";
+import { caseState, claimWords, deadlineWords, isHeld, itemName, judgeCase, sellerWon, sharedListings } from "../_lib/state";
 import { statedMoney } from "../_lib/story";
 import { TopBar } from "../_ui/Chrome";
 import { Refresh } from "../_ui/Refresh";
@@ -49,7 +49,7 @@ export async function Inbox() {
   const rows = list.map((c) => ({ c, st: caseState(c, line) }));
   const waiting = rows
     .filter((r) => r.st.phase === "waiting")
-    .sort((x, y) => Number(x.c.id === judge?.id ? 0 : 1) - Number(y.c.id === judge?.id ? 0 : 1) || Number(RESERVED_CASES.includes(x.c.id)) - Number(RESERVED_CASES.includes(y.c.id)) || byNewest(x.c, y.c));
+    .sort((x, y) => Number(x.c.id === judge?.id ? 0 : 1) - Number(y.c.id === judge?.id ? 0 : 1) || Number(isHeld(x.c)) - Number(isHeld(y.c)) || byNewest(x.c, y.c));
   const open = rows.filter((r) => r.st.phase === "open").sort((x, y) => dueOf(x.c) - dueOf(y.c) || byNewest(x.c, y.c));
   const closed = rows
     .filter((r) => r.st.phase === "closed")
@@ -88,7 +88,7 @@ export async function Inbox() {
               {waiting.map(({ c }) => {
                 const amount = usd(c.snapshot.amount.value);
                 const item = itemName(c);
-                const held = RESERVED_CASES.includes(c.id);
+                const held = isHeld(c);
                 const dl = deadlineWords(c, now);
                 return (
                   <li key={c.id} className="wrow" data-judge={c.id === judge?.id || undefined}>
