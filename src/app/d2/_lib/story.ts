@@ -16,9 +16,16 @@ export type Stop = {
   tone: Tone;
   /** Dot only, no label (stops too close together to name separately). */
   quiet?: boolean;
-  /** PayPal's own proof for this stop, shown only in the details layer */
-  proof?: { label: string; value: string }[];
+  /** The stop's own record, shown in the record line under the scale: PayPal's ids where it sent one, else CaseClerk's log. */
+  proof?: Proof[];
 };
+
+/** One entry of a stop's record: an id PayPal issued (set as code), or the words CaseClerk logged (`words`). */
+export type Proof = { label: string; value: string; words?: boolean };
+
+const firstSentence = (s: string) => s.split(/(?<=\.)\s/)[0].replace(/\.$/, "");
+/** A CaseClerk audit row as a record entry, for stops PayPal sent no id for. */
+export const logged = (a: { summary: string }, label = "CaseClerk's log"): Proof => ({ label, value: firstSentence(a.summary), words: true });
 
 export type Tick = { t: number; label: string; /** label hidden when the scale is narrow */ narrow?: "hide" };
 
@@ -110,30 +117,49 @@ export function storyStops(b: CaseBundle, voice: "story" | "seller" = "story"): 
   const you = voice === "seller";
 
   const created = b.wire.find((w) => w.kind === "event" && w.eventType === "CUSTOMER.DISPUTE.CREATED");
+  // cases older than the wire log have no webhook id: the dispute id and the first row CaseClerk logged stand in
+  const heard = firstAudit(b, "webhook.received") ?? b.audit[0];
   add({
     id: "in",
     at: t0,
     title: `${stageWord(c.snapshot.stage)[0].toUpperCase()}${stageWord(c.snapshot.stage).slice(1)} in`,
     detail: `${amount}, ${reasonWords(c.snapshot.reason)}`,
     tone: "done",
-    proof: created?.eventId ? [{ label: "Webhook", value: created.eventId }] : undefined,
+    proof: created?.eventId ? [{ label: "Webhook", value: created.eventId }] : [{ label: "Dispute", value: c.id }, ...(heard ? [logged(heard)] : [])],
   });
 
   const tracking = firstAudit(b, "tool.get_tracking");
   const shipping = c.order?.shipping?.[0];
   if (tracking) {
+    const trackerCall = [...b.wire]
+      .reverse()
+      .find((w) => w.kind === "call" && w.method === "GET" && /^\/v1\/shipping\/trackers/.test(w.path ?? "") && Date.parse(w.at) <= Date.parse(tracking.at) + 2000);
     add({
       id: "read",
       at: tracking.at,
       title: "Order and tracking read",
       detail: shipping ? `${shipping.carrier}: ${shipping.status === "DELIVERED" ? "delivered" : (shipping.status ?? "in transit").toLowerCase()}` : "No tracking on the order",
       tone: "done",
+      proof: [
+        ...(c.order?.orderId ? [{ label: "Order", value: c.order.orderId }] : []),
+        { label: "Tracking", value: firstSentence(tracking.summary.replace(/^Read tracking: /, "")), words: true },
+        ...(trackerCall?.debugId ? [{ label: "Debug id", value: trackerCall.debugId }] : []),
+      ],
     });
   }
 
   const asked = firstAudit(b, "action.awaiting_approval");
   if (asked) {
-    add({ id: "ask", at: asked.at, title: you ? "Asked you" : "Asked the seller", detail: "Over the $250 line", tone: "ask" });
+    // the rule as CaseClerk logged it when it stopped ("A $397.00 dispute is at or above your $250 review level for evidence")
+    const rule = (asked.summary.split(": ").slice(1).join(": ") || asked.summary).split("; ")[0];
+    add({
+      id: "ask",
+      at: asked.at,
+      title: you ? "Asked you" : "Asked the seller",
+      detail: "Over the $250 line",
+      tone: "ask",
+      proof: [{ label: "Rule", value: firstSentence(rule), words: true }],
+    });
   }
 
   const filed = filingOf(b);
@@ -153,10 +179,14 @@ export function storyStops(b: CaseBundle, voice: "story" | "seller" = "story"): 
   }
 
   const denied = firstAudit(b, "action.denied");
-  if (denied) add({ id: "denied", at: denied.at, title: you ? "You said no" : "Seller said no", detail: "Nothing was filed", tone: "done" });
+  if (denied) {
+    add({ id: "denied", at: denied.at, title: you ? "You said no" : "Seller said no", detail: "Nothing was filed", tone: "done", proof: [logged(denied)] });
+  }
 
   const stopped = lastAudit(b, "agent.error");
-  if (stopped && c.status === "error") add({ id: "error", at: stopped.at, title: "Stopped on an error", detail: "Nothing sent to PayPal", tone: "done" });
+  if (stopped && c.status === "error") {
+    add({ id: "error", at: stopped.at, title: "Stopped on an error", detail: "Nothing sent to PayPal", tone: "done", proof: [logged(stopped)] });
+  }
 
   const resolved = b.wire.find((w) => w.kind === "event" && w.eventType === "CUSTOMER.DISPUTE.RESOLVED");
   const closedAt = resolved?.at ?? [...b.audit].reverse().find((a) => a.kind === "webhook.received" && /resolved/i.test(a.summary))?.at;
@@ -170,7 +200,9 @@ export function storyStops(b: CaseBundle, voice: "story" | "seller" = "story"): 
       tone: won ? "kept" : "lost",
       // The hold release sits too near the close on a log scale to label apart; PayPal's capture id stands for it in the proof.
       proof: [
-        ...(resolved?.eventId ? [{ label: "Webhook", value: resolved.eventId }] : []),
+        ...(resolved?.eventId
+          ? [{ label: "Webhook", value: resolved.eventId }]
+          : [{ label: "Dispute", value: c.id }, ...(c.snapshot.outcome ? [{ label: "PayPal outcome", value: c.snapshot.outcome }] : [])]),
         ...(m?.captureId ? [{ label: "Capture", value: m.captureId }] : []),
       ],
     });
@@ -178,19 +210,39 @@ export function storyStops(b: CaseBundle, voice: "story" | "seller" = "story"): 
   return stops.sort((a, b2) => a.t - b2.t);
 }
 
-/** Drops stops whose dots would touch: within `gap` of the axis, the lower-ranked one goes (its words live on in its neighbour). */
+/** Stops that only mark a moment ("now", reading the order): within `gap` of another stop they fold into it. */
+const PASSING = new Set(["now", "read"]);
+
+/**
+ * Folds passing stops into a neighbour they would touch. Milestones (in, ask, filed, denied, error, kept, lost)
+ * are never dropped, however close: the scale spaces their dots instead (`spread`).
+ */
 export function foldClose(stops: Stop[], pos: (t: number) => number, gap: number): Stop[] {
-  const rank = (s: Stop) => ({ in: 0, kept: 1, now: 2, filed: 3, ask: 4, denied: 4, error: 4 })[s.id] ?? 9;
   const out: Stop[] = [];
   for (const s of stops) {
     const prev = out[out.length - 1];
     if (prev && pos(s.t) - pos(prev.t) < gap) {
-      if (rank(s) < rank(prev)) out[out.length - 1] = s;
-      continue;
+      if (PASSING.has(s.id)) continue;
+      if (PASSING.has(prev.id)) {
+        out[out.length - 1] = s;
+        continue;
+      }
     }
     out.push(s);
   }
   return out;
+}
+
+/** Rail positions kept at least `gap` apart, in order: later dots nudge right, then back from the end if they run past it. */
+export function spread(xs: number[], gap: number): number[] {
+  const out = [...xs];
+  for (let i = 1; i < out.length; i++) out[i] = Math.max(out[i], out[i - 1] + gap);
+  const last = out.length - 1;
+  if (last >= 0 && out[last] > 1) {
+    out[last] = 1;
+    for (let i = last - 1; i >= 0; i--) out[i] = Math.min(out[i], out[i + 1] - gap);
+  }
+  return out.map((x) => Math.max(0, x));
 }
 
 const STEPS: Tick[] = [

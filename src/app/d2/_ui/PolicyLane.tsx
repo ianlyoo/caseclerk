@@ -50,6 +50,8 @@ export function PolicyLane({
   marks?: Marks;
 }) {
   const lx = axis.x(line);
+  // a line near the low end leaves no room to name the zone under it; the head names the line, the lane's label says so
+  const tight = lx < 25;
   const groups: number[][] = [];
   for (const v of [...(marks?.values ?? [])].map(axis.x).sort((a, b) => a - b)) {
     const g = groups[groups.length - 1];
@@ -64,7 +66,7 @@ export function PolicyLane({
         <p className="lane-title">{title}</p>
         <p className="plane-line">{lineLabel}</p>
       </div>
-      <svg className="lane-svg" width="100%" height={72 + top} role="img" aria-label={`${below} below ${lineLabel}; ${above} past it`}>
+      <svg className="lane-svg" width="100%" height={72 + top} role="img" aria-label={`${lineLabel}: ${below} below the line; ${above} past it`}>
         <g transform={`translate(0 ${top})`}>
           <rect x="0" y="28" width={`${lx}%`} height="6" className="lane-own" />
           <rect x={`${lx}%`} y="28" width={`${100 - lx}%`} height="6" className={ask ? "lane-ask" : open ? "plane-open" : "plane-past"} />
@@ -83,9 +85,11 @@ export function PolicyLane({
             </g>
           ))}
           <line x1={`${lx}%`} x2={`${lx}%`} y1="6" y2="46" className="lane-line" />
-          <text x={`${lx}%`} dx="-8" y="18" className="lane-zone" textAnchor="end">
-            {below}
-          </text>
+          {!tight && (
+            <text x={`${lx}%`} dx="-8" y="18" className="lane-zone" textAnchor="end">
+              {below}
+            </text>
+          )}
           <text x={`${lx}%`} dx="8" y="18" className={`lane-zone${ask ? " lane-zone-ask" : ""}`} textAnchor="start">
             {above}
           </text>
@@ -102,7 +106,7 @@ export function PolicyLane({
           ))}
         </g>
         {marks && last !== undefined && (
-          <text x={`${last}%`} dx={last > 50 ? 6 : -6} y="12" className="lane-mark-label" textAnchor={last > 50 ? "end" : "start"}>
+          <text x="100%" y="12" className="lane-mark-label" textAnchor="end">
             {marks.label}
           </text>
         )}

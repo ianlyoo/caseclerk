@@ -346,10 +346,13 @@ function Plate({ b, m, line, answered, arrived, denied }: { b: CaseBundle; m: Ca
         </h2>
         <p className="decide-why">The disputed amount goes back to the buyer. {m.filed ? "CaseClerk had filed evidence." : "Nothing was filed on this case."}</p>
         <dl className="decide-read">
-          <div>
-            <dt>Claim</dt>
-            <dd>{claimWords(c)}</dd>
-          </div>
+          {/* with no order on file the page title is the claim already */}
+          {itemName(c) && (
+            <div>
+              <dt>Claim</dt>
+              <dd>{claimWords(c)}</dd>
+            </div>
+          )}
           <div>
             <dt>Disputed</dt>
             <dd>{amount}</dd>
@@ -433,16 +436,18 @@ function Plate({ b, m, line, answered, arrived, denied }: { b: CaseBundle; m: Ca
   return (
     <>
       <p className="plate-k">{denied ? "You said no" : "Where it stands"}</p>
-      <p className="decide-amount">{amount}</p>
+      <p className="decide-amount plate-amount">{amount}</p>
       <h2 id="panel-title" className="decide-title">
         {denied ? "Not filed." : heading[m.state.key]}
       </h2>
       <p className="decide-why">{denied ? "Nothing was sent to PayPal. The case stays with you until PayPal’s deadline." : why[m.state.key]}</p>
       <dl className="decide-read">
-        <div>
-          <dt>Claim</dt>
-          <dd>{claimWords(c)}</dd>
-        </div>
+        {itemName(c) && (
+          <div>
+            <dt>Claim</dt>
+            <dd>{claimWords(c)}</dd>
+          </div>
+        )}
         <div>
           <dt>Deadline</dt>
           <dd>{dl.text}</dd>
@@ -474,7 +479,7 @@ function Record({ b }: { b: CaseBundle }) {
     return (
       <More summary={<>PayPal&rsquo;s record for this case, {b.wire.length} entries</>}>
         <div className="proof">
-          <table className="proof-table">
+          <table className="proof-table proof-wire">
             <thead>
               <tr>
                 <th scope="col">Time (PT)</th>

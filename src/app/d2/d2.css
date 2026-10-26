@@ -537,7 +537,6 @@
   position: absolute;
   left: calc(var(--x) * 100%);
   top: 0;
-  max-width: 24cqw;
   padding-left: var(--space-3);
   border-left: 1px solid var(--sc-leader);
 }
@@ -812,8 +811,9 @@
   flex-direction: column;
   gap: var(--space-4);
 }
-.try-grid > .td {
-  grid-column: 8 / -1;
+/* the control sits under the words it answers, on their edge */
+.try-copy > .td {
+  margin-top: var(--space-2);
 }
 .facts {
   display: flex;
@@ -1216,8 +1216,7 @@
   .ledger,
   .waiting-head,
   .facts-dark,
-  .try-copy,
-  .try-grid > .td {
+  .try-copy {
     grid-column: 1;
   }
   .waiting-head .btn {
@@ -1284,9 +1283,24 @@
     grid-template-columns: minmax(0, 1fr);
     row-gap: var(--space-1);
   }
-  .proof-table th:nth-child(4),
-  .proof-table td:nth-child(4) {
+  /* each entry on two lines: time, what and status, then PayPal's id under them */
+  .proof-wire thead {
     display: none;
+  }
+  .proof-wire tr {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    column-gap: var(--space-3);
+    row-gap: var(--space-1);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--metal-3);
+  }
+  .proof-wire td {
+    padding: 0;
+    border-bottom: 0;
+  }
+  .proof-wire td:nth-child(4) {
+    grid-column: 2 / -1;
   }
 }
 
@@ -1481,12 +1495,15 @@
 }
 
 @media (max-width: 899px) {
-  .bar-nav-wide {
-    display: none;
-  }
-  /* PayPal's answer isn't in the title above, so its figure stays */
+  /* once nothing waits for a yes, the plate's figure stays: PayPal's answer, what was kept or lost, what is disputed */
   .decide .plate-status {
     display: flex;
+    font-size: 40px;
+  }
+  .decide .plate-kept,
+  .decide .plate-lost,
+  .decide .plate-amount {
+    display: block;
     font-size: 40px;
   }
 }

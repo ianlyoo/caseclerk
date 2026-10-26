@@ -29,10 +29,6 @@ export function TopBar({ here, children }: { here?: Place; children?: ReactNode 
           <Link href={href.policy()} aria-current={here === "policy" ? "page" : undefined}>
             Rules
           </Link>
-          {/* the Bryntum deadline board is its own app: a plain link, full page load */}
-          <a href={href.board()} className="bar-nav-wide">
-            Deadlines
-          </a>
         </nav>
         <p className="bar-env">PayPal sandbox, live data</p>
       </div>

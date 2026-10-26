@@ -21,8 +21,8 @@ export async function Policy() {
   }
 
   const evidence = policy.evidenceApprovalAtUsd ?? 250;
-  const refund = policy.autoRefundMaxUsd;
-  const approval = policy.approvalAboveUsd;
+  const refund = policy.autoRefundMaxUsd ?? 15;
+  const approval = policy.approvalAboveUsd ?? refund;
   const amounts = (list ?? []).map((c) => Number(c.snapshot.amount.value)).filter(Number.isFinite);
   const called = (list ?? []).flatMap((c) => (c.decision ? [c.decision.winProbability] : []));
   // the money lane's own zone ends at the lower of the two lines; above it, it asks
@@ -46,9 +46,9 @@ export async function Policy() {
               It asks before money moves.
             </h2>
             <p className="body">
-              Evidence on a dispute of {short(evidence)} or more waits for your yes; below that, CaseClerk files on its own. A refund or offer over{" "}
-              {short(asksFrom)} waits for your yes
-              {approval > refund ? <>; your {short(approval)} approval line sits above that limit, so from {short(refund)} up it already asks</> : null}.
+              Over {short(evidence)} to file evidence, or over {short(asksFrom)} to refund or offer, it asks you first. Below those lines CaseClerk acts on
+              its own.
+              {approval > refund ? <> Your {short(approval)} approval line sits above the {short(refund)} refund limit, so the {short(refund)} limit is the one that asks.</> : null}
             </p>
           </div>
           <div className="ledger">
@@ -66,8 +66,8 @@ export async function Policy() {
               title="Refunds and offers"
               axis={DOLLARS}
               line={asksFrom}
-              lineLabel={`${short(refund)} refund limit`}
-              below="Own"
+              lineLabel={`Asks over ${short(asksFrom)}`}
+              below="On its own"
               above="Asks you"
               ask
               extra={approval !== refund ? { v: approval, label: `${short(approval)} approval line` } : undefined}

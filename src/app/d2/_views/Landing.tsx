@@ -31,7 +31,8 @@ export async function Landing() {
   }
 
   const evidenceLine = policy?.evidenceApprovalAtUsd ?? 250;
-  const moneyLine = policy?.approvalAboveUsd ?? 50;
+  // a refund or offer asks above the lower of the seller's two money lines (the $15 auto-refund limit sits under the $50 approval line)
+  const moneyLine = Math.min(policy?.autoRefundMaxUsd ?? 15, policy?.approvalAboveUsd ?? Infinity);
   const m = moneyFor(story);
   const amount = usd(story.case.snapshot.amount.value);
   const kept = m ? usd(m.kept.value) : null;
@@ -109,7 +110,7 @@ export async function Landing() {
               It asks before money moves.
             </h2>
             <p className="body">
-              Small cases it answers on its own, under your rules. Over {usd(evidenceLine).replace(".00", "")} to file evidence, or{" "}
+              Small cases it answers on its own, under your rules. Over {usd(evidenceLine).replace(".00", "")} to file evidence, or over{" "}
               {usd(moneyLine).replace(".00", "")} to refund or offer, it asks you first.
             </p>
           </div>
@@ -183,8 +184,8 @@ export async function Landing() {
                 Watch one arrive.
               </h2>
               <p className="body">Open a real PayPal sandbox chargeback of your own. PayPal takes a few minutes to deliver it; then CaseClerk works it under these rules.</p>
+              <TestDispute />
             </div>
-            <TestDispute />
           </div>
         </section>
       )}

@@ -30,12 +30,14 @@ function Beads({ values }: { values: number[] }) {
   );
 }
 
-function Lane({ title, line, own, ask, marks }: { title: string; line: number; own: string; ask: string; marks?: Marks }) {
+function Lane({ title, line, own, ask, over, marks }: { title: string; line: number; own: string; ask: string; over?: boolean; marks?: Marks }) {
   const lx = x(line);
+  // a line near the low end leaves no room to name the zone under it: the zone past it carries the figure instead
+  const tight = lx < 25;
   return (
     <div className="lane">
       <p className="lane-title">{title}</p>
-      <svg className="lane-svg" width="100%" height={marks ? 100 : 72} role="img" aria-label={`${own} below ${short(line)}; ${ask} from ${short(line)}`}>
+      <svg className="lane-svg" width="100%" height={marks ? 100 : 72} role="img" aria-label={over ? `${own} up to ${short(line)}; ${ask} over ${short(line)}` : `${own} below ${short(line)}; ${ask} from ${short(line)}`}>
         <g transform={marks ? "translate(0 28)" : undefined}>
           <rect x="0" y="28" width={`${lx}%`} height="6" className="lane-own" />
           <rect x={`${lx}%`} y="28" width={`${100 - lx}%`} height="6" className="lane-ask" />
@@ -54,11 +56,13 @@ function Lane({ title, line, own, ask, marks }: { title: string; line: number; o
             </g>
           ))}
           <line x1={`${lx}%`} x2={`${lx}%`} y1="6" y2="46" className="lane-line" />
-          <text x={`${lx}%`} dx="-8" y="18" className="lane-zone" textAnchor="end">
-            {own}
-          </text>
+          {!tight && (
+            <text x={`${lx}%`} dx="-8" y="18" className="lane-zone" textAnchor="end">
+              {own}
+            </text>
+          )}
           <text x={`${lx}%`} dx="8" y="18" className="lane-zone lane-zone-ask" textAnchor="start">
-            {ask}
+            {tight ? `${ask} over ${short(line)}` : ask}
           </text>
           {marks && <Beads values={marks.values} />}
         </g>
@@ -76,7 +80,7 @@ export function Ledger({ evidenceLine, moneyLine, marks }: { evidenceLine: numbe
   return (
     <div className="ledger">
       <Lane title="Filing evidence" line={evidenceLine} own="On its own" ask="Asks you" marks={marks} />
-      <Lane title="Refunds and offers" line={moneyLine} own="Under your rules" ask="Asks you"  />
+      <Lane title="Refunds and offers" line={moneyLine} own="On its own" ask="Asks you" over />
     </div>
   );
 }

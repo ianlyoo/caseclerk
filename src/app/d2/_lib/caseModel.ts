@@ -3,7 +3,7 @@ import type { AgentAction } from "@/lib/types";
 import type { CaseBundle } from "./api";
 import { clock, secondsBetween, usd } from "./format";
 import { caseState, type CaseState } from "./state";
-import { arrivedAt, filingOf, foldClose, logPos, storyStops, ticksFor, type Stop, type Tick } from "./story";
+import { arrivedAt, filingOf, foldClose, lastWebhook, logged, logPos, storyStops, ticksFor, type Stop, type Tick } from "./story";
 
 export type Exhibit = { title: string; body: string };
 export type Filing = { exhibits?: Exhibit[]; narrative?: string; filing?: { files?: { name: string; size: number }[] } };
@@ -59,7 +59,21 @@ export function caseModel(b: CaseBundle, nowIso: string): CaseModel {
   const due = c.snapshot.sellerResponseDueDate;
   const tau = 10;
   const tMax = due ? Math.max(secondsBetween(t0, due), nowT * 1.2) : Math.max(nowT * 1.25, 900);
-  const now: Stop = { id: "now", t: nowT, at: nowIso, title: "Now", detail: NOW_WORDS[state.key], tone: state.key === "ask" ? "ask" : "done" };
+  // its record: where PayPal has the case, and the last word PayPal sent about it
+  const latest = lastWebhook(b);
+  const heard = [...b.audit].reverse().find((a) => a.kind === "webhook.received");
+  const now: Stop = {
+    id: "now",
+    t: nowT,
+    at: nowIso,
+    title: "Now",
+    detail: NOW_WORDS[state.key],
+    tone: state.key === "ask" ? "ask" : "done",
+    proof: [
+      { label: "PayPal status", value: c.snapshot.status },
+      ...(latest?.eventId ? [{ label: "Latest webhook", value: latest.eventId }] : heard ? [logged(heard, "Latest webhook")] : []),
+    ],
+  };
   const pos = (t: number) => logPos(t, tau, tMax);
   // A filing made a moment ago sits at "now": the filing keeps the dot and says where it stands.
   const near = stops.find((st) => st.id === "filed" && pos(nowT) - pos(st.t) < 0.07);

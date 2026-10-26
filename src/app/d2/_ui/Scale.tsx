@@ -3,7 +3,7 @@
 // Stops sit at their real times; the index travels stop to stop (replay on the landing, "now" on a case).
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import NumberFlow, { NumberFlowGroup } from "@number-flow/react";
-import { logPos, type Stop, type Tick } from "../_lib/story";
+import { logPos, spread, type Stop, type Tick } from "../_lib/story";
 
 type Props = {
   stops: Stop[];
@@ -26,25 +26,30 @@ type Props = {
   fresh?: string;
 };
 
+type Layout = { rows: Record<string, "1" | "2">; ends: Record<string, "left" | "right">; width: number };
+
 /**
  * Labels sit in two rows. A row-2 label's leader runs up through row 1, so the rows are chosen (all
  * combinations; a case has a handful of stops) so no two labels in a row come within 16px and no leader
- * crosses a row-1 label; among clean layouts, the one closest to alternating wins.
+ * crosses a row-1 label; among clean layouts, the one closest to alternating wins. A label that would run
+ * past the rail's end hangs left of its leader instead.
  */
 function useRows(ol: RefObject<HTMLOListElement | null>, sig: string) {
-  const [rows, setRows] = useState<Record<string, "1" | "2">>({});
+  const [layout, setLayout] = useState<Layout>({ rows: {}, ends: {}, width: 0 });
   useLayoutEffect(() => {
     const el = ol.current;
     if (!el) return;
     const place = () => {
       const W = el.clientWidth;
       const items = [...el.querySelectorAll<HTMLElement>(".sc-stop")];
-      if (!W || items.length > 10 || items.some((li) => getComputedStyle(li).position !== "absolute")) return setRows({});
+      const set = (next: Layout) => setLayout((cur) => (JSON.stringify(cur) === JSON.stringify(next) ? cur : next));
+      if (!W || items.length > 10 || items.some((li) => getComputedStyle(li).position !== "absolute")) return set({ rows: {}, ends: {}, width: W });
       const box = items.map((li) => {
         const w = li.offsetWidth;
         const x = Number(li.dataset.x) * W;
-        const left = li.dataset.end === "right" ? x - w : x;
-        return { id: li.dataset.id ?? "", x, left, right: left + w };
+        const end: "left" | "right" = x + w > W ? "right" : "left";
+        const left = end === "right" ? x - w : x;
+        return { id: li.dataset.id ?? "", x, end, left, right: left + w };
       });
       let best = { cost: Infinity, mask: 0 };
       for (let mask = 0; mask < 1 << box.length; mask++) {
@@ -63,8 +68,11 @@ function useRows(ol: RefObject<HTMLOListElement | null>, sig: string) {
         const cost = bad * 100 + off;
         if (cost < best.cost) best = { cost, mask };
       }
-      const out = Object.fromEntries(box.map((b, i) => [b.id, (best.mask >> i) & 1 ? "2" : "1"])) as Record<string, "1" | "2">;
-      setRows((cur) => (JSON.stringify(cur) === JSON.stringify(out) ? cur : out));
+      set({
+        rows: Object.fromEntries(box.map((b, i) => [b.id, (best.mask >> i) & 1 ? "2" : "1"])),
+        ends: Object.fromEntries(box.map((b) => [b.id, b.end])),
+        width: W,
+      });
     };
     place();
     // labels change width when the web font arrives, without the scale itself resizing
@@ -78,7 +86,7 @@ function useRows(ol: RefObject<HTMLOListElement | null>, sig: string) {
       ro.disconnect();
     };
   }, [ol, sig]);
-  return rows;
+  return layout;
 }
 
 const STEP_MS = 900;
@@ -117,19 +125,24 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
 
   const current = active >= 0 ? stops[active] : null;
   const indexT = current ? current.t : (nowT ?? stops[last]?.t ?? 0);
-  const p = pos(indexT);
+  const olRef = useRef<HTMLOListElement>(null);
+  const [width, setWidth] = useState(0);
+  // every stop keeps its dot: stops closer than ~20px on the rail are spaced, in order, rather than dropped
+  const xs = spread(
+    stops.map((s) => pos(s.t)),
+    width ? Math.max(0.02, 20 / width) : 0.025,
+  );
+  const nowAt = stops.findIndex((s) => s.id === "now");
+  const p = current ? xs[active] : nowT !== undefined ? (nowAt >= 0 ? xs[nowAt] : pos(nowT)) : (xs[last] ?? 0);
   const shown = Math.round(indexT);
   const min = Math.floor(shown / 60);
   const sec = shown % 60;
   const hours = Math.floor(shown / 3600);
 
-  // PayPal's proof shows by default: the active stop's, else the latest stop before it that has one.
-  const upTo = active >= 0 ? active : last;
-  const proofStop = [...stops.slice(0, upTo + 1)].reverse().find((s) => s.proof?.length);
-  const labelled = stops.filter((s) => !s.quiet);
-  const lastLabelled = labelled[labelled.length - 1];
-  const olRef = useRef<HTMLOListElement>(null);
-  const rows = useRows(olRef, labelled.map((s) => `${s.id}:${s.title}:${s.detail}:${pos(s.t).toFixed(3)}`).join("|"));
+  // the record line is the selected stop's own; unselected, the stop the index rests on
+  const proofStop = current ?? (nowAt >= 0 ? stops[nowAt] : stops[last]);
+  const { rows, ends, width: measured } = useRows(olRef, stops.map((s, i) => `${s.id}:${s.title}:${s.detail}:${xs[i].toFixed(3)}`).join("|"));
+  useEffect(() => setWidth(measured), [measured]);
 
   const pick = (i: number) => {
     clear();
@@ -205,7 +218,7 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
             data-tone={s.tone}
             data-state={active >= 0 ? (i < active ? "past" : i === active ? "current" : "future") : "past"}
             data-new={s.id === fresh || undefined}
-            style={{ "--x": pos(s.t) } as CSSProperties}
+            style={{ "--x": xs[i] } as CSSProperties}
           />
         ))}
         <span className="sc-index" aria-hidden="true" />
@@ -215,7 +228,7 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
         {stops.map((s, i) => {
           if (s.quiet) return null;
           const row = rows[s.id] ?? (stops.slice(0, i).filter((o) => !o.quiet).length % 2 ? "2" : "1");
-          const x = pos(s.t);
+          const x = xs[i];
           const state = active >= 0 ? (i < active ? "past" : i === active ? "current" : "future") : "past";
           return (
             <li
@@ -225,7 +238,7 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
               data-id={s.id}
               data-x={x}
               data-new={s.id === fresh || undefined}
-              data-end={s === lastLabelled && x > 0.86 ? "right" : "left"}
+              data-end={ends[s.id] ?? (x > 0.76 ? "right" : "left")}
               data-tone={s.tone}
               data-state={state}
               style={{ "--x": x } as CSSProperties}
@@ -246,13 +259,13 @@ export function Scale({ stops, ticks, tau, tMax, replay, nowT, nowLabel, caption
               <span className="sc-proof-stop">{proofStop.title}</span>
               {proofStop.proof?.map((p) => (
                 <span key={p.label} className="sc-proof-item">
-                  <span className="sc-proof-k">{p.label}</span> <code>{p.value}</code>
+                  <span className="sc-proof-k">{p.label}</span> {p.words ? p.value : <code>{p.value}</code>}
                 </span>
               ))}
             </>
           )}
           {/* the landing keeps its first screen to the story; a case page says how to read its stops */}
-          {!picked && !replay && <span className="sc-proof-hint">Select a stop for PayPal&rsquo;s record of it.</span>}
+          {!picked && !replay && <span className="sc-proof-hint">Select a stop for its record.</span>}
         </p>
         <div className="sc-actions">
           {footer}
