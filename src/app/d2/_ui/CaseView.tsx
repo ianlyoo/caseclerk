@@ -306,7 +306,8 @@ function Plate({ b, m, line, answered, arrived, denied }: { b: CaseBundle; m: Ca
     return (
       <>
         <p className="plate-k">PayPal ruled for you</p>
-        <p className="decide-amount plate-kept">{money ? usd(money.kept.value) : amount}</p>
+        {/* Kept green only for money PayPal stated; until then the figure is the disputed amount, in ink */}
+        <p className={`decide-amount ${money ? "plate-kept" : "plate-amount"}`}>{money ? usd(money.kept.value) : amount}</p>
         <h2 id="panel-title" className="decide-title">
           {money ? `You kept ${usd(money.kept.value)} of ${amount}.` : "Closed for you."}
         </h2>
