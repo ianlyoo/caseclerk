@@ -6,7 +6,7 @@ Built for the PayPal AI Hackathon (2026). Everything runs on the PayPal **sandbo
 
 **Hosted demo: https://caseclerk.vercel.app** (no login, no keys needed)
 
-**Demo video:** VIDEO_LINK_TBD (YouTube; added after the owner's OK)
+**Demo video:** https://youtu.be/Z-NBssV4bSk (YouTube)
 
 ## A 60-second path for judges
 

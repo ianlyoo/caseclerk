@@ -76,7 +76,7 @@ anthropic, claude, claude-opus-5-5, claude-haiku-5-5, paypal, paypal-disputes-ap
 ## Try it out
 
 - Hosted demo: https://caseclerk.vercel.app
-- Demo video: VIDEO_LINK_TBD (YouTube; added after the owner's OK)
+- Demo video: https://youtu.be/Z-NBssV4bSk (YouTube)
 - Code: https://github.com/ianlyoo/caseclerk (public at submission; MIT)
 
 ## Testing instructions for judges
