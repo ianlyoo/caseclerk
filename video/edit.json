@@ -991,9 +991,9 @@
    ]
   ],
   "targetLufs": -14,
-  "voiceTrim": 0.765,
+  "voiceTrim": 0.612,
   "masterGainDb": 0.8,
-  "finalNote": "The final cut (the owner, 10/27: #541, then #542): the narration stem at 0.765x (0.9, then 0.85 more; -2.33 dB from rehearsal E) over the whole film. masterGainDb pins rehearsal E's master gain, so nothing normalizes the voice back up to targetLufs; the mix lands under it, as intended. The bed is 0.5 dB lower (bedLufs -27) so it stays about 18-19 dB under the quieter voice, and its ducking is slower (scripts/mix.py: down over 0.8 s, up over 2 s, held through pauses under 1.5 s). The cues are 3 dB louder, with five more on real on-screen actions: three clicks and two page changes.",
+  "finalNote": "The final cut (the owner, 10/27: #541, #542, then #552): the narration stem at 0.612x (0.9, then 0.85 more, then 0.8 more; -4.27 dB from rehearsal E) over the whole film. masterGainDb pins rehearsal E's master gain, so nothing normalizes the voice back up to targetLufs; the mix lands under it, as intended. The bed is 0.5 dB lower (bedLufs -27; #542 put it 18.3 dB under the voice, and #552's 1.94 dB quieter voice leaves it about 16.4 dB under), and its ducking is slower (scripts/mix.py: down over 0.8 s, up over 2 s, held through pauses under 1.5 s). The cues are 3 dB louder, with five more on real on-screen actions: three clicks and two page changes.",
   "ceilingDbtp": -1
  }
 }

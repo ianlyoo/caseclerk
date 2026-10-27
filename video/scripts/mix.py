@@ -28,7 +28,7 @@ None of it goes in git: the take and the mix carry the owner's voice.
   word). It fades out over the end card's last seconds, after the last word.
 - Cues: edit.json "cues", the CC0 recordings in assets/sfx/.
 - Master: gain to audio.targetLufs integrated, then a limiter under audio.ceilingDbtp.
-  audio.voiceTrim scales the voice stem (the final cut's 0.765x); audio.masterGainDb, when set,
+  audio.voiceTrim scales the voice stem (the final cut's 0.612x); audio.masterGainDb, when set,
   replaces the gain to targetLufs, so a trim isn't normalized away.
 
 Needs an ffmpeg with aevalsrc, afir, deesser, amultiply, alimiter and ebur128.

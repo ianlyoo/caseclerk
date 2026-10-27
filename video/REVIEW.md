@@ -224,3 +224,20 @@ What changed (edit.json cams only; audio, cut times and captions as they were):
 - Sound: the AAC stream is bit-identical to the #542 final (same packet MD5), so every loudness, duck and cue number in `LISTEN.md` stands.
 - Picture against the #542 final: 2,980 of 5,055 frames identical. The ones that changed on purpose are in 0:33.3–0:37.2 and 1:03.85–1:48.6. The other 610 changed only at the encoder level (PSNR 48 dB or more).
 - Checks: before/after stills and a 50% blend at each changed dissolve (0.4 s before the cut and just after it). At 0:37.2, 1:22.4 and 1:42.4 the header, timeline and panel line up. Below the timeline the page shifts by one wrapped record line where the content differs. At 1:04.2 the zoom and left edge match, with the offsets above. I also checked the contact sheet, the 14 cut pairs and the vab cover at 1:22.45 and 1:28.
+
+# Review: the narration 20% quieter again (PM 12:50, #552)
+
+The owner's note: the narration 20% quieter again. One change: `audio.voiceTrim` 0.765 → 0.612 (×0.8, −1.94 dB; −4.27 dB from E), with the master gain still pinned at +0.8 dB so nothing normalizes the voice back up. The bed, the cues, the duck's timing, the picture and the captions are as they were.
+
+## Before rendering (10/27)
+
+Mix: voice stem −18.8 LUFS (#542: −16.8), voice RMS over speech −22.7 dBFS (−20.8). The bed stem (−34.6 LUFS), the cues stem (−26.6 LUFS), the speech spans, the placements and the bed's chords all match #542's report. In the pauses the new `mix.wav` is #542's sample for sample. Under speech the difference is 14.1 dB under #542's mix, as a 0.8× voice predicts. The bed is now 16.4 dB under the voice (#542: 18.3), as expected with the bed unchanged. The mix is −18.5 LUFS and −2.4 dBTP; no 10 ms block reaches the limiter's level. The clicks between words (sfx-01, sfx-06) are 5 dB under the voice's level (#542: 7); every other cue lands in a pause, as before.
+
+## Render (10/27, done 12:41 win-guest time, capture 8 min 27 s)
+
+`s4/video/final.mp4` (replaces the #543 final), sha256 993cfacd92619681decb0585d751a1e6e5b2c2d9f959d5551548afe12f635055, 54.9 MB, and `final-contact-sheet.png`; `final.srt`/`final.vtt` are unchanged. A copy is at `board/narration/final.mp4` (same sha256). Rendered on win-guest.
+
+- ffprobe: h264 High, yuv420p, 1920×1080, 30/1, 5055 frames, 168.5 s, 2.60 Mb/s, AAC LC. A full decode with `-xerror` logged 0 error lines; atoms ftyp moov free mdat.
+- Sound on the AAC track: −18.6 LUFS, −2.5 dBTP, LRA 6.1 LU (#542/#543: −16.5, −2.0, 6.4; E: −14.2, −1.7, 6.5). Small speaker −23.3 LUFS, earbuds −16.7 LUFS, mono correlation +0.42 (17% of frames below zero).
+- Re-transcribed: 32 of 295 caption words differ from the mix (#542: 28), 34 from the small-speaker simulation (#542: 34). Every amount comes out right from the mix. The new misses are three small words and N22a's "Claude".
+- Picture against the #543 final: 4,609 of 5,055 frames identical, the rest at PSNR 51.3 dB or more (encoder noise).

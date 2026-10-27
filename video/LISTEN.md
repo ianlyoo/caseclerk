@@ -1,21 +1,21 @@
 # Listen: the final cut
 
-`s4/video/final.mp4`: rehearsal E as the owner approved it (#541), with the owner's last notes on the sound (#542): the narration 15% quieter again, the cues louder and five more, and the bed's dip under the voice made gradual. Every take is as in E, and N20's caption is the written line ("Anything bigger waits for a yes."). Mixed by `scripts/mix.py` (numbers from its `out/audio/loudness.json` and from the MP4 itself). The first final cut (02:44, the narration at 0.9×) is replaced. The owner's note on the dissolve at 0:36 (#543) changed only the picture: four dissolves between two case pages now hold one zoom (see Cuts that became dissolves). The sound is the same `mix.wav`.
+`s4/video/final.mp4`: rehearsal E as the owner approved it (#541), with the owner's notes on the sound (#542: the narration 15% quieter again, the cues louder and five more, the bed's dip under the voice made gradual), one zoom across the case-page dissolves (#543, picture only), and the narration 20% quieter again (#552). Every take is as in E, and N20's caption is the written line ("Anything bigger waits for a yes."). Mixed by `scripts/mix.py` (numbers from its `out/audio/loudness.json` and from the MP4 itself). The #543 final (03:51, the narration at 0.765×) is replaced; its picture is kept. #552 changes the voice stem only: the bed, the cues, the duck's timing, the picture and the captions are as they were.
 
 ## Loudness and peaks
 
-| Measured on | Final cut | First final cut (0.9×) | Rehearsal E |
+| Measured on | Final cut (0.612×) | #542/#543 final (0.765×) | Rehearsal E |
 |---|---|---|---|
-| The MP4's AAC track (what viewers get) | −16.5 LUFS, −2.0 dBTP, LRA 6.4 LU | −15.3 LUFS, −1.8 dBTP, LRA 6.4 LU | −14.2 LUFS, −1.7 dBTP, LRA 6.5 LU |
-| `mix.wav`, before the AAC encode | −16.4 LUFS, −2.0 dBTP, LRA 6.4 LU | −15.2 LUFS, −1.6 dBTP, LRA 6.3 LU | −14.1 LUFS, −1.5 dBTP, LRA 6.5 LU |
-| Voice stem | −16.8 LUFS, LRA 5.4 LU | −15.4 LUFS, LRA 5.4 LU | −14.5 LUFS, LRA 5.4 LU |
-| Bed stem, ducked | −34.6 LUFS, −16.9 dBTP | −32.3 LUFS, −13.7 dBTP | the same as the first final |
-| Cues stem | −26.6 LUFS, −3.3 dBTP | −29.1 LUFS, −6.3 dBTP | the same as the first final |
+| The MP4's AAC track (what viewers get) | −18.6 LUFS, −2.5 dBTP, LRA 6.1 LU | −16.5 LUFS, −2.0 dBTP, LRA 6.4 LU | −14.2 LUFS, −1.7 dBTP, LRA 6.5 LU |
+| `mix.wav`, before the AAC encode | −18.5 LUFS, −2.4 dBTP, LRA 6.1 LU | −16.4 LUFS, −2.0 dBTP, LRA 6.4 LU | −14.1 LUFS, −1.5 dBTP, LRA 6.5 LU |
+| Voice stem | −18.8 LUFS, LRA 5.4 LU | −16.8 LUFS, LRA 5.4 LU | −14.5 LUFS, LRA 5.4 LU |
+| Bed stem, ducked | −34.6 LUFS, −16.9 dBTP | the same | −32.3 LUFS, −13.7 dBTP |
+| Cues stem | −26.6 LUFS, −3.3 dBTP | the same | −29.1 LUFS, −6.3 dBTP |
 
-- **The narration:** the voice stem is scaled by 0.765 (`audio.voiceTrim`: 0.9 after E, then 0.85 more, −1.41 dB; −2.33 dB from E) over the whole film, after the voice chain. The master gain stays pinned at E's +0.8 dB (`audio.masterGainDb`), so nothing pulls the voice back up: the film lands about 2.2 dB under E, as intended.
-- **True peak:** −2.0 dBTP on the MP4, inside the −1 dBTP ceiling.
+- **The narration:** the voice stem is scaled by 0.612 (`audio.voiceTrim`: 0.9 after E, then 0.85 more, then 0.8 more in #552, −1.94 dB; −4.27 dB from E) over the whole film, after the voice chain. The master gain stays pinned at E's +0.8 dB (`audio.masterGainDb`), so nothing pulls the voice back up: the film lands about 4.4 dB under E and 2.1 dB under #542, as intended. In the pauses (more than 0.5 s from a sentence) the new mix is sample-for-sample #542's; under speech the difference is 14.1 dB under #542's mix, as a 0.8× voice predicts (14.0).
+- **True peak:** −2.5 dBTP on the MP4, inside the −1 dBTP ceiling.
 - **Voice chain** (light, as in D and E): high-pass 80 Hz; −3 dB at 150 Hz (the take is boomy around 125 Hz); +1.5 dB at 2.8 kHz; −2 dB shelf from 8 kHz and a de-esser; 2.5:1 compression with a soft knee, about 3 dB of gain reduction on average. No de-clip: neither the take nor the retakes have clipped runs.
-- **Bed under the voice:** 18.3 dB under the voice while the owner speaks (RMS over the spoken spans; E 20.1 dB, the first final 19.2 dB). The bed is 0.5 dB lower than in E (`audio.bedLufs` −27) so it stays in the 18–20 dB band under the quieter voice.
+- **Bed under the voice:** 16.4 dB under the voice while the owner speaks (RMS over the spoken spans; #542 18.3 dB, E 20.1 dB). #552 asked for the narration only, so the bed is as it was (`audio.bedLufs` −27) and sits 1.9 dB closer to the quieter voice; in the pauses it is exactly as before.
 - **The bed's dip, made gradual** (the owner found E's abrupt): it now goes down over 0.8 s before a sentence (E: 0.35 s) and comes back up over 2 s after it (E: 1.0 s), on a raised-cosine curve with the corners rounded. It holds through pauses under 1.5 s as before. In a pause between 1.5 and 3 s it now rises only part of the way (E: all 10 dB in every one). Its fastest change is 19 dB a second (E: 45). Per pause:
 
 | Pause | Length | Bed rises (E) | Bed rises now |
@@ -31,13 +31,13 @@
 | The seven pauses of 2.85 s and longer | 2.85–6.1 s | 10 dB | 9.6–10 dB |
 
   Under every sentence the bed is fully down, as before (checked at each sentence's start, middle and end). The title's lift (+4 dB) and the end card's (+5 dB) still act in the pauses only; with the duck held, the title's is now mostly folded under it.
-- **Master:** +0.8 dB of gain (pinned), then a limiter with 3 ms look-ahead at −2 dBFS. With the voice lower it hardly works now: 4 of 16,850 10 ms blocks go over its level, all by under 1 dB, the most 0.82 dB (E: 2.7% of blocks, the most 3.1 dB).
-- **Small speaker** (mono, nothing under 300 Hz or over 7 kHz, a 1.5 kHz bump): −21.2 LUFS, LRA 6.6 LU (E: −19.0 LUFS, 6.6 LU). Its peaks reach about 0 dBFS: the simulation's 1.5 kHz bump on the louder cues; the file itself peaks at −2.0.
-- **Earbuds** (lows +5 dB, +4 dB at 3 kHz, air +2 dB): −14.6 LUFS, LRA 6.5 LU (E: −12.3 LUFS, 6.5 LU), so speech and pauses keep the same balance as on the file. Its peaks reach about 0 dBFS from the simulation's boosts; the file itself peaks at −2.0.
-- **Mono fold-down:** left/right correlation averages +0.45 and is below zero in 17% of 100 ms frames (E: +0.46, 17%). The voice and cues are identical in both channels; the bed's room is wide by design and unchanged from D.
-- **Re-transcribed** (Parakeet, locally): 28 of the captions' 295 words come out differently from the final mix (9.5%; the first final cut: 30) and 34 (11.5%; the first final: 34) from the small-speaker simulation, much the same words as before: names (PayPal as "Papal", CaseClerk as "Case cleric", Claude as "Clawed") and single-word endings. Every amount comes out right from the mix. The small-speaker simulation hears N15's "$388.18" as "$380.18", as it did in the first final cut. N12b, where the louder Yes click sits, comes out word for word as before ("A yes file set…", the run-in "files it"), and N20's "for a yes" comes out as written from the mix.
+- **Master:** +0.8 dB of gain (pinned), then a limiter with 3 ms look-ahead at −2 dBFS. With the voice lower again it no longer acts: no 10 ms block reaches its level (#542: 4 of 16,850, the most 0.82 dB; E: 2.7% of blocks, the most 3.1 dB).
+- **Small speaker** (mono, nothing under 300 Hz or over 7 kHz, a 1.5 kHz bump): −23.3 LUFS, LRA 6.5 LU (#542: −21.2 LUFS, 6.6 LU; E: −19.0). Its peaks reach about 0 dBFS: the simulation's 1.5 kHz bump on the louder cues; the file itself peaks at −2.5.
+- **Earbuds** (lows +5 dB, +4 dB at 3 kHz, air +2 dB): −16.7 LUFS, LRA 6.2 LU (#542: −14.6 LUFS, 6.5 LU; E: −12.3), so speech and pauses keep the same balance as on the file. Its peaks reach −1.2 dBFS from the simulation's boosts; the file itself peaks at −2.5.
+- **Mono fold-down:** left/right correlation averages +0.42 and is below zero in 17% of 100 ms frames (#542: +0.45, 17%; E: +0.46, 17%). The voice and cues are identical in both channels; the bed's room is wide by design and unchanged from D.
+- **Re-transcribed** (Parakeet, locally): 32 of the captions' 295 words come out differently from the final mix (10.8%; #542: 28) and 34 (11.5%; #542: 34) from the small-speaker simulation. They are much the same words as before: names (PayPal as "Papal", CaseClerk as "Case cleric", Claude as "Clawed") and single-word endings. The four new ones from the mix are small words ("and" as "in" in N02, the "A" before "Claude agent", the "to" in "to undo") and N22a's "Claude", which drops out ("…Haiku sorts the case"). Every amount comes out right from the mix. The small-speaker simulation hears N15's "$388.18" as "$380.18", as before.
 
-Spectrogram and waveform views of the MP4's sound are on win-guest in `tmp/qa-g/` (`g-spectrum.png`, `g-wave.png`), with the bed stem's waveform (`bed-wave.png`, `bed-wave-60-110.png`); I looked at them. I can't hear the file, so these views, the meters, the duck curve and the transcriptions are what I checked by. Speech and pauses alternate as in E. The new clicks show as thin full-band lines in the pauses. The bed stays under about 2.7 kHz. In the bed's waveform each pause's swell now rises and falls on a long taper, and the short pauses barely move. The picture is the first final cut's: 4,602 of 5,055 frames are identical, and the rest differ only by encoder noise (PSNR 51 dB or more).
+Spectrogram and waveform views of the MP4's sound are on win-guest in `tmp/qa-i/` (`f-spectrum.png`, `f-wave.png`, `small-spectrum.png`); I looked at them. I can't hear the file, so these views, the meters, the null test and the transcriptions are what I checked by. Speech and pauses alternate as before; the cues stand about 1.9 dB further out of the quieter voice. The bed's duck curve is #542's (the bed stem measures the same). The picture is the #543 final's: 4,609 of 5,055 frames are identical, and the rest differ only by encoder noise (PSNR 51.3 dB or more).
 
 ## The cues
 
@@ -45,12 +45,12 @@ Eleven, every one on something that happens on screen, all Kenney CC0 recordings
 
 | Cue | At | Sound | On screen | Against the voice |
 |---|---|---|---|---|
-| sfx-01 | 0:18.23 | click (press) | The cursor clicks Open a test dispute | In the 50 ms gap between "click" and "opens"; 7 dB under the voice's level (E: 13) |
+| sfx-01 | 0:18.23 | click (press) | The cursor clicks Open a test dispute | In the 50 ms gap between "click" and "opens"; 5 dB under the voice's level (#542: 7; E: 13) |
 | sfx-02 | 0:24.68 | tick | The +3 min plate lands | In the pause |
 | sfx-12 (new) | 0:36.82 | page flip | The page changes to the $412.00 case (dissolve 0:36.85–0:37.2) | In the pause |
 | sfx-13 (new) | 0:43.77 | click (press and release) | The cursor clicks Asked you, 98 s after it arrived | In the pause |
 | sfx-14 (new) | 1:04.26 | click (press and release) | The cursor clicks File the evidence | In the pause, 0.4 s before "The seller decides" |
-| sfx-06 | 1:06.53 | click (press) | The cursor clicks Yes, file it | In the 30 ms gap between "A yes" and "files"; 7 dB under the voice's level (E: 13) |
+| sfx-06 | 1:06.53 | click (press) | The cursor clicks Yes, file it | In the 30 ms gap between "A yes" and "files"; 5 dB under the voice's level (#542: 7; E: 13) |
 | sfx-07 | 1:19.23 | pop | PayPal's 200 settles | In the pause |
 | sfx-15 (new) | 1:33.92 | click (press and release) | The cursor clicks You said yes. Filed | In the pause, 0.6 s after "kept" |
 | sfx-16 (new) | 1:48.22 | page flip | The page changes to Your rules (dissolve 1:48.25–1:48.6) | In the pause |
